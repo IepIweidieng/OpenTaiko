@@ -1,6 +1,13 @@
 Duration :
+; The total animation duration in...
+; the prompt dialog of the game entry screen
 Chara_Entry_AnimationDuration=1000
+; the title screen.
 Chara_Normal_AnimationDuration=1000
+; menu screens, when...
+; in normal state
 Chara_Menu_Loop_AnimationDuration=1000
+; an item is selected.
 Chara_Menu_Select_AnimationDuration=1000
+; the game is going to progress into the next screen.
 Chara_Menu_Start_AnimationDuration=1000

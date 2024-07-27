@@ -1,4 +1,5 @@
 Beat :
+; "Tired" means that the player just missed.
 Game_Chara_Beat_Tower_Standing=1
 Game_Chara_Beat_Tower_Standing_Tired=1
 Game_Chara_Beat_Tower_Fail=1

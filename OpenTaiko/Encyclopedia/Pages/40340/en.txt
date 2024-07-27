@@ -1,4 +1,8 @@
 Duration :
+; The duration of each frame of the Balloon-popping animation
 Game_Chara_Balloon_Timer=28
+; The delay duration before the character fading out
+; after successing or failing to pop a Balloon
 Game_Chara_Balloon_Delay=500
+; The fading-out duration after successing or failing to pop a Balloon
 Game_Chara_Balloon_FadeOut=84

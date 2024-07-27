@@ -1,7 +1,11 @@
-Coordinates :
+Coordinates (X & Y) :
+; Position for player 1 & 2 when popping Balloon
 Game_Chara_Balloon_X=(1P),(2P)
 Game_Chara_Balloon_Y=(1P),(2P)
+; Position for player 1 when popping Balloon, when the player count is 3/4 (4P) or 5 (5P)
+; The position for other players are calculated according to this.
 Game_Chara_Balloon_4P=(X),(Y)
 Game_Chara_Balloon_5P=(X),(Y)
+; Position for player 1 to 5 when popping Kusudama
 Game_Chara_Kusudama_X=(1P),(2P),(3P),(4P),(5P)
 Game_Chara_Kusudama_Y=(1P),(2P),(3P),(4P),(5P)

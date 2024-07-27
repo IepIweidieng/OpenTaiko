@@ -1,7 +1,9 @@
 Beat :
 Game_Chara_Beat_Normal=1
+; When every 10 combo is reached
 Game_Chara_Beat_10Combo=1
 Game_Chara_Beat_10ComboMax=1
+; When the clear mark on the soul gauge has been reached
 Game_Chara_Beat_ClearIn=1
 Game_Chara_Beat_Clear=1
 Game_Chara_Beat_ClearMax=1

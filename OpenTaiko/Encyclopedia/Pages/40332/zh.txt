@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 节拍：
 Game_Chara_Beat_GoGoStart（高潮段开始时）=1
 Game_Chara_Beat_GoGoStartClear（成功时高潮段开始时）=1
@@ -5,3 +6,18 @@ Game_Chara_Beat_GoGoStartMax（魂条满时高潮段开始时）=1
 Game_Chara_Beat_GoGo（高潮段）=1
 Game_Chara_Beat_GoGoClear（成功时高潮段）=1
 Game_Chara_Beat_GoGoMax（魂条满时高潮段）=1
+=======
+拍数 (Beat)：
+; Go-go time 开始
+Game_Chara_Beat_GoGoStart=1
+; Go-go time 开始，魂量表已達過关标准
+Game_Chara_Beat_GoGoStartClear=1
+; Go-go time 开始，魂量表全滿
+Game_Chara_Beat_GoGoStartMax=1
+; Go-go time 期间
+Game_Chara_Beat_GoGo=1
+; Go-go time 期间，魂量表已達過关标准
+Game_Chara_Beat_GoGoClear=1
+; Go-go time 期间，魂量表全滿
+Game_Chara_Beat_GoGoMax=1
+>>>>>>> c07a1b62 ([WIP] add zh Encyclopedia files; revise en entries; make zh & en settings easier to understand // TODO: rebased onto 0auBSQ/OpenTaiko#635 & incorporate 0auBSQ/OpenTaiko#637)

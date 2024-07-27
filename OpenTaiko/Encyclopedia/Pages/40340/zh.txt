@@ -1,4 +1,7 @@
-持续时间：
-Game_Chara_Balloon_Timer（吹气球）=28
-Game_Chara_Balloon_Delay（吹气球延迟）=500
-Game_Chara_Balloon_FadeOut（吹气球淡出）=84
+时長 (Duration)：
+; 连打气球音符时的角色动画的每帧时長
+Game_Chara_Balloon_Timer=28
+; 气球音符连打成功或失敗时，角色在淡出前的总持续时長
+Game_Chara_Balloon_Delay=500
+; 气球音符连打成功或失敗时，角色淡出期间的总持续时長
+Game_Chara_Balloon_FadeOut=84

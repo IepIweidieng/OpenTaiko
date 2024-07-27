@@ -1,5 +1,9 @@
 Duration :
+; The total animation duration in the result screen, when...
+; Before the player is revealed to either clear or fail the song.
 Chara_Result_Normal_AnimationDuration=1000
+; the player cleared the song.
 Chara_Result_Clear_AnimationDuration=1000
+; the player failed the song.
 Chara_Result_Failed_In_AnimationDuration=1000
 Chara_Result_Failed_AnimationDuration=1000

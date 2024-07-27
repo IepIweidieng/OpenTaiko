@@ -1,6 +1,11 @@
-持续时间：
-Chara_Entry_AnimationDuration（进入）=1000
-Chara_Normal_AnimationDuration（正常）=1000
-Chara_Menu_Loop_AnimationDuration（菜单中循环）=1000
-Chara_Menu_Select_AnimationDuration（菜单中选择）=1000
-Chara_Menu_Start_AnimationDuration（菜单中开始）=1000
+时長 (Duration)：
+; 在玩家登录画面的登录确认面板中，角色动画的总时長
+Chara_Entry_AnimationDuration=1000
+; 在标題画面中，角色动画的总时長
+Chara_Normal_AnimationDuration=1000
+; 在各个菜單界面中的一般狀态下，角色动画的总时長
+Chara_Menu_Loop_AnimationDuration=1000
+; 在各个菜單界面中選中项目时，角色动画的总时長
+Chara_Menu_Select_AnimationDuration=1000
+; 在各个菜單界面中進入下一个界面时，角色动画的总时長
+Chara_Menu_Start_AnimationDuration=1000

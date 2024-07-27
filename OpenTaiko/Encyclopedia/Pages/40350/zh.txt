@@ -1,7 +1,20 @@
 其他：
-Chara_Resolution（应用的分辨率）=1920,1080
+<<<<<<< HEAD
 Heya_Chara_Render_Offset（我的房间界面描绘偏移量）=0,0
 Result_UseResult1P（结算界面是否使用玩家１）=1
 Game_Chara_Tower_Clear_IsLooping（塔模式成功是否循环）=1
 Game_Chara_Tower_Clear_Tired_IsLooping（塔模式疲惫时成功是否循环）=1
 Game_Chara_Tower_Fail_IsLooping（塔模式失败是否循环）=1
+=======
+; 角色的坐标参数所基于的画面分辨率
+Chara_Resolution=1920,1080
+; 在
+Heya_Chara_Render_Offset=0,0
+; 结算界面中，是否使用玩家 1 的位置
+Result_UseResult1P=1
+; 太鼓塔模式，动画是否循环
+Game_Chara_Tower_Clear_IsLooping=1
+; 
+Game_Chara_Tower_Clear_Tired_IsLooping=1
+Game_Chara_Tower_Fail_IsLooping=1
+>>>>>>> c07a1b62 ([WIP] add zh Encyclopedia files; revise en entries; make zh & en settings easier to understand // TODO: rebased onto 0auBSQ/OpenTaiko#635 & incorporate 0auBSQ/OpenTaiko#637)

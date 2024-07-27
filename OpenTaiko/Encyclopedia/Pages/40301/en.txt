@@ -1,4 +1,4 @@
-Coordinates are used to specifying where the
+Coordinates (X & Y) are used to specify where the
 character should be standing, including positions
 for different events or different player counts.
 

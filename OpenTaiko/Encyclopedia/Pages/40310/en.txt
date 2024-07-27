@@ -1,7 +1,11 @@
-Coordinates :
+Coordinates (X & Y) :
+; Normal position for player 1 & 2
 Game_Chara_X=(1P),(2P)
 Game_Chara_Y=(1P),(2P)
+; Normal position for player 1, when the player count is 3/4 (4P) or 5 (5P)
+; The position for other players are calculated according to this.
 Game_Chara_4P=(X),(Y)
 Game_Chara_5P=(X),(Y)
+; Normal position for player 1 & 2, in the AI battle mode
 Game_Chara_X_AI=(1P),(2P)
 Game_Chara_Y_AI=(1P),(2P)

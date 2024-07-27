@@ -108,7 +108,7 @@
         "SETTINGS_SYSTEM_SONGPREVIEWVOL": "プレビュー音量",
         "SETTINGS_SYSTEM_SONGPREVIEWVOL_DESC": "プレビュー時の音源の音量を調節します。",
         "SETTINGS_SYSTEM_VOLINCREMENT": "キーボード音量調整",
-        "SETTINGS_SYSTEM_VOLINCREMENT_DESC": "キーボードで音量調整をするときの増加量、減少量を指定します。\n1 ～ 20 の値が指定可能です。",
+        "SETTINGS_SYSTEM_VOLINCREMENT_DESC": "キーボードで音量調整をするときの増加量、減少量を指定します。\n1 ～ 20 % の値が指定可能です。",
 
         "SETTINGS_SYSTEM_SONGPLAYBACKBUFFER": "MusicPreTimeMs",
         "SETTINGS_SYSTEM_SONGPLAYBACKBUFFER_DESC": "音源再生前の空白時間 (ms)。",
@@ -153,7 +153,7 @@
         "SETTINGS_GAME_NOTELOCK": "タイト",
         "SETTINGS_GAME_NOTELOCK_DESC": "ドラムチップのないところでパッドを\n叩くとミスになります。",
         "SETTINGS_GAME_AILEVEL": "AIレベル",
-        "SETTINGS_GAME_AILEVEL_DESC": "AIの制度を定める設定です。\n０ならAIはオフされます。\n１以上なら2PはAIとして自動でやります。\nAUTO 2PはオンならAI使用できません。",
+        "SETTINGS_GAME_AILEVEL_DESC": "AIの制度（%）を定める設定です。\n０ならAIはオフされます。\n１以上なら2PはAIとして自動でやります。\nAUTO 2PはオンならAI使用できません。",
         "SETTINGS_GAME_NORMALGAUGE": "ゲージをNormalに固定",
         "SETTINGS_GAME_NORMALGAUGE_DESC": "ゲージをNormalに固定します",
 
@@ -248,7 +248,7 @@
         "SETTINGS_KEYASSIGN_GAME_RIGHTBLUE": "RightBlue",
         "SETTINGS_KEYASSIGN_GAME_RIGHTBLUE_DESC": "右側のふちへのキーの\n割り当てを設定します。",
         "SETTINGS_KEYASSIGN_GAME_CLAP": "Clap",
-        "SETTINGS_KEYASSIGN_GAME_CLAP_DESC": "コンガの拍手へのキーの割り当てを設\n定します。",
+        "SETTINGS_KEYASSIGN_GAME_CLAP_DESC": "ボンゴの拍手へのキーの割り当てを設\n定します。",
 
         "SETTINGS_KEYASSIGN_GAME_LEFTRED2P": "LeftRed2P",
         "SETTINGS_KEYASSIGN_GAME_LEFTRED2P_DESC": "左側の面へのキーの割り当てを設\n定します。",
@@ -259,7 +259,7 @@
         "SETTINGS_KEYASSIGN_GAME_RIGHTBLUE2P": "RightBlue2P",
         "SETTINGS_KEYASSIGN_GAME_RIGHTBLUE2P_DESC": "右側のふちへのキーの\n割り当てを設定します。",
         "SETTINGS_KEYASSIGN_GAME_CLAP2P": "Clap2P",
-        "SETTINGS_KEYASSIGN_GAME_CLAP2P_DESC": "コンガの拍手へのキーの割り当てを設\n定します。",
+        "SETTINGS_KEYASSIGN_GAME_CLAP2P_DESC": "ボンゴの拍手へのキーの割り当てを設\n定します。",
 
         "SETTINGS_KEYASSIGN_GAME_LEFTRED3P": "LeftRed3P",
         "SETTINGS_KEYASSIGN_GAME_LEFTRED3P_DESC": "左側の面へのキーの割り当てを設\n定します。",
@@ -270,7 +270,7 @@
         "SETTINGS_KEYASSIGN_GAME_RIGHTBLUE3P": "RightBlue3P",
         "SETTINGS_KEYASSIGN_GAME_RIGHTBLUE3P_DESC": "右側のふちへのキーの\n割り当てを設定します。",
         "SETTINGS_KEYASSIGN_GAME_CLAP3P": "Clap3P",
-        "SETTINGS_KEYASSIGN_GAME_CLAP3P_DESC": "コンガの拍手へのキーの割り当てを設\n定します。",
+        "SETTINGS_KEYASSIGN_GAME_CLAP3P_DESC": "ボンゴの拍手へのキーの割り当てを設\n定します。",
 
         "SETTINGS_KEYASSIGN_GAME_LEFTRED4P": "LeftRed4P",
         "SETTINGS_KEYASSIGN_GAME_LEFTRED4P_DESC": "左側の面へのキーの割り当てを設\n定します。",
@@ -281,7 +281,7 @@
         "SETTINGS_KEYASSIGN_GAME_RIGHTBLUE4P": "RightBlue4P",
         "SETTINGS_KEYASSIGN_GAME_RIGHTBLUE4P_DESC": "右側のふちへのキーの\n割り当てを設定します。",
         "SETTINGS_KEYASSIGN_GAME_CLAP4P": "Clap4P",
-        "SETTINGS_KEYASSIGN_GAME_CLAP4P_DESC": "コンガの拍手へのキーの割り当てを設\n定します。",
+        "SETTINGS_KEYASSIGN_GAME_CLAP4P_DESC": "ボンゴの拍手へのキーの割り当てを設\n定します。",
 
         "SETTINGS_KEYASSIGN_GAME_LEFTRED5P": "LeftRed5P",
         "SETTINGS_KEYASSIGN_GAME_LEFTRED5P_DESC": "左側の面へのキーの割り当てを設\n定します。",
@@ -292,7 +292,7 @@
         "SETTINGS_KEYASSIGN_GAME_RIGHTBLUE5P": "RightBlue5P",
         "SETTINGS_KEYASSIGN_GAME_RIGHTBLUE5P_DESC": "右側のふちへのキーの\n割り当てを設定します。",
         "SETTINGS_KEYASSIGN_GAME_CLAP5P": "Clap5P",
-        "SETTINGS_KEYASSIGN_GAME_CLAP5P_DESC": "コンガの拍手へのキーの割り当てを設\n定します。",
+        "SETTINGS_KEYASSIGN_GAME_CLAP5P_DESC": "ボンゴの拍手へのキーの割り当てを設\n定します。",
 
         // Key Assignment - Training
         "SETTINGS_KEYASSIGN_TRAINING_PAUSE": "Pause Training",
@@ -560,7 +560,7 @@
 
         "MOD_GAMETYPE": "ゲームタイプ",
         "MOD_GAMETYPE_TAIKO": "太鼓",
-        "MOD_GAMETYPE_KONGA": "コンガ",
+        "MOD_GAMETYPE_KONGA": "ボンゴ",
 
         "MOD_GAMEMODE": "ゲームモード",
         "MOD_GAMEMODE_TRAINING": "特訓モード",

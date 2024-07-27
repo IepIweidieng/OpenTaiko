@@ -1,6 +1,20 @@
+<<<<<<< HEAD
 节拍：
 Game_Chara_Beat_Tower_Standing（塔模式站立时）=1
 Game_Chara_Beat_Tower_Standing_Tired（塔模式疲惫时）=1
 Game_Chara_Beat_Tower_Fail（塔模式失败）=1
 Game_Chara_Beat_Tower_Clear（塔模式成功）=1
 Game_Chara_Beat_Tower_Clear_Tired（塔模式疲惫时成功）=1
+=======
+拍数 (Beat)：
+; 登塔模式，站立，一般狀态
+Game_Chara_Beat_Tower_Standing=1
+; 登塔模式，站立，失误狀态
+Game_Chara_Beat_Tower_Standing_Tired=1
+; 登塔模式，失敗
+Game_Chara_Beat_Tower_Fail=1
+; 登塔模式，过关，一般狀态
+Game_Chara_Beat_Tower_Clear=1
+; 登塔模式，过关，失误狀态
+Game_Chara_Beat_Tower_Clear_Tired=1
+>>>>>>> c07a1b62 ([WIP] add zh Encyclopedia files; revise en entries; make zh & en settings easier to understand // TODO: rebased onto 0auBSQ/OpenTaiko#635 & incorporate 0auBSQ/OpenTaiko#637)

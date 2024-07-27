@@ -1,7 +1,11 @@
 Beat :
+; The player misses few notes in a row
 Game_Chara_Beat_MissIn=1
 Game_Chara_Beat_Miss=1
+; The player continues to miss more notes in a row
 Game_Chara_Beat_MissDownIn=1
 Game_Chara_Beat_MissDown=1
+; The moment when the soul gauge becomes full
 Game_Chara_Beat_SoulIn=1
+; The player don't miss a note after missing notes in a row
 Game_Chara_Beat_Return=1

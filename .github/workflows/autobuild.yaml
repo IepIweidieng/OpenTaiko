@@ -109,11 +109,10 @@ jobs:
               # Read the message as individual items
               $commitBody = Get-Content -Path ($env:messagePathPrefix + $c) | Select-Object -Skip 1
 
-              # Split the message into individual items, trim whitespace, and format
-              $messageArray = $commitBody -split '-' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }
-
-              # Format each item to have a leading dash
-              $message = ($messageArray | ForEach-Object { "- $_" }) -join "`n"
+              # Trim ending whitespace and filter out empty lines
+              $messageArray = $commitBody | Select-Object | ForEach-Object { $_.TrimEnd() } | Where-Object { $_ -ne "" }
+              $message = $messageArray -join "`n"
+              Write-Host $message
 
               # Check if the version already exists
               $version = $versions[$c]

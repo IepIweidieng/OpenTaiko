@@ -2,6 +2,12 @@
 
 ## [0.6.0.1] - 2024-10-27 (Beta)
 
+Co-authored-by: Wei-Cheng Yeh (IID) <iid@ccns.ncku.edu.tw>
+
+- Fix Mob, Dancer, Runner appearing despite empty array on the scene preset
+- Chapter IV nameplates and make Chapter III all-songs nameplates accessible (condition changed from 999 songs to 34)
+- Japanese translations for some nameplates
+
 - Fix Mob, Dancer, Runner appearing despite empty array on the scene preset
 - Chapter IV nameplates and make Chapter III all
 - songs nameplates accessible (condition changed from 999 songs to 34)

@@ -120,15 +120,32 @@ internal class CChip : IComparable<CChip>, ICloneable {
 	//
 
 
-	public bool b自動再生音チャンネルである {
-		get {
-			int num = this.nChannelNo;
-			if ((((num != 1) && ((0x61 > num) || (num > 0x69))) && ((0x70 > num) || (num > 0x79))) && ((0x80 > num) || (num > 0x89))) {
-				return ((0x90 <= num) && (num <= 0x92));
-			}
-			return true;
-		}
-	}
+	public bool isDrumsSoundRange => this.nChannelNo is >= 0x11 and <= 0x1F;
+	public bool isGuitarSoundRange => this.nChannelNo is >= 0x20 and <= 0x2F;
+	public bool isBassSoundRange => this.nChannelNo is >= 0xA0 and <= 0xAF;
+	public bool isSESoundRange => this.nChannelNo is >= 0x60 and <= 0x9F;
+	public bool isEmptyHitSoundRange => this.nChannelNo is >= 0xB0 and <= 0xBF;
+
+	public bool isAutoKeySoundChip => this.nChannelNo is
+		1
+		or (>= 0x61 and <= 0x69)
+		or (>= 0x70 and <= 0x79)
+		or (>= 0x80 and <= 0x89)
+		or (>= 0x90 and <= 0x92);
+
+	public bool isAudibleChip => this.isAutoKeySoundChip || this.nChannelNo is
+		// Dr play channel
+		(>= 0x11 and <= 0x1C)
+		// Gt play channel
+		or (>= 0x20 and <= 0x28)
+		// Bs play channel
+		or (>= 0xA0 and <= 0xA8)
+		// Dr invisible chip
+		or (>= 0x31 and <= 0x3A)
+		// Dr/Gt/Bs player empty hit
+		or (>= 0xB1 and <= 0xBC)
+		// fill-in sound
+		or 0x1F or 0x2F or 0xAF;
 
 
 
@@ -248,7 +265,7 @@ internal class CChip : IComparable<CChip>, ICloneable {
 			this.db実数値,
 			this.dbChipSizeRatio,
 			this.fBMSCROLLTime,
-			this.b自動再生音チャンネルである,
+			this.isAutoKeySoundChip,
 			this.nBranch,
 			CTja.tZZ(this.n整数値));
 	}

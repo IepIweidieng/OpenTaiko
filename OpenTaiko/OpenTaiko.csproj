@@ -33,7 +33,7 @@
     <Folder Include="System\Open-World Memories\Modules\Modal\Sounds\" />
   </ItemGroup>
   <PropertyGroup>
-    <Version>6.6.2.6</Version>
+    <Version>6.6.2.7</Version>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
         <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>

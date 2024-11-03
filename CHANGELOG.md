@@ -2,6 +2,8 @@
 
 ## [0.6.0.15] - 2024-11-02 (Beta)
 
+- A first-option
+- A second option-- that- should- be -on a -second- line
 - Korean translation by AsPho
 
 ## [0.6.0.14] - 2024-11-02 (Beta)

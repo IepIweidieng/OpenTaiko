@@ -1196,15 +1196,7 @@ internal class CTja : CActivity {
 		this.nBGMAdjust += nBGMAdjustの増減値;
 
 		for (int i = 0; i < this.listChip.Count; i++) {
-			int nChannelNumber = this.listChip[i].nChannelNo;
-			if (((
-					 (nChannelNumber == 1) ||
-					 ((0x61 <= nChannelNumber) && (nChannelNumber <= 0x69))
-				 ) ||
-				 ((0x70 <= nChannelNumber) && (nChannelNumber <= 0x79))
-				) ||
-				(((0x80 <= nChannelNumber) && (nChannelNumber <= 0x89)) || ((0x90 <= nChannelNumber) && (nChannelNumber <= 0x92)))
-			   ) {
+			if (this.listChip[i].isAutoKeySoundChip) {
 				this.listChip[i].n発声時刻ms += nBGMAdjustの増減値;
 			}
 		}
@@ -1644,24 +1636,16 @@ internal class CTja : CActivity {
 					if ((chip.nChannelNo == 0x01 && this.listWAV.TryGetValue(chip.n整数値_内部番号, out CWAV cwav)) && !cwav.listこのWAVを使用するチャンネル番号の集合.Contains(chip.nChannelNo)) {
 						cwav.listこのWAVを使用するチャンネル番号の集合.Add(chip.nChannelNo);
 
-						int c = chip.nChannelNo >> 4;
-						switch (c) {
-							case 0x01:
-								cwav.bIsDrumsSound = true; break;
-							case 0x02:
-								cwav.bIsGuitarSound = true; break;
-							case 0x0A:
-								cwav.bIsBassSound = true; break;
-							case 0x06:
-							case 0x07:
-							case 0x08:
-							case 0x09:
-								cwav.bIsSESound = true; break;
-							case 0x00:
-								if (chip.nChannelNo == 0x01) {
-									cwav.bIsBGMSound = true; break;
-								}
-								break;
+						if (chip.nChannelNo == 0x01) {
+							cwav.bIsBGMSound = true;
+						} else if (chip.isSESoundRange) {
+							cwav.bIsSESound = true;
+						} else if (chip.isDrumsSoundRange) {
+							cwav.bIsDrumsSound = true;
+						} else if (chip.isGuitarSoundRange) {
+							cwav.bIsGuitarSound = true;
+						} else if (chip.isBassSoundRange) {
+							cwav.bIsBassSound = true;
 						}
 					}
 				}
@@ -6125,121 +6109,96 @@ internal class CTja : CActivity {
 		List<CChip> listRemoveTiming = new List<CChip>(128);
 
 		foreach (CChip pChip in listChip) {
-			switch (pChip.nChannelNo) {
-				// BGM, 演奏チャネル, 不可視サウンド, フィルインサウンド, 空打ち音はミキサー管理の対象
-				// BGM:
-				case 0x01:
-					// Dr演奏チャネル
-					//case 0x11:	case 0x12:	case 0x13:	case 0x14:	case 0x15:	case 0x16:	case 0x17:	case 0x18:	case 0x19:	case 0x1A:  case 0x1B:  case 0x1C:
-					// Gt演奏チャネル
-					//case 0x20:	case 0x21:	case 0x22:	case 0x23:	case 0x24:	case 0x25:	case 0x26:	case 0x27:	case 0x28:
-					// Bs演奏チャネル
-					//case 0xA0:	case 0xA1:	case 0xA2:	case 0xA3:	case 0xA4:	case 0xA5:	case 0xA6:	case 0xA7:	case 0xA8:
-					// Dr不可視チップ
-					//case 0x31:	case 0x32:	case 0x33:	case 0x34:	case 0x35:	case 0x36:	case 0x37:
-					//case 0x38:	case 0x39:	case 0x3A:
-					// Dr/Gt/Bs空打ち
-					//case 0xB1:	case 0xB2:	case 0xB3:	case 0xB4:	case 0xB5:	case 0xB6:	case 0xB7:	case 0xB8:
-					//case 0xB9:	case 0xBA:	case 0xBB:	case 0xBC:
-					// フィルインサウンド
-					//case 0x1F:	case 0x2F:	case 0xAF:
-					// 自動演奏チップ
-					//case 0x61:	case 0x62:	case 0x63:	case 0x64:	case 0x65:	case 0x66:	case 0x67:	case 0x68:	case 0x69:
-					//case 0x70:	case 0x71:	case 0x72:	case 0x73:	case 0x74:	case 0x75:	case 0x76:	case 0x77:	case 0x78:	case 0x79:
-					//case 0x80:	case 0x81:	case 0x82:	case 0x83:	case 0x84:	case 0x85:	case 0x86:	case 0x87:	case 0x88:	case 0x89:
-					//case 0x90:	case 0x91:	case 0x92:
-
-					#region [ 発音1秒前のタイミングを算出 ]
-					int n発音前余裕ms = 1000, n発音後余裕ms = 800; {
-						int ch = pChip.nChannelNo >> 4;
-						if (ch == 0x02 || ch == 0x0A) {
-							n発音前余裕ms = 800;
-							n発音前余裕ms = 500;
-						}
-						if (ch == 0x06 || ch == 0x07 || ch == 0x08 || ch == 0x09) {
-							n発音前余裕ms = 200;
-							n発音前余裕ms = 500;
-						}
-					}
-					#endregion
-					#region [ 発音1秒前のタイミングを算出 ]
-					int nAddMixer時刻ms, nAddMixer位置 = 0;
-					t発声時刻msと発声位置を取得する(pChip.n発声時刻ms - n発音前余裕ms, out nAddMixer時刻ms, out nAddMixer位置);
-
-					CChip c_AddMixer = new CChip() {
-						nChannelNo = 0xDA,
-						n整数値 = pChip.n整数値,
-						n整数値_内部番号 = pChip.n整数値_内部番号,
-						n発声時刻ms = nAddMixer時刻ms,
-						n発声位置 = nAddMixer位置,
-						b演奏終了後も再生が続くチップである = false
-					};
-					listAddMixerChannel.Add(c_AddMixer);
-					#endregion
-
-					int duration = 0;
-					if (listWAV.TryGetValue(pChip.n整数値_内部番号, out CTja.CWAV wc)) {
-						double _db再生速度 = this.db再生速度;
-						duration = (wc.rSound[0] == null) ? 0 : (int)(wc.rSound[0].TotalPlayTime / _db再生速度); // #23664 durationに再生速度が加味されておらず、低速再生でBGMが途切れる問題を修正 (発声時刻msは、DTX読み込み時に再生速度加味済)
-					}
-					int n新RemoveMixer時刻ms, n新RemoveMixer位置;
-					t発声時刻msと発声位置を取得する(pChip.n発声時刻ms + duration + n発音後余裕ms, out n新RemoveMixer時刻ms, out n新RemoveMixer位置);
-					if (n新RemoveMixer時刻ms < pChip.n発声時刻ms + duration)   // 曲の最後でサウンドが切れるような場合は
-					{
-						CChip c_AddMixer_noremove = c_AddMixer;
-						c_AddMixer_noremove.b演奏終了後も再生が続くチップである = true;
-						listAddMixerChannel[listAddMixerChannel.Count - 1] = c_AddMixer_noremove;
-						break;
-					}
-
-					#region [ 発音終了2秒後にmixerから削除するが、その前に再発音することになるのかを確認(再発音ならmixer削除タイミングを延期) ]
-					int n整数値 = pChip.n整数値;
-					int index = listRemoveTiming.FindIndex(
-						delegate (CChip cchip) { return cchip.n整数値 == n整数値; }
-					);
-					if (index >= 0)                                                 // 過去に同じチップで発音中のものが見つかった場合
-					{                                                                   // 過去の発音のmixer削除を確定させるか、延期するかの2択。
-						int n旧RemoveMixer時刻ms = listRemoveTiming[index].n発声時刻ms;
-						int n旧RemoveMixer位置 = listRemoveTiming[index].n発声位置;
-
-						if (pChip.n発声時刻ms - n発音前余裕ms <= n旧RemoveMixer時刻ms)  // mixer削除前に、同じ音の再発音がある場合は、
-						{                                                                   // mixer削除時刻を遅延させる(if-else後に行う)
-																							//Debug.WriteLine( "remove TAIL of listAddMixerChannel. TAIL INDEX=" + listAddMixerChannel.Count );
-																							//DebugOut_CChipList( listAddMixerChannel );
-							listAddMixerChannel.RemoveAt(listAddMixerChannel.Count - 1);    // また、同じチップ音の「mixerへの再追加」は削除する
-																							//Debug.WriteLine( "removed result:" );
-																							//DebugOut_CChipList( listAddMixerChannel );
-						} else                                                            // 逆に、時間軸上、mixer削除後に再発音するような流れの場合は
-						{
-							listRemoveMixerChannel.Add(listRemoveTiming[index]);    // mixer削除を確定させる
-																					//Debug.WriteLine( "listRemoveMixerChannel:" );
-																					//DebugOut_CChipList( listRemoveMixerChannel );
-																					//listRemoveTiming.RemoveAt( index );
-						}
-						CChip c = new CChip()                                           // mixer削除時刻を更新(遅延)する
-						{
-							nChannelNo = 0xDB,
-							n整数値 = listRemoveTiming[index].n整数値,
-							n整数値_内部番号 = listRemoveTiming[index].n整数値_内部番号,
-							n発声時刻ms = n新RemoveMixer時刻ms,
-							n発声位置 = n新RemoveMixer位置
-						};
-						listRemoveTiming[index] = c;
-					} else                                                                // 過去に同じチップを発音していないor
-					{                                                                   // 発音していたが既にmixer削除確定していたなら
-						CChip c = new CChip()                                           // 新しくmixer削除候補として追加する
-						{
-							nChannelNo = 0xDB,
-							n整数値 = pChip.n整数値,
-							n整数値_内部番号 = pChip.n整数値_内部番号,
-							n発声時刻ms = n新RemoveMixer時刻ms,
-							n発声位置 = n新RemoveMixer位置
-						};
-						listRemoveTiming.Add(c);
-					}
-					#endregion
-					break;
+			if (!(pChip.nChannelNo == 0x01 /* || pChip.isAudibleChip */)) {
+				continue;
 			}
+			// BGM, 演奏チャネル, 不可視サウンド, フィルインサウンド, 空打ち音はミキサー管理の対象
+			#region [ 発音1秒前のタイミングを算出 ]
+			int n発音前余裕ms = 1000, n発音後余裕ms = 800;
+			if (pChip.isGuitarSoundRange || pChip.isBassSoundRange) {
+				n発音前余裕ms = 800;
+				n発音前余裕ms = 500;
+			} else if (pChip.isSESoundRange) {
+				n発音前余裕ms = 200;
+				n発音前余裕ms = 500;
+			}
+			#endregion
+			#region [ 発音1秒前のタイミングを算出 ]
+			int nAddMixer時刻ms, nAddMixer位置 = 0;
+			t発声時刻msと発声位置を取得する(pChip.n発声時刻ms - n発音前余裕ms, out nAddMixer時刻ms, out nAddMixer位置);
+
+			CChip c_AddMixer = new CChip() {
+				nChannelNo = 0xDA,
+				n整数値 = pChip.n整数値,
+				n整数値_内部番号 = pChip.n整数値_内部番号,
+				n発声時刻ms = nAddMixer時刻ms,
+				n発声位置 = nAddMixer位置,
+				b演奏終了後も再生が続くチップである = false
+			};
+			listAddMixerChannel.Add(c_AddMixer);
+			#endregion
+
+			int duration = 0;
+			if (listWAV.TryGetValue(pChip.n整数値_内部番号, out CTja.CWAV wc)) {
+				double _db再生速度 = this.db再生速度;
+				duration = (wc.rSound[0] == null) ? 0 : (int)(wc.rSound[0].TotalPlayTime / _db再生速度); // #23664 durationに再生速度が加味されておらず、低速再生でBGMが途切れる問題を修正 (発声時刻msは、DTX読み込み時に再生速度加味済)
+			}
+			int n新RemoveMixer時刻ms, n新RemoveMixer位置;
+			t発声時刻msと発声位置を取得する(pChip.n発声時刻ms + duration + n発音後余裕ms, out n新RemoveMixer時刻ms, out n新RemoveMixer位置);
+			if (n新RemoveMixer時刻ms < pChip.n発声時刻ms + duration)   // 曲の最後でサウンドが切れるような場合は
+			{
+				CChip c_AddMixer_noremove = c_AddMixer;
+				c_AddMixer_noremove.b演奏終了後も再生が続くチップである = true;
+				listAddMixerChannel[listAddMixerChannel.Count - 1] = c_AddMixer_noremove;
+				break;
+			}
+
+			#region [ 発音終了2秒後にmixerから削除するが、その前に再発音することになるのかを確認(再発音ならmixer削除タイミングを延期) ]
+			int n整数値 = pChip.n整数値;
+			int index = listRemoveTiming.FindIndex(
+				delegate (CChip cchip) { return cchip.n整数値 == n整数値; }
+			);
+			if (index >= 0)                                                 // 過去に同じチップで発音中のものが見つかった場合
+			{                                                                   // 過去の発音のmixer削除を確定させるか、延期するかの2択。
+				int n旧RemoveMixer時刻ms = listRemoveTiming[index].n発声時刻ms;
+				int n旧RemoveMixer位置 = listRemoveTiming[index].n発声位置;
+
+				if (pChip.n発声時刻ms - n発音前余裕ms <= n旧RemoveMixer時刻ms)  // mixer削除前に、同じ音の再発音がある場合は、
+				{                                                                   // mixer削除時刻を遅延させる(if-else後に行う)
+																					//Debug.WriteLine( "remove TAIL of listAddMixerChannel. TAIL INDEX=" + listAddMixerChannel.Count );
+																					//DebugOut_CChipList( listAddMixerChannel );
+					listAddMixerChannel.RemoveAt(listAddMixerChannel.Count - 1);    // また、同じチップ音の「mixerへの再追加」は削除する
+																					//Debug.WriteLine( "removed result:" );
+																					//DebugOut_CChipList( listAddMixerChannel );
+				} else                                                            // 逆に、時間軸上、mixer削除後に再発音するような流れの場合は
+				{
+					listRemoveMixerChannel.Add(listRemoveTiming[index]);    // mixer削除を確定させる
+																			//Debug.WriteLine( "listRemoveMixerChannel:" );
+																			//DebugOut_CChipList( listRemoveMixerChannel );
+																			//listRemoveTiming.RemoveAt( index );
+				}
+				CChip c = new CChip()                                           // mixer削除時刻を更新(遅延)する
+				{
+					nChannelNo = 0xDB,
+					n整数値 = listRemoveTiming[index].n整数値,
+					n整数値_内部番号 = listRemoveTiming[index].n整数値_内部番号,
+					n発声時刻ms = n新RemoveMixer時刻ms,
+					n発声位置 = n新RemoveMixer位置
+				};
+				listRemoveTiming[index] = c;
+			} else                                                                // 過去に同じチップを発音していないor
+			{                                                                   // 発音していたが既にmixer削除確定していたなら
+				CChip c = new CChip()                                           // 新しくmixer削除候補として追加する
+				{
+					nChannelNo = 0xDB,
+					n整数値 = pChip.n整数値,
+					n整数値_内部番号 = pChip.n整数値_内部番号,
+					n発声時刻ms = n新RemoveMixer時刻ms,
+					n発声位置 = n新RemoveMixer位置
+				};
+				listRemoveTiming.Add(c);
+			}
+			#endregion
 		}
 
 		listChip.AddRange(listAddMixerChannel);

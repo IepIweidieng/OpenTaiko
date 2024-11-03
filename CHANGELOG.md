@@ -1,5 +1,9 @@
 # Changelog
 
+## [6.6.2.6] - 2024-11-03 (Beta)
+
+- Nice stuff
+
 ## [0.6.0.15] - 2024-11-02 (Beta)
 
 - A first-option

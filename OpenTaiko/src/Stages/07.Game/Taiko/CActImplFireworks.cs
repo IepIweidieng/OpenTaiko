@@ -18,7 +18,7 @@ internal class CActImplFireworks : CActivity {
 	/// 大音符の花火エフェクト
 	/// </summary>
 	/// <param name="nLane"></param>
-	public virtual void Start(int nLane, int nPlayer) {
+	public virtual void Start(EChipType nLane, int nPlayer) {
 		nY座標P2 = new int[] { 548, 612, 670, 712, 730, 780, 725, 690, 640 };
 		if (OpenTaiko.Tx.Effects_Hit_FireWorks != null && OpenTaiko.Tx.Effects_Hit_FireWorks != null) {
 			for (int i = 0; i < 9; i++) {
@@ -30,10 +30,10 @@ internal class CActImplFireworks : CActivity {
 						this.st大音符花火[j].fY = nPlayer == 0 ? this.nY座標[i] : this.nY座標P2[i];
 
 						switch (nLane) {
-							case 0:
+							case EChipType.T1DonReg - (int)EChipType.T1DonReg:
 								this.st大音符花火[j].nColor = 0;
 								break;
-							case 1:
+							case EChipType.T2KaReg - (int)EChipType.T1DonReg:
 								this.st大音符花火[j].nColor = 1;
 								break;
 						}
@@ -86,7 +86,7 @@ internal class CActImplFireworks : CActivity {
 		}
 	}
 
-	public virtual void Start(int nLane, ENoteJudge judge, int player) {
+	public virtual void Start(EChipType nLane, ENoteJudge judge, int player) {
 		for (int j = 0; j < 3 * 4; j++) {
 			if (!this.st状態[j].b使用中)
 			//for( int n = 0; n < 1; n++ )
@@ -99,14 +99,14 @@ internal class CActImplFireworks : CActivity {
 				this.st状態_大[j].nPlayer = player;
 
 				switch (nLane) {
-					case 0x11:
-					case 0x12:
+					case EChipType.T1DonReg:
+					case EChipType.T2KaReg:
 						this.st状態[j].nIsBig = 0;
 						break;
-					case 0x13:
-					case 0x14:
-					case 0x1A:
-					case 0x1B:
+					case EChipType.T3DonBig:
+					case EChipType.T4KaBig:
+					case EChipType.TADonBigHand:
+					case EChipType.TBKaBigHand:
 						this.st状態_大[j].ct進行 = new CCounter(0, 9, 20, OpenTaiko.Timer);
 						this.st状態_大[j].judge = judge;
 						this.st状態_大[j].nIsBig = 1;

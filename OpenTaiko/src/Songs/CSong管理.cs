@@ -185,7 +185,8 @@ internal class CSongs管理 {
 								for (int i = 0; i < dtx.listChip.Count; i++) {
 									CChip pChip = dtx.listChip[i];
 
-									if (pChip.n整数値_内部番号 > c曲リストノード.nTotalFloor && pChip.nChannelNo == 0x50) c曲リストノード.nTotalFloor = pChip.n整数値_内部番号;
+									if (pChip.n整数値_内部番号 > c曲リストノード.nTotalFloor && pChip.nChannelNo == EChipType.BarLine)
+										c曲リストノード.nTotalFloor = pChip.n整数値_内部番号;
 
 								}
 								c曲リストノード.nTotalFloor++;
@@ -656,7 +657,7 @@ internal class CSongs管理 {
 					for (int k = 0; k < cdtx.listChip.Count; k++) {
 						CChip pChip = cdtx.listChip[k];
 
-						if (pChip.n整数値_内部番号 > c曲リストノード.score[i].譜面情報.nTotalFloor && pChip.nChannelNo == 0x50)
+						if (pChip.n整数値_内部番号 > c曲リストノード.score[i].譜面情報.nTotalFloor && pChip.nChannelNo == EChipType.BarLine)
 							c曲リストノード.score[i].譜面情報.nTotalFloor = pChip.n整数値_内部番号;
 					}
 					c曲リストノード.score[i].譜面情報.nTotalFloor++;

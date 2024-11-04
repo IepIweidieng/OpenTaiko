@@ -124,10 +124,10 @@ internal abstract class CStage演奏画面共通 : CStage {
 							if (chip2 == null) {
 								var chip3 = listChip[p].Find(x => Math.Abs(x.db発声時刻ms - chip.db発声時刻ms) < 100);
 								if (!NotesManager.IsKusudama(chip3)) {
-									chip.nChannelNo = 0x17;
+									chip.nChannelNo = EChipType.T7BalloonReg;
 								}
 							} else if (!NotesManager.IsKusudama(chip2)) {
-								chip.nChannelNo = 0x17;
+								chip.nChannelNo = EChipType.T7BalloonReg;
 							}
 						}
 					}
@@ -210,7 +210,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 
 
 		for (int index = OpenTaiko.TJA.listChip.Count - 1; index >= 0; index--) {
-			if (OpenTaiko.TJA.listChip[index].nChannelNo == 0x01) {
+			if (OpenTaiko.TJA.listChip[index].nChannelNo == EChipType.Bgm) {
 				this.bgmlength = OpenTaiko.TJA.listChip[index].GetDuration() + OpenTaiko.TJA.listChip[index].n発声時刻ms;
 				break;
 			}
@@ -224,7 +224,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 		CChip endChip = null;
 		for (int i = 0; i < listChip[0].Count; i++) {
 			CChip chip = listChip[0][i];
-			if (endChip == null || (chip.n発声時刻ms > endChip.n発声時刻ms && chip.nChannelNo == 0x50)) {
+			if (endChip == null || (chip.n発声時刻ms > endChip.n発声時刻ms && chip.nChannelNo == EChipType.BarLine)) {
 				endChip = chip;
 			}
 		}
@@ -377,7 +377,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 		foreach (CChip pChip in listChip[0]) {
 			//				Debug.WriteLine( "CH=" + pChip.nチャンネル番号.ToString( "x2" ) + ", 整数値=" + pChip.n整数値 +  ", time=" + pChip.n発声時刻ms );
 			if (pChip.n発声時刻ms <= 0) {
-				if (pChip.nChannelNo == 0xDA) {
+				if (pChip.nChannelNo == EChipType.AddSound) {
 					pChip.bHit = true;
 					//						Trace.TraceInformation( "first [DA] BAR=" + pChip.n発声位置 / 384 + " ch=" + pChip.nチャンネル番号.ToString( "x2" ) + ", wav=" + pChip.n整数値 + ", time=" + pChip.n発声時刻ms );
 					if (listWAV.TryGetValue(pChip.n整数値_内部番号, out CTja.CWAV wc)) {
@@ -1007,7 +1007,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 		return ENoteJudge.Miss;
 	}
 
-	protected CChip r指定時刻に一番近い連打Chip_ヒット未済問わず不可視考慮(long nTime, int nChannel, int nInputAdjustTime, int nPlayer) {
+	protected CChip r指定時刻に一番近い連打Chip_ヒット未済問わず不可視考慮(long nTime, EChipType nChannel, int nInputAdjustTime, int nPlayer) {
 		//sw2.Start();
 		//Trace.TraceInformation( "NTime={0}, nChannel={1:x2}", nTime, nChannel );
 		nTime += nInputAdjustTime;                      // #24239 2011.1.23 yyagi InputAdjust
@@ -1029,7 +1029,9 @@ internal abstract class CStage演奏画面共通 : CStage {
 		//int nIndex_NearestChip_Future;	// = nIndex_InitialPositionSearchingToFuture;
 		//while ( nIndex_NearestChip_Future < count )		// 未来方向への検索
 		for (; nIndex_NearestChip_Future < count; nIndex_NearestChip_Future++) {
-			if (((0x11 <= nChannel) && (nChannel <= 0x17)) || nChannel == 0x19) {
+			if (((EChipType.T1DonReg <= nChannel) && (nChannel <= EChipType.T7BalloonReg))
+				|| nChannel == EChipType.T9BalloonEx
+				) {
 				CChip chip = playerListChip[nIndex_NearestChip_Future];
 
 				if (chip.nChannelNo == nChannel) {
@@ -1049,7 +1051,10 @@ internal abstract class CStage演奏画面共通 : CStage {
 		int nIndex_NearestChip_Past = nIndex_InitialPositionSearchingToPast;
 		//while ( nIndex_NearestChip_Past >= 0 )			// 過去方向への検索
 		for (; nIndex_NearestChip_Past >= 0; nIndex_NearestChip_Past--) {
-			if ((((0x15 <= nChannel) && (nChannel <= 0x17) || nChannel == 0x19) || (nChannel == 0x20 || nChannel == 0x21))) {
+			if ((((EChipType.T5RollReg <= nChannel) && (nChannel <= EChipType.T7BalloonReg)
+				|| nChannel == EChipType.T9BalloonEx)
+				|| (nChannel == EChipType.THClapRoll || nChannel == EChipType.TILeftRoll)
+				)) {
 				CChip chip = playerListChip[nIndex_NearestChip_Past];
 
 				if (((chip.nChannelNo == nChannel))) {
@@ -1087,22 +1092,22 @@ internal abstract class CStage演奏画面共通 : CStage {
 	}
 	protected void tサウンド再生(CChip pChip, int nPlayer) {
 		var _gt = OpenTaiko.ConfigIni.nGameType[OpenTaiko.GetActualPlayer(nPlayer)];
-		int index = pChip.nChannelNo;
+		EChipType index = pChip.nChannelNo;
 
-		if (index == 0x11 || index == 0x13 || index == 0x1A || index == 0x101) {
+		if (index == EChipType.T1DonReg || index == EChipType.T3DonBig || index == EChipType.TADonBigHand || index == EChipType.TGKadon) {
 			this.soundRed[pChip.nPlayerSide]?.PlayStart();
-			if ((index == 0x13 && _gt == EGameType.Konga) || index == 0x101) {
+			if ((index == EChipType.T3DonBig && _gt == EGameType.Konga) || index == EChipType.TGKadon) {
 				this.soundBlue[pChip.nPlayerSide]?.PlayStart();
 			}
-		} else if (index == 0x12 || index == 0x14 || index == 0x1B) {
-			if (index == 0x14 && _gt == EGameType.Konga) {
+		} else if (index == EChipType.T2KaReg || index == EChipType.T4KaBig || index == EChipType.TBKaBigHand) {
+			if (index == EChipType.T4KaBig && _gt == EGameType.Konga) {
 				this.soundClap[pChip.nPlayerSide]?.PlayStart();
 			} else {
 				this.soundBlue[pChip.nPlayerSide]?.PlayStart();
 			}
 
 
-		} else if (index == 0x1F) {
+		} else if (index == EChipType.TFAdlib) {
 			this.soundAdlib[pChip.nPlayerSide]?.PlayStart();
 		}
 
@@ -1141,7 +1146,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 				pChip.RollDelay?.Stop();
 			}
 
-			if (pChip.nChannelNo == 0x15)
+			if (pChip.nChannelNo == EChipType.T5RollReg)
 				this.eRollState = ERollState.Roll;
 			else
 				this.eRollState = ERollState.RollB;
@@ -1166,14 +1171,14 @@ internal abstract class CStage演奏画面共通 : CStage {
 			if (!OpenTaiko.ConfigIni.ShinuchiMode) {
 				// 旧配点・旧筐体配点
 				if (OpenTaiko.TJA.nScoreModeTmp == 0 || OpenTaiko.TJA.nScoreModeTmp == 1) {
-					if (pChip.nChannelNo == 0x15)
+					if (pChip.nChannelNo == EChipType.T5RollReg)
 						nAddScore = 300L;
 					else
 						nAddScore = 360L;
 				}
 				// 新配点
 				else {
-					if (pChip.nChannelNo == 0x15)
+					if (pChip.nChannelNo == EChipType.T5RollReg)
 						nAddScore = 100L;
 					else
 						nAddScore = 200L;
@@ -1198,7 +1203,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 			if (sort == 0 || sort == 2) {
 				this.soundRed[pChip.nPlayerSide]?.PlayStart();
 
-				if (pChip.nChannelNo == 0x15 || _gt == EGameType.Konga || (_gt == EGameType.Taiko && pChip.nChannelNo == 0x21)) {
+				if (pChip.nChannelNo == EChipType.T5RollReg || _gt == EGameType.Konga || (_gt == EGameType.Taiko && pChip.nChannelNo == EChipType.TILeftRoll)) {
 					//CDTXMania.Skin.soundRed.t再生する();
 					//CDTXMania.stage演奏ドラム画面.actChipFireTaiko.Start( 1, nPlayer );
 					OpenTaiko.stageGameScreen.FlyingNotes.Start(1, nPlayer, true);
@@ -1210,7 +1215,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 			} else if (sort == 1 || sort == 3) {
 				this.soundBlue[pChip.nPlayerSide]?.PlayStart();
 
-				if (pChip.nChannelNo == 0x15 || _gt == EGameType.Konga || (_gt == EGameType.Taiko && pChip.nChannelNo == 0x21)) {
+				if (pChip.nChannelNo == EChipType.T5RollReg || _gt == EGameType.Konga || (_gt == EGameType.Taiko && pChip.nChannelNo == EChipType.TILeftRoll)) {
 					//CDTXMania.Skin.soundBlue.t再生する();
 					//CDTXMania.stage演奏ドラム画面.actChipFireTaiko.Start( 2, nPlayer );
 					OpenTaiko.stageGameScreen.FlyingNotes.Start(2, nPlayer, true);
@@ -1459,12 +1464,12 @@ internal abstract class CStage演奏画面共通 : CStage {
 
 							OpenTaiko.stageGameScreen.actTaikoLaneFlash.PlayerLane[nPlayer].Start(PlayerLane.FlashType.Red);
 							//CDTXMania.stage演奏ドラム画面.actChipFireTaiko.Start( pChip.nチャンネル番号 == 0x15 ? 1 : 3, nPlayer );
-							OpenTaiko.stageGameScreen.FlyingNotes.Start(pChip.nChannelNo == 0x15 ? 1 : 3, nPlayer, true);
+							OpenTaiko.stageGameScreen.FlyingNotes.Start(pChip.nChannelNo == EChipType.T5RollReg ? 1 : 3, nPlayer, true);
 							OpenTaiko.stageGameScreen.actMtaiko.tMtaikoEvent(pChip.nChannelNo, this.nHand[nPlayer], nPlayer);
 
 
-							if (pChip.nChannelNo == 0x20 && _gt == EGameType.Konga) nLane = 4;
-							else if (pChip.nChannelNo == 0x21 && _gt == EGameType.Konga) nLane = 1;
+							if (pChip.nChannelNo == EChipType.THClapRoll && _gt == EGameType.Konga) nLane = 4;
+							else if (pChip.nChannelNo == EChipType.TILeftRoll && _gt == EGameType.Konga) nLane = 1;
 
 							this.tRollProcess(pChip, (SoundManager.PlayTimer.NowTime * OpenTaiko.ConfigIni.SongPlaybackSpeed), 1, nLane, 0, nPlayer);
 						}
@@ -1567,8 +1572,8 @@ internal abstract class CStage演奏画面共通 : CStage {
 				if (eJudgeResult != ENoteJudge.Auto && eJudgeResult != ENoteJudge.Miss) {
 					this.actJudgeString.Start(nPlayer, eJudgeResult != ENoteJudge.Bad ? ENoteJudge.ADLIB : ENoteJudge.Bad);
 					eJudgeResult = ENoteJudge.Perfect; // Prevent ADLIB notes breaking DFC runs
-					OpenTaiko.stageGameScreen.actLaneTaiko.Start(0x11, eJudgeResult, true, nPlayer);
-					OpenTaiko.stageGameScreen.actChipFireD.Start(0x11, eJudgeResult, nPlayer);
+					OpenTaiko.stageGameScreen.actLaneTaiko.Start(EChipType.T1DonReg, eJudgeResult, true, nPlayer);
+					OpenTaiko.stageGameScreen.actChipFireD.Start(EChipType.T1DonReg, nPlayer);
 					this.CChartScore[nPlayer].nADLIB++;
 					this.CSectionScore[nPlayer].nADLIB++;
 					this.CBranchScore[nPlayer].nADLIB++;
@@ -1580,7 +1585,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 					this.actJudgeString.Start(nPlayer, eJudgeResult != ENoteJudge.Bad ? ENoteJudge.Mine : ENoteJudge.Bad);
 					bBombHit = true;
 					eJudgeResult = ENoteJudge.Bad;
-					OpenTaiko.stageGameScreen.actLaneTaiko.Start(0x11, eJudgeResult, true, nPlayer);
+					OpenTaiko.stageGameScreen.actLaneTaiko.Start(EChipType.T1DonReg, eJudgeResult, true, nPlayer);
 					OpenTaiko.stageGameScreen.actChipFireD.Start(0x11, ENoteJudge.Mine, nPlayer);
 					OpenTaiko.Skin.soundBomb?.tPlay();
 					actGauge.MineDamage(nPlayer);
@@ -2037,7 +2042,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 				nAddScore = (int)(nAddScore * 10);
 
 				//大音符のボーナス
-				if (pChip.nChannelNo == 0x13 || pChip.nChannelNo == 0x14 || pChip.nChannelNo == 0x1A || pChip.nChannelNo == 0x1B) {
+				if (pChip.nChannelNo is EChipType.T3DonBig or EChipType.T4KaBig or EChipType.TADonBigHand or EChipType.TBKaBigHand) {
 					nAddScore = nAddScore * 2;
 				}
 
@@ -2078,7 +2083,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 				nAddScore = (int)(nAddScore * 10);
 
 				//大音符のボーナス
-				if (pChip.nChannelNo == 0x13 || pChip.nChannelNo == 0x14 || pChip.nChannelNo == 0x1A || pChip.nChannelNo == 0x1B) {
+				if (pChip.nChannelNo is EChipType.T3DonBig or EChipType.T4KaBig or EChipType.TADonBigHand or EChipType.TBKaBigHand) {
 					nAddScore = nAddScore * 2;
 				}
 
@@ -2103,7 +2108,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 
 
 				//大音符のボーナス
-				if (pChip.nChannelNo == 0x13 || pChip.nChannelNo == 0x25) {
+				if (pChip.nChannelNo == EChipType.T3DonBig || pChip.nChannelNo == EChipType.T4KaBig + 0x11) {
 					nAddScore = nAddScore * 2;
 				}
 
@@ -2396,7 +2401,7 @@ internal abstract class CStage演奏画面共通 : CStage {
     */
 
 
-	protected CChip r指定時刻に一番近い未ヒットChip(long nTime, int nChannel, int nInputAdjustTime, int n検索範囲時間ms, int nPlayer) {
+	protected CChip r指定時刻に一番近い未ヒットChip(long nTime, EChipType nChannel, int nInputAdjustTime, int n検索範囲時間ms, int nPlayer) {
 		//sw2.Start();
 		//Trace.TraceInformation( "nTime={0}, nChannel={1:x2}, 現在のTop={2}", nTime, nChannel,CDTXMania.DTX.listChip[ this.n現在のトップChip ].n発声時刻ms );
 		nTime += nInputAdjustTime;
@@ -2418,62 +2423,42 @@ internal abstract class CStage演奏画面共通 : CStage {
 		//			while ( nIndex_NearestChip_Future < count )	// 未来方向への検索
 		for (; nIndex_NearestChip_Future < count; nIndex_NearestChip_Future++) {
 			CChip chip = listChip[nPlayer][nIndex_NearestChip_Future];
-			if (!chip.bHit) {
-				if ((0x11 <= nChannel) && (nChannel <= 0x1F)) {
-					if ((chip.nChannelNo == nChannel) || (chip.nChannelNo == (nChannel + 0x20))) {
-						if (chip.n発声時刻ms > nTime) {
-							break;
-						}
-						nIndex_InitialPositionSearchingToPast = nIndex_NearestChip_Future;
+			if (chip.bHit) {
+				continue;
+			}
+			if (EChipType.T1DonReg <= nChannel && nChannel <= EChipType.TFAdlib) {
+				if (chip.nChannelNo == nChannel || chip.nChannelNo == (nChannel + 0x20)) {
+					if (chip.n発声時刻ms > nTime) {
+						break;
 					}
-					continue;
+					nIndex_InitialPositionSearchingToPast = nIndex_NearestChip_Future;
 				}
-
-				//if ( ( ( 0xDE <= nChannel ) && ( nChannel <= 0xDF ) ) )
-				if (((0xDF == nChannel))) {
-					if (chip.nChannelNo == nChannel) {
-						if (chip.n発声時刻ms > nTime) {
-							break;
-						}
-						nIndex_InitialPositionSearchingToPast = nIndex_NearestChip_Future;
-					}
+			}
+			//else if ( ( ( EChipType.BranchVisual <= nChannel ) && ( EChipType.BranchInternal <= 0xDF ) ) )
+			else if ((EChipType.BranchInternal == nChannel || EChipType.BarLine == nChannel)
+				&& chip.nChannelNo == nChannel
+				) {
+				if (chip.n発声時刻ms > nTime) {
+					break;
 				}
-
-				if (((0x50 == nChannel))) {
-					if (chip.nChannelNo == nChannel) {
-						if (chip.n発声時刻ms > nTime) {
-							break;
-						}
-						nIndex_InitialPositionSearchingToPast = nIndex_NearestChip_Future;
-					}
-				}
-
+				nIndex_InitialPositionSearchingToPast = nIndex_NearestChip_Future;
 			}
 			//				nIndex_NearestChip_Future++;
 		}
 
 		// Channel is always 50, following code is unreachable
 
+
 		int nIndex_NearestChip_Past = nIndex_InitialPositionSearchingToPast;
 		//			while ( nIndex_NearestChip_Past >= 0 )		// 過去方向への検索
 		for (; nIndex_NearestChip_Past >= 0; nIndex_NearestChip_Past--) {
 			CChip chip = listChip[nPlayer][nIndex_NearestChip_Past];
-			if ((!chip.bHit) &&
-				(
-					(
-						((((nChannel >= 0x11) && (nChannel <= 0x14)) || nChannel == 0x1A || nChannel == 0x1B || nChannel == 0x1F) && (chip.nChannelNo == nChannel))
-					)
-					||
-					(
-						//	( ( ( nChannel >= 0xDE ) && ( nChannel <= 0xDF ) ) && ( chip.nチャンネル番号 == nChannel ) )
-						(((nChannel == 0xDF)) && (chip.nChannelNo == nChannel))
-					)
-					||
-					(
-						//	( ( ( nChannel >= 0xDE ) && ( nChannel <= 0xDF ) ) && ( chip.nチャンネル番号 == nChannel ) )
-						(((nChannel == 0x50)) && (chip.nChannelNo == nChannel))
-					)
-				)
+			if (!chip.bHit && chip.nChannelNo == nChannel
+				&& ((nChannel >= EChipType.T1DonReg && nChannel <= EChipType.T4KaBig)
+					|| nChannel == EChipType.TADonBigHand || nChannel == EChipType.TBKaBigHand
+					|| nChannel == EChipType.TFAdlib
+					|| nChannel == EChipType.BranchInternal
+					|| nChannel == EChipType.BarLine)
 			   ) {
 				break;
 			}
@@ -2497,7 +2482,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 			int nTimeDiff_Future = Math.Abs((int)(nTime - listChip[nPlayer][nIndex_NearestChip_Future].n発声時刻ms));
 			int nTimeDiff_Past = Math.Abs((int)(nTime - listChip[nPlayer][nIndex_NearestChip_Past].n発声時刻ms));
 
-			if (nChannel == 0xDF) //0xDFの場合は過去方向への検索をしない
+			if (nChannel == EChipType.BranchInternal) //0xDFの場合は過去方向への検索をしない
 			{
 				return listChip[nPlayer][nIndex_NearestChip_Future];
 			}
@@ -4568,7 +4553,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 			long n発声時刻ms = (long)(pChip.n発声時刻ms / OpenTaiko.ConfigIni.SongPlaybackSpeed);
 
 			if ((n発声時刻ms + nDuration > 0) && (n発声時刻ms <= nStartTime) && (nStartTime <= n発声時刻ms + nDuration)) {
-				if (pChip.nChannelNo == 0x01 && (pChip.nChannelNo >> 4) != 0xB) // wav系チャンネル、且つ、空打ちチップではない
+				if (pChip.nChannelNo == EChipType.Bgm && !pChip.isEmptyHitSoundRange) // wav系チャンネル、且つ、空打ちチップではない
 				{
 					CTja.CWAV wc;
 					bool b = dTX.listWAV.TryGetValue(pChip.n整数値_内部番号, out wc);

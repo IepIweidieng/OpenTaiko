@@ -2,11 +2,13 @@
 using System.Drawing;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics.X86;
 using System.Text;
 using System.Text.RegularExpressions;
 using FDK;
 using FDK.ExtensionMethods;
 using SkiaSharp;
+using static OpenTaiko.CTja;
 using Color = System.Drawing.Color;
 
 namespace OpenTaiko;
@@ -137,7 +139,7 @@ internal class CTja : CActivity {
 
 	public class CWAV : IDisposable {
 		public bool bBGMとして使う;
-		public List<int> listこのWAVを使用するチャンネル番号の集合 = new List<int>(16);
+		public List<EChipType> listこのWAVを使用するチャンネル番号の集合 = new List<EChipType>(16);
 		public int nチップサイズ = 100;
 		public int n位置;
 		public long[] n一時停止時刻 = new long[OpenTaiko.ConfigIni.nPoliphonicSounds];    // 4
@@ -999,13 +1001,13 @@ internal class CTja : CActivity {
 					if (NotesManager.IsMissableNote(chip)) {
 						int n = rnd.Next(100);
 
-						if (n < bombFactor) chip.nChannelNo = 0x1C;
+						if (n < bombFactor) chip.nChannelNo = EChipType.TCMine;
 					}
 
 					if (NotesManager.IsBalloon(chip)) {
 						int n = rnd.Next(100);
 
-						if (n < fuseRollFactor) chip.nChannelNo = 0x1D;
+						if (n < fuseRollFactor) chip.nChannelNo = EChipType.TDBalloonFuze;
 					}
 
 				}
@@ -1034,18 +1036,18 @@ internal class CTja : CActivity {
 			case ERandomMode.Mirror:
 				foreach (var chip in this.listChip) {
 					switch (chip.nChannelNo) {
-						case 0x11:
-							chip.nChannelNo = 0x12;
+						case EChipType.T1DonReg:
+							chip.nChannelNo = EChipType.T2KaReg;
 							break;
-						case 0x12:
-							chip.nChannelNo = 0x11;
+						case EChipType.T2KaReg:
+							chip.nChannelNo = EChipType.T1DonReg;
 							break;
-						case 0x13:
-							chip.nChannelNo = 0x14;
+						case EChipType.T3DonBig:
+							chip.nChannelNo = EChipType.T4KaBig;
 							chip.nSenote = 6;
 							break;
-						case 0x14:
-							chip.nChannelNo = 0x13;
+						case EChipType.T4KaBig:
+							chip.nChannelNo = EChipType.T3DonBig;
 							chip.nSenote = 5;
 							break;
 					}
@@ -1057,18 +1059,18 @@ internal class CTja : CActivity {
 
 					if (n >= 0 && n <= 20) {
 						switch (chip.nChannelNo) {
-							case 0x11:
-								chip.nChannelNo = 0x12;
+							case EChipType.T1DonReg:
+								chip.nChannelNo = EChipType.T2KaReg;
 								break;
-							case 0x12:
-								chip.nChannelNo = 0x11;
+							case EChipType.T2KaReg:
+								chip.nChannelNo = EChipType.T1DonReg;
 								break;
-							case 0x13:
-								chip.nChannelNo = 0x14;
+							case EChipType.T3DonBig:
+								chip.nChannelNo = EChipType.T4KaBig;
 								chip.nSenote = 6;
 								break;
-							case 0x14:
-								chip.nChannelNo = 0x13;
+							case EChipType.T4KaBig:
+								chip.nChannelNo = EChipType.T3DonBig;
 								chip.nSenote = 5;
 								break;
 						}
@@ -1081,18 +1083,18 @@ internal class CTja : CActivity {
 
 					if (n >= 0 && n <= 50) {
 						switch (chip.nChannelNo) {
-							case 0x11:
-								chip.nChannelNo = 0x12;
+							case EChipType.T1DonReg:
+								chip.nChannelNo = EChipType.T2KaReg;
 								break;
-							case 0x12:
-								chip.nChannelNo = 0x11;
+							case EChipType.T2KaReg:
+								chip.nChannelNo = EChipType.T1DonReg;
 								break;
-							case 0x13:
-								chip.nChannelNo = 0x14;
+							case EChipType.T3DonBig:
+								chip.nChannelNo = EChipType.T4KaBig;
 								chip.nSenote = 6;
 								break;
-							case 0x14:
-								chip.nChannelNo = 0x13;
+							case EChipType.T4KaBig:
+								chip.nChannelNo = EChipType.T3DonBig;
 								chip.nSenote = 5;
 								break;
 						}
@@ -1105,18 +1107,18 @@ internal class CTja : CActivity {
 
 					if (n >= 0 && n <= 80) {
 						switch (chip.nChannelNo) {
-							case 0x11:
-								chip.nChannelNo = 0x12;
+							case EChipType.T1DonReg:
+								chip.nChannelNo = EChipType.T2KaReg;
 								break;
-							case 0x12:
-								chip.nChannelNo = 0x11;
+							case EChipType.T2KaReg:
+								chip.nChannelNo = EChipType.T1DonReg;
 								break;
-							case 0x13:
-								chip.nChannelNo = 0x14;
+							case EChipType.T3DonBig:
+								chip.nChannelNo = EChipType.T4KaBig;
 								chip.nSenote = 6;
 								break;
-							case 0x14:
-								chip.nChannelNo = 0x13;
+							case EChipType.T4KaBig:
+								chip.nChannelNo = EChipType.T3DonBig;
 								chip.nSenote = 5;
 								break;
 						}
@@ -1131,13 +1133,13 @@ internal class CTja : CActivity {
 		if (OpenTaiko.Tx.Puchichara[PuchiChara.tGetPuchiCharaIndexByName(OpenTaiko.GetActualPlayer(nPlayerSide))].effect.AllPurple) {
 			foreach (var chip in this.listChip) {
 				switch (chip.nChannelNo) {
-					case 0x13:
-					case 0x1A:
-						chip.nChannelNo = 0x101;
+					case EChipType.T3DonBig:
+					case EChipType.TADonBigHand:
+						chip.nChannelNo = EChipType.TGKadon;
 						break;
-					case 0x14:
-					case 0x1B:
-						chip.nChannelNo = 0x101;
+					case EChipType.T4KaBig:
+					case EChipType.TBKaBigHand:
+						chip.nChannelNo = EChipType.TGKadon;
 						break;
 				}
 			}
@@ -1152,7 +1154,7 @@ internal class CTja : CActivity {
 			int dkdkCount = 0;
 
 			foreach (CChip chip in this.listChip) {
-				if (chip.nChannelNo >= 0x11 && chip.nChannelNo < 0x18) {
+				if (chip.nChannelNo >= EChipType.T1DonReg && chip.nChannelNo < EChipType.T8EndRoll) {
 					list音符のみのリスト.Add(chip);
 				}
 			}
@@ -1303,7 +1305,7 @@ internal class CTja : CActivity {
 			this.n無限管理SIZE = null;
 			if (!this.bヘッダのみ) {
 				#region [ BPM/BMP初期化 ]
-				int ch;
+				EChipType ch;
 				CBPM cbpm = null;
 				foreach (CBPM cbpm2 in this.listBPM.Values) {
 					if (cbpm2.n表記上の番号 == 0) {
@@ -1319,14 +1321,14 @@ internal class CTja : CActivity {
 					this.listBPM.Add(cbpm.n内部番号, cbpm);
 					CChip chip = new CChip();
 					chip.n発声位置 = 0;
-					chip.nChannelNo = 8;      // 拡張BPM
+					chip.nChannelNo = EChipType.BpmChangeEx; // 拡張BPM
 					chip.n整数値 = 0;
 					chip.n整数値_内部番号 = cbpm.n内部番号;
 					this.listChip.Insert(0, chip);
 				} else {
 					CChip chip = new CChip();
 					chip.n発声位置 = 0;
-					chip.nChannelNo = 8;      // 拡張BPM
+					chip.nChannelNo = EChipType.BpmChangeEx; // 拡張BPM
 					chip.n整数値 = 0;
 					chip.n整数値_内部番号 = cbpm.n内部番号;
 					this.listChip.Insert(0, chip);
@@ -1362,7 +1364,7 @@ internal class CTja : CActivity {
 				bool bShowBeatBarLine = true;
 				for (int i = 0; i < this.listChip.Count; i++) {
 					bool bChangedBeatBarStatus = false;
-					if ((this.listChip[i].nChannelNo == 0xc2)) {
+					if ((this.listChip[i].nChannelNo == EChipType.BeatBarLineVisibleChange)) {
 						if (this.listChip[i].n整数値 == 1)             // BAR/BEAT LINE = ON
 						{
 							bShowBeatBarLine = true;
@@ -1382,8 +1384,9 @@ internal class CTja : CActivity {
 						startIndex++;   // 1つ小さく過ぎているので、戻す
 					}
 					for (int j = startIndex; j <= i; j++) {
-						if (((this.listChip[j].nChannelNo == 0x50) || (this.listChip[j].nChannelNo == 0x51)) &&
-							(this.listChip[j].n整数値 == (36 * 36 - 1))) {
+						if ((this.listChip[j].nChannelNo is EChipType.BarLine or EChipType.BeatLine)
+							&& (this.listChip[j].n整数値 == (36 * 36 - 1))
+							) {
 							this.listChip[j].bVisible = bShowBeatBarLine;
 						}
 					}
@@ -1405,10 +1408,21 @@ internal class CTja : CActivity {
 				int BGM番号 = 0;
 
 				foreach (CChip chip in this.listChip) {
-					if (chip.nChannelNo == 0x02) { } else if (chip.nChannelNo == 0x01) { } else if (chip.nChannelNo == 0x08) { } else if (chip.nChannelNo >= 0x11 && chip.nChannelNo <= 0x1F) { } else if (chip.nChannelNo == 0x50) { } else if (chip.nChannelNo == 0x51) { } else if (chip.nChannelNo == 0x54) { } else if (chip.nChannelNo == 0x08) { } else if (chip.nChannelNo == 0xF1) { } else if (chip.nChannelNo == 0xF2) { } else if (chip.nChannelNo == 0xFF) { } else if (chip.nChannelNo == 0xDD) { chip.n発声時刻ms = ms + ((int)(((625 * (chip.n発声位置 - n発声位置)) * this.dbBarLength) / bpm)); } else if (chip.nChannelNo == 0xDF) { chip.n発声時刻ms = ms + ((int)(((625 * (chip.n発声位置 - n発声位置)) * this.dbBarLength) / bpm)); } else if (chip.nChannelNo < 0x93)
+					if (chip.nChannelNo
+						is EChipType.MeasureChange or EChipType.Bgm or EChipType.BpmChangeEx
+						or (>= EChipType.T1DonReg and <= EChipType.TFAdlib)
+						or EChipType.BarLine or EChipType.BeatLine or EChipType.BgaOn or EChipType.BpmChangeEx
+						or EChipType.LyricChange or EChipType.DirectionChange or EChipType.EndChart
+						) {
+						// do nothing
+					} else if (chip.nChannelNo
+						is EChipType.BranchSectionReset or EChipType.BranchInternal
+						or (< EChipType.T1DonRegOld)
+						or (> EChipType.GogoEnd and < EChipType.CamVMoveStart)
+						or (>= EChipType.SysF0 and < EChipType.SysFE)
+						) {
 						chip.n発声時刻ms = ms + ((int)(((625 * (chip.n発声位置 - n発声位置)) * this.dbBarLength) / bpm));
-					else if ((chip.nChannelNo > 0x9F && chip.nChannelNo < 0xA0) || (chip.nChannelNo >= 0xF0 && chip.nChannelNo < 0xFE))
-						chip.n発声時刻ms = ms + ((int)(((625 * (chip.n発声位置 - n発声位置)) * this.dbBarLength) / bpm));
+					}
 					nBar = chip.n発声位置 / 384;
 					ch = chip.nChannelNo;
 
@@ -1418,7 +1432,7 @@ internal class CTja : CActivity {
 						this.nNowRollCountBranch[i]++;
 
 					switch (ch) {
-						case 0x01: {
+						case EChipType.Bgm: {
 								n発声位置 = chip.n発声位置;
 
 								if (this.bOFFSETの値がマイナスである == false)
@@ -1441,7 +1455,7 @@ internal class CTja : CActivity {
 								#endregion
 								continue;
 							}
-						case 0x02:  // BarLength
+						case EChipType.MeasureChange:  // BarLength
 						{
 								n発声位置 = chip.n発声位置;
 								if (this.bOFFSETの値がマイナスである == false)
@@ -1450,7 +1464,7 @@ internal class CTja : CActivity {
 								dbBarLength = chip.db実数値;
 								continue;
 							}
-						case 0x03:  // BPM
+						case EChipType.BpmInfoChange:  // BPM
 						{
 								n発声位置 = chip.n発声位置;
 								if (this.bOFFSETの値がマイナスである == false)
@@ -1460,17 +1474,17 @@ internal class CTja : CActivity {
 								this.dbNowBPM = bpm;
 								continue;
 							}
-						case 0x04:  // BGA (レイヤBGA1)
-						case 0x07:  // レイヤBGA2
+						case EChipType.BgaLayer1:  // BGA (レイヤBGA1)
+						case EChipType.BgaLayer2:  // レイヤBGA2
 							break;
 
-						case 0x15:
-						case 0x16:
-						case 0x17:
-						case 0x19:
-						case 0x1D:
-						case 0x20:
-						case 0x21: {
+						case EChipType.T5RollReg:
+						case EChipType.T6RollBig:
+						case EChipType.T7BalloonReg:
+						case EChipType.T9BalloonEx:
+						case EChipType.TDBalloonFuze:
+						case EChipType.THClapRoll:
+						case EChipType.TILeftRoll: {
 								if (this.bOFFSETの値がマイナスである) {
 									chip.n発声時刻ms += this.nOFFSET;
 									chip.nNoteEndTimems += this.nOFFSET;
@@ -1479,22 +1493,22 @@ internal class CTja : CActivity {
 								this.nNowRoll = this.nNowRollCount - 1;
 								continue;
 							}
-						case 0x18: {
+						case EChipType.T8EndRoll: {
 								if (this.bOFFSETの値がマイナスである) {
 									chip.n発声時刻ms += this.nOFFSET;
 								}
 								continue;
 							}
 
-						case 0x55:
-						case 0x56:
-						case 0x57:
-						case 0x58:
-						case 0x59:
-						case 0x60:
+						case EChipType.BgaOff:
+						case EChipType.Sys56:
+						case EChipType.Sys57:
+						case EChipType.Sys58:
+						case EChipType.Sys59:
+						case EChipType.ScrollChangeOld:
 							break;
 
-						case 0x50: {
+						case EChipType.BarLine: {
 								if (this.bOFFSETの値がマイナスである)
 									chip.n発声時刻ms += this.nOFFSET;
 								if (this.n内部番号BRANCH1to + 1 > this.listBRANCH.Count)
@@ -1508,18 +1522,18 @@ internal class CTja : CActivity {
 								continue;
 							}
 
-						case 0x05:  // Extended Object (非対応)
-						case 0x06:  // Missアニメ (非対応)
-						case 0x5A:  // 未定義
-						case 0x5b:  // 未定義
-						case 0x5c:  // 未定義
-						case 0x5d:  // 未定義
-						case 0x5e:  // 未定義
-						case 0x5f:  // 未定義
+						case EChipType.BgaExtendObj:  // Extended Object (非対応)
+						case EChipType.BgaMiss:  // Missアニメ (非対応)
+						case EChipType.Sys5A:  // 未定義
+						case EChipType.Sys5B:  // 未定義
+						case EChipType.Sys5C:  // 未定義
+						case EChipType.Sys5D:  // 未定義
+						case EChipType.Sys5E:  // 未定義
+						case EChipType.Sys5F:  // 未定義
 						{
 								continue;
 							}
-						case 0x08:  // 拡張BPM
+						case EChipType.BpmChangeEx:  // 拡張BPM
 						{
 								n発声位置 = chip.n発声位置;
 								if (this.bOFFSETの値がマイナスである == false)
@@ -1531,7 +1545,7 @@ internal class CTja : CActivity {
 								}
 								continue;
 							}
-						case 0x54:  // 動画再生
+						case EChipType.BgaOn:  // 動画再生
 						{
 								if (this.bOFFSETの値がマイナスである == false)
 									chip.n発声時刻ms += this.nOFFSET;
@@ -1541,9 +1555,9 @@ internal class CTja : CActivity {
 									chip.n発声時刻ms -= this.nMOVIEOFFSET;
 								continue;
 							}
-						case 0x97:
-						case 0x98:
-						case 0x99: {
+						case EChipType.T5RollRegOld:
+						case EChipType.T6RollBigOld:
+						case EChipType.T7BalloonRegOld: {
 								if (this.bOFFSETの値がマイナスである) {
 									chip.n発声時刻ms += this.nOFFSET;
 									chip.nNoteEndTimems += this.nOFFSET;
@@ -1552,22 +1566,22 @@ internal class CTja : CActivity {
 
 								continue;
 							}
-						case 0x9A: {
+						case EChipType.T8EndRollOld: {
 
 								if (this.bOFFSETの値がマイナスである) {
 									chip.n発声時刻ms += this.nOFFSET;
 								}
 								continue;
 							}
-						case 0x9D: {
+						case EChipType.ScrollChange: {
 								continue;
 							}
-						case 0xDC: {
+						case EChipType.Delay: {
 								if (this.bOFFSETの値がマイナスである)
 									chip.n発声時刻ms += this.nOFFSET;
 								continue;
 							}
-						case 0xDE: {
+						case EChipType.BranchVisual: {
 								if (this.bOFFSETの値がマイナスである) {
 									chip.n発声時刻ms += this.nOFFSET;
 									chip.n分岐時刻ms += this.nOFFSET;
@@ -1575,7 +1589,7 @@ internal class CTja : CActivity {
 								this.n現在のコース = chip.nBranch;
 								continue;
 							}
-						case 0x52: {
+						case EChipType.BranchEnd: {
 								if (this.bOFFSETの値がマイナスである) {
 									chip.n発声時刻ms += this.nOFFSET;
 									chip.n分岐時刻ms += this.nOFFSET;
@@ -1583,12 +1597,12 @@ internal class CTja : CActivity {
 								this.n現在のコース = chip.nBranch;
 								continue;
 							}
-						case 0xDF: {
+						case EChipType.BranchInternal: {
 								if (this.bOFFSETの値がマイナスである)
 									chip.n発声時刻ms += this.nOFFSET;
 								continue;
 							}
-						case 0xE0: {
+						case EChipType.BarLineVisibleChange: {
 								continue;
 							}
 						default: {
@@ -1622,21 +1636,23 @@ internal class CTja : CActivity {
 					this.n可視チップ数[n] = 0;
 				}
 				foreach (CChip chip in this.listChip) {
-					int c = chip.nChannelNo;
-					if ((0x11 <= c) && (c <= 0x14)) {
-						if (c == 0x11 || c == 0x13)
+					EChipType c = chip.nChannelNo;
+					if ((EChipType.T1DonReg <= c) && (c <= EChipType.T4KaBig)) {
+						if (c == EChipType.T1DonReg || c == EChipType.T3DonBig)
 							this.n可視チップ数.Taiko_Red++;
-						else if (c == 0x12 || c == 0x14)
+						else if (c == EChipType.T2KaReg || c == EChipType.T4KaBig)
 							this.n可視チップ数.Taiko_Blue++;
 					}
 				}
 				#endregion
 				#region [ チップの種類を分類し、対応するフラグを立てる ]
 				foreach (CChip chip in this.listChip) {
-					if ((chip.nChannelNo == 0x01 && this.listWAV.TryGetValue(chip.n整数値_内部番号, out CWAV cwav)) && !cwav.listこのWAVを使用するチャンネル番号の集合.Contains(chip.nChannelNo)) {
+					if ((chip.nChannelNo == EChipType.Bgm && this.listWAV.TryGetValue(chip.n整数値_内部番号, out CWAV cwav))
+						&& !cwav.listこのWAVを使用するチャンネル番号の集合.Contains(chip.nChannelNo)
+						) {
 						cwav.listこのWAVを使用するチャンネル番号の集合.Add(chip.nChannelNo);
 
-						if (chip.nChannelNo == 0x01) {
+						if (chip.nChannelNo == EChipType.Bgm) {
 							cwav.bIsBGMSound = true;
 						} else if (chip.isSESoundRange) {
 							cwav.bIsSESound = true;
@@ -1672,7 +1688,7 @@ internal class CTja : CActivity {
 				#endregion
 				int n整数値管理 = 0;
 				foreach (CChip chip in this.listChip) {
-					if (chip.nChannelNo != 0x54)
+					if (chip.nChannelNo != EChipType.BgaOn)
 						chip.n整数値 = n整数値管理;
 					n整数値管理++;
 				}
@@ -2045,7 +2061,7 @@ internal class CTja : CActivity {
 		}
 	}
 
-	private CChip t発声位置から過去方向で一番近くにある指定チャンネルのチップを返す(int n発声時刻, int nチャンネル番号) {
+	private CChip t発声位置から過去方向で一番近くにある指定チャンネルのチップを返す(int n発声時刻, EChipType nチャンネル番号) {
 		//過去方向への検索
 		for (int i = this.listChip.Count - 1; i >= 0; i--) {
 			if (this.listChip[i].nChannelNo == nチャンネル番号) {
@@ -2178,7 +2194,7 @@ internal class CTja : CActivity {
 			AddMusicPreTimeMs(); // 音源を鳴らす前に遅延。
 			var chip = new CChip();
 
-			chip.nChannelNo = 0x01;
+			chip.nChannelNo = EChipType.Bgm;
 			chip.n発声位置 = 384;
 			chip.n発声時刻ms = (int)this.dbNowTime;
 			chip.fNow_Measure_m = this.fNow_Measure_m;
@@ -2191,7 +2207,7 @@ internal class CTja : CActivity {
 			this.listChip.Add(chip);
 
 			var chip1 = new CChip();
-			chip1.nChannelNo = 0x54;
+			chip1.nChannelNo = EChipType.BgaOn;
 			if (this.nMOVIEOFFSET == 0)
 				chip1.n発声時刻ms = (int)this.dbNowTime;
 			else
@@ -2210,7 +2226,7 @@ internal class CTja : CActivity {
 			//ためしに割り込む。
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xFF;
+			chip.nChannelNo = EChipType.EndChart;
 			chip.n発声位置 = ((this.n現在の小節数 + 2) * 384);
 			chip.n発声時刻ms = (int)(this.dbNowTime + 1000); //2016.07.16 kairera0467 終了時から1秒後に設置するよう変更。
 			chip.fNow_Measure_m = this.fNow_Measure_m;
@@ -2252,7 +2268,7 @@ internal class CTja : CActivity {
 			//チップ追加して割り込んでみる。
 			var chip = new CChip();
 
-			chip.nChannelNo = 0x08;
+			chip.nChannelNo = EChipType.BpmChangeEx;
 			chip.n発声位置 = ((this.n現在の小節数) * 384);
 			chip.n発声時刻ms = (int)this.dbNowTime;
 			chip.fNow_Measure_m = this.fNow_Measure_m;
@@ -2266,7 +2282,7 @@ internal class CTja : CActivity {
 			this.listChip.Add(chip);
 
 			var chip1 = new CChip();
-			chip1.nChannelNo = 0x9C;
+			chip1.nChannelNo = EChipType.AnimeBpmChange;
 			chip1.n発声位置 = ((this.n現在の小節数) * 384);
 			chip1.n発声時刻ms = (int)this.dbNowTime;
 			chip.fNow_Measure_m = this.fNow_Measure_m;
@@ -2322,7 +2338,7 @@ internal class CTja : CActivity {
 				//チップ追加して割り込んでみる。
 				var chip = new CChip();
 
-				chip.nChannelNo = 0x9D;
+				chip.nChannelNo = EChipType.ScrollChange;
 				chip.n発声位置 = ((this.n現在の小節数) * 384) - 1;
 				chip.n発声時刻ms = (int)this.dbNowTime;
 				chip.fNow_Measure_m = this.fNow_Measure_m;
@@ -2362,7 +2378,7 @@ internal class CTja : CActivity {
 				//チップ追加して割り込んでみる。
 				var chip = new CChip();
 
-				chip.nChannelNo = 0x9D;
+				chip.nChannelNo = EChipType.ScrollChange;
 				chip.n発声位置 = ((this.n現在の小節数) * 384) - 1;
 				chip.n発声時刻ms = (int)this.dbNowTime;
 				chip.fNow_Measure_m = this.fNow_Measure_m;
@@ -2396,7 +2412,7 @@ internal class CTja : CActivity {
 
 			var chip = new CChip();
 
-			chip.nChannelNo = 0x02;
+			chip.nChannelNo = EChipType.MeasureChange;
 			chip.n発声位置 = ((this.n現在の小節数) * 384);
 			chip.n発声時刻ms = (int)this.dbNowTime;
 			chip.fNow_Measure_m = this.fNow_Measure_m;
@@ -2419,7 +2435,7 @@ internal class CTja : CActivity {
 			//チップ追加して割り込んでみる。
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xDC;
+			chip.nChannelNo = EChipType.Delay;
 			chip.n発声位置 = ((this.n現在の小節数) * 384);
 			chip.db発声時刻ms = this.dbNowTime;
 			chip.fNow_Measure_m = this.fNow_Measure_m;
@@ -2437,7 +2453,7 @@ internal class CTja : CActivity {
 		} else if (command == "#GOGOSTART") {
 			var chip = new CChip();
 
-			chip.nChannelNo = 0x9E;
+			chip.nChannelNo = EChipType.GogoStart;
 			chip.n発声位置 = ((this.n現在の小節数) * 384);
 			chip.dbBPM = this.dbNowBPM;
 			chip.n発声時刻ms = (int)this.dbNowTime;
@@ -2451,7 +2467,7 @@ internal class CTja : CActivity {
 		} else if (command == "#GOGOEND") {
 			var chip = new CChip();
 
-			chip.nChannelNo = 0x9F;
+			chip.nChannelNo = EChipType.GogoEnd;
 			chip.n発声位置 = ((this.n現在の小節数) * 384);
 			chip.n発声時刻ms = (int)this.dbNowTime;
 			chip.fNow_Measure_m = this.fNow_Measure_m;
@@ -2470,7 +2486,7 @@ internal class CTja : CActivity {
 				int index = (10 * int.Parse(listvdIndex[0].ToString())) + int.Parse(listvdIndex[1].ToString()) + 2;
 
 				var chip = new CChip();
-				chip.nChannelNo = 0x54;
+				chip.nChannelNo = EChipType.BgaOn;
 				chip.n発声位置 = ((this.n現在の小節数) * 384);
 				chip.dbBPM = this.dbNowBPM;
 				chip.n発声時刻ms = (int)this.dbNowTime;
@@ -2489,7 +2505,7 @@ internal class CTja : CActivity {
 		} else if (command == "#BGAOFF") {
 			int index = (10 * int.Parse(argument[0].ToString())) + int.Parse(argument[1].ToString()) + 2;
 			var chip = new CChip();
-			chip.nChannelNo = 0x55;
+			chip.nChannelNo = EChipType.BgaOff;
 			chip.n発声位置 = ((this.n現在の小節数) * 384);
 			chip.dbBPM = this.dbNowBPM;
 			chip.n発声時刻ms = (int)this.dbNowTime;
@@ -2506,7 +2522,7 @@ internal class CTja : CActivity {
 				//arguments: <start y>,<end y>,<easing type>,<calc type>
 				var chip = new CChip();
 
-				chip.nChannelNo = 0xA0;
+				chip.nChannelNo = EChipType.CamVMoveStart;
 				chip.n発声位置 = ((this.n現在の小節数) * 384);
 				chip.dbBPM = this.dbNowBPM;
 				chip.n発声時刻ms = (int)this.dbNowTime;
@@ -2564,7 +2580,7 @@ internal class CTja : CActivity {
 				//ends vertical camera moving
 				var chip = new CChip();
 
-				chip.nChannelNo = 0xA1;
+				chip.nChannelNo = EChipType.CamVMoveEnd;
 				chip.n発声位置 = ((this.n現在の小節数) * 384);
 				chip.dbBPM = this.dbNowBPM;
 				chip.n発声時刻ms = (int)this.dbNowTime;
@@ -2592,7 +2608,7 @@ internal class CTja : CActivity {
 				//arguments: <start x>,<end x>,<easing type>,<calc type>
 				var chip = new CChip();
 
-				chip.nChannelNo = 0xA2;
+				chip.nChannelNo = EChipType.CamHMoveStart;
 				chip.n発声位置 = ((this.n現在の小節数) * 384);
 				chip.dbBPM = this.dbNowBPM;
 				chip.n発声時刻ms = (int)this.dbNowTime;
@@ -2652,7 +2668,7 @@ internal class CTja : CActivity {
 				//ends horizontal camera moving
 				var chip = new CChip();
 
-				chip.nChannelNo = 0xA3;
+				chip.nChannelNo = EChipType.CamHMoveEnd;
 				chip.n発声位置 = ((this.n現在の小節数) * 384);
 				chip.dbBPM = this.dbNowBPM;
 				chip.n発声時刻ms = (int)this.dbNowTime;
@@ -2680,7 +2696,7 @@ internal class CTja : CActivity {
 				//arguments: <start value>,<end value>,<easing type>,<calc type>
 				var chip = new CChip();
 
-				chip.nChannelNo = 0xA4;
+				chip.nChannelNo = EChipType.CamZoomStart;
 				chip.n発声位置 = ((this.n現在の小節数) * 384);
 				chip.dbBPM = this.dbNowBPM;
 				chip.n発声時刻ms = (int)this.dbNowTime;
@@ -2738,7 +2754,7 @@ internal class CTja : CActivity {
 				//stops zooming
 				var chip = new CChip();
 
-				chip.nChannelNo = 0xA5;
+				chip.nChannelNo = EChipType.CamZoomEnd;
 				chip.n発声位置 = ((this.n現在の小節数) * 384);
 				chip.dbBPM = this.dbNowBPM;
 				chip.n発声時刻ms = (int)this.dbNowTime;
@@ -2766,7 +2782,7 @@ internal class CTja : CActivity {
 				//arguments: <start degrees>,<end degrees>,<easing type>,<calc type>
 				var chip = new CChip();
 
-				chip.nChannelNo = 0xA6;
+				chip.nChannelNo = EChipType.CamRotationStart;
 				chip.n発声位置 = ((this.n現在の小節数) * 384);
 				chip.dbBPM = this.dbNowBPM;
 				chip.n発声時刻ms = (int)this.dbNowTime;
@@ -2826,7 +2842,7 @@ internal class CTja : CActivity {
 				//stops screen rotation
 				var chip = new CChip();
 
-				chip.nChannelNo = 0xA7;
+				chip.nChannelNo = EChipType.CamRotationEnd;
 				chip.n発声位置 = ((this.n現在の小節数) * 384);
 				chip.dbBPM = this.dbNowBPM;
 				chip.n発声時刻ms = (int)this.dbNowTime;
@@ -2854,7 +2870,7 @@ internal class CTja : CActivity {
 				//arguments: <start scale>,<end scale>,<easing type>,<calc type>
 				var chip = new CChip();
 
-				chip.nChannelNo = 0xA8;
+				chip.nChannelNo = EChipType.CamVScaleStart;
 				chip.n発声位置 = ((this.n現在の小節数) * 384);
 				chip.dbBPM = this.dbNowBPM;
 				chip.n発声時刻ms = (int)this.dbNowTime;
@@ -2914,7 +2930,7 @@ internal class CTja : CActivity {
 				//ends vertical camera scaling
 				var chip = new CChip();
 
-				chip.nChannelNo = 0xA9;
+				chip.nChannelNo = EChipType.CamVScaleEnd;
 				chip.n発声位置 = ((this.n現在の小節数) * 384);
 				chip.dbBPM = this.dbNowBPM;
 				chip.n発声時刻ms = (int)this.dbNowTime;
@@ -2942,7 +2958,7 @@ internal class CTja : CActivity {
 				//arguments: <start scale>,<end scale>,<easing type>,<calc type>
 				var chip = new CChip();
 
-				chip.nChannelNo = 0xB0;
+				chip.nChannelNo = EChipType.CamHScaleStart;
 				chip.n発声位置 = ((this.n現在の小節数) * 384);
 				chip.dbBPM = this.dbNowBPM;
 				chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3002,7 +3018,7 @@ internal class CTja : CActivity {
 				//ends horizontal camera scaling
 				var chip = new CChip();
 
-				chip.nChannelNo = 0xB1;
+				chip.nChannelNo = EChipType.CamHScaleEnd;
 				chip.n発声位置 = ((this.n現在の小節数) * 384);
 				chip.dbBPM = this.dbNowBPM;
 				chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3029,7 +3045,7 @@ internal class CTja : CActivity {
 			//arguments: <r>,<g>,<b>
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xB2;
+			chip.nChannelNo = EChipType.BorderColorChange;
 			chip.n発声位置 = ((this.n現在の小節数) * 384);
 			chip.dbBPM = this.dbNowBPM;
 			chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3048,7 +3064,7 @@ internal class CTja : CActivity {
 				//argument: <offset>
 				var chip = new CChip();
 
-				chip.nChannelNo = 0xB3;
+				chip.nChannelNo = EChipType.CamHOffsetChange;
 				chip.n発声位置 = ((this.n現在の小節数) * 384);
 				chip.dbBPM = this.dbNowBPM;
 				chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3076,7 +3092,7 @@ internal class CTja : CActivity {
 				//argument: <offset>
 				var chip = new CChip();
 
-				chip.nChannelNo = 0xB4;
+				chip.nChannelNo = EChipType.CamVOffsetChange;
 				chip.n発声位置 = ((this.n現在の小節数) * 384);
 				chip.dbBPM = this.dbNowBPM;
 				chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3104,7 +3120,7 @@ internal class CTja : CActivity {
 				//argument: <zoom factor>
 				var chip = new CChip();
 
-				chip.nChannelNo = 0xB5;
+				chip.nChannelNo = EChipType.CamZoomChange;
 				chip.n発声位置 = ((this.n現在の小節数) * 384);
 				chip.dbBPM = this.dbNowBPM;
 				chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3132,7 +3148,7 @@ internal class CTja : CActivity {
 				//argument: <degrees>
 				var chip = new CChip();
 
-				chip.nChannelNo = 0xB6;
+				chip.nChannelNo = EChipType.CamRotationChange;
 				chip.n発声位置 = ((this.n現在の小節数) * 384);
 				chip.dbBPM = this.dbNowBPM;
 				chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3160,7 +3176,7 @@ internal class CTja : CActivity {
 				//argument: <scale>
 				var chip = new CChip();
 
-				chip.nChannelNo = 0xB7;
+				chip.nChannelNo = EChipType.CamHScaleChange;
 				chip.n発声位置 = ((this.n現在の小節数) * 384);
 				chip.dbBPM = this.dbNowBPM;
 				chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3188,7 +3204,7 @@ internal class CTja : CActivity {
 				//argument: <scale>
 				var chip = new CChip();
 
-				chip.nChannelNo = 0xB8;
+				chip.nChannelNo = EChipType.CamVScaleChange;
 				chip.n発声位置 = ((this.n現在の小節数) * 384);
 				chip.dbBPM = this.dbNowBPM;
 				chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3214,7 +3230,7 @@ internal class CTja : CActivity {
 			//resets camera properties
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xB9;
+			chip.nChannelNo = EChipType.CamReset;
 			chip.n発声位置 = ((this.n現在の小節数) * 384);
 			chip.dbBPM = this.dbNowBPM;
 			chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3245,7 +3261,7 @@ internal class CTja : CActivity {
 			//resets camera properties
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xBA;
+			chip.nChannelNo = EChipType.EnableDoron;
 			chip.n発声位置 = ((this.n現在の小節数) * 384);
 			chip.dbBPM = this.dbNowBPM;
 			chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3259,7 +3275,7 @@ internal class CTja : CActivity {
 			//resets camera properties
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xBB;
+			chip.nChannelNo = EChipType.DisableDoron;
 			chip.n発声位置 = ((this.n現在の小節数) * 384);
 			chip.dbBPM = this.dbNowBPM;
 			chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3273,7 +3289,7 @@ internal class CTja : CActivity {
 			//adds object
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xBC;
+			chip.nChannelNo = EChipType.AddObject;
 			chip.n発声位置 = ((this.n現在の小節数) * 384);
 			chip.dbBPM = this.dbNowBPM;
 			chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3303,7 +3319,7 @@ internal class CTja : CActivity {
 			//removes object
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xBD;
+			chip.nChannelNo = EChipType.RemoveObject;
 			chip.n発声位置 = ((this.n現在の小節数) * 384);
 			chip.dbBPM = this.dbNowBPM;
 			chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3326,7 +3342,7 @@ internal class CTja : CActivity {
 					//arguments: <start y>,<end y>,<easing type>,<calc type>
 					var chip = new CChip();
 
-					chip.nChannelNo = 0xBE;
+					chip.nChannelNo = EChipType.ObjVMoveStart;
 					chip.n発声位置 = ((this.n現在の小節数) * 384);
 					chip.dbBPM = this.dbNowBPM;
 					chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3387,7 +3403,7 @@ internal class CTja : CActivity {
 				//ends vertical camera moving
 				var chip = new CChip();
 
-				chip.nChannelNo = 0xBF;
+				chip.nChannelNo = EChipType.ObjVMoveEnd;
 				chip.n発声位置 = ((this.n現在の小節数) * 384);
 				chip.dbBPM = this.dbNowBPM;
 				chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3422,7 +3438,7 @@ internal class CTja : CActivity {
 					//arguments: <start x>,<end x>,<easing type>,<calc type>
 					var chip = new CChip();
 
-					chip.nChannelNo = 0xC0;
+					chip.nChannelNo = EChipType.ObjHMoveStart;
 					chip.n発声位置 = ((this.n現在の小節数) * 384);
 					chip.dbBPM = this.dbNowBPM;
 					chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3483,7 +3499,7 @@ internal class CTja : CActivity {
 				//ends horizontal camera moving
 				var chip = new CChip();
 
-				chip.nChannelNo = 0xC1;
+				chip.nChannelNo = EChipType.ObjHMoveEnd;
 				chip.n発声位置 = ((this.n現在の小節数) * 384);
 				chip.dbBPM = this.dbNowBPM;
 				chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3516,7 +3532,7 @@ internal class CTja : CActivity {
 				if (!currentObjAnimations.ContainsKey("vscale_" + name)) {
 					var chip = new CChip();
 
-					chip.nChannelNo = 0xC2;
+					chip.nChannelNo = EChipType.ObjVScaleStart;
 					chip.n発声位置 = ((this.n現在の小節数) * 384);
 					chip.dbBPM = this.dbNowBPM;
 					chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3576,7 +3592,7 @@ internal class CTja : CActivity {
 			if (currentObjAnimations.ContainsKey("vscale_" + name)) {
 				var chip = new CChip();
 
-				chip.nChannelNo = 0xC3;
+				chip.nChannelNo = EChipType.ObjVScaleEnd;
 				chip.n発声位置 = ((this.n現在の小節数) * 384);
 				chip.dbBPM = this.dbNowBPM;
 				chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3609,7 +3625,7 @@ internal class CTja : CActivity {
 				if (!currentObjAnimations.ContainsKey("hscale_" + name)) {
 					var chip = new CChip();
 
-					chip.nChannelNo = 0xC4;
+					chip.nChannelNo = EChipType.ObjHScaleStart;
 					chip.n発声位置 = ((this.n現在の小節数) * 384);
 					chip.dbBPM = this.dbNowBPM;
 					chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3667,7 +3683,7 @@ internal class CTja : CActivity {
 			if (currentObjAnimations.ContainsKey("hscale_" + name)) {
 				var chip = new CChip();
 
-				chip.nChannelNo = 0xC5;
+				chip.nChannelNo = EChipType.ObjHScaleEnd;
 				chip.n発声位置 = ((this.n現在の小節数) * 384);
 				chip.dbBPM = this.dbNowBPM;
 				chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3700,7 +3716,7 @@ internal class CTja : CActivity {
 				if (!currentObjAnimations.ContainsKey("rotation_" + name)) {
 					var chip = new CChip();
 
-					chip.nChannelNo = 0xC6;
+					chip.nChannelNo = EChipType.ObjRotationStart;
 					chip.n発声位置 = ((this.n現在の小節数) * 384);
 					chip.dbBPM = this.dbNowBPM;
 					chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3760,7 +3776,7 @@ internal class CTja : CActivity {
 			if (currentObjAnimations.ContainsKey("rotation_" + name)) {
 				var chip = new CChip();
 
-				chip.nChannelNo = 0xC7;
+				chip.nChannelNo = EChipType.ObjRotationEnd;
 				chip.n発声位置 = ((this.n現在の小節数) * 384);
 				chip.dbBPM = this.dbNowBPM;
 				chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3793,7 +3809,7 @@ internal class CTja : CActivity {
 				if (!currentObjAnimations.ContainsKey("opacity_" + name)) {
 					var chip = new CChip();
 
-					chip.nChannelNo = 0xC8;
+					chip.nChannelNo = EChipType.ObjOpacityStart;
 					chip.n発声位置 = ((this.n現在の小節数) * 384);
 					chip.dbBPM = this.dbNowBPM;
 					chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3851,7 +3867,7 @@ internal class CTja : CActivity {
 			if (currentObjAnimations.ContainsKey("opacity_" + name)) {
 				var chip = new CChip();
 
-				chip.nChannelNo = 0xC9;
+				chip.nChannelNo = EChipType.ObjOpacityEnd;
 				chip.n発声位置 = ((this.n現在の小節数) * 384);
 				chip.dbBPM = this.dbNowBPM;
 				chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3879,7 +3895,7 @@ internal class CTja : CActivity {
 		} else if (command == "#OBJCOLOR") {
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xCA;
+			chip.nChannelNo = EChipType.ObjColorChange;
 			chip.n発声位置 = ((this.n現在の小節数) * 384);
 			chip.dbBPM = this.dbNowBPM;
 			chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3905,7 +3921,7 @@ internal class CTja : CActivity {
 				if (!currentObjAnimations.ContainsKey("vmove_" + name)) {
 					var chip = new CChip();
 
-					chip.nChannelNo = 0xCB;
+					chip.nChannelNo = EChipType.ObjYChange;
 					chip.n発声位置 = ((this.n現在の小節数) * 384);
 					chip.dbBPM = this.dbNowBPM;
 					chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3935,7 +3951,7 @@ internal class CTja : CActivity {
 				if (!currentObjAnimations.ContainsKey("hmove_" + name)) {
 					var chip = new CChip();
 
-					chip.nChannelNo = 0xCC;
+					chip.nChannelNo = EChipType.ObjXChange;
 					chip.n発声位置 = ((this.n現在の小節数) * 384);
 					chip.dbBPM = this.dbNowBPM;
 					chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3965,7 +3981,7 @@ internal class CTja : CActivity {
 				if (!currentObjAnimations.ContainsKey("vscale_" + name)) {
 					var chip = new CChip();
 
-					chip.nChannelNo = 0xCD;
+					chip.nChannelNo = EChipType.ObjVScaleChange;
 					chip.n発声位置 = ((this.n現在の小節数) * 384);
 					chip.dbBPM = this.dbNowBPM;
 					chip.n発声時刻ms = (int)this.dbNowTime;
@@ -3995,7 +4011,7 @@ internal class CTja : CActivity {
 				if (!currentObjAnimations.ContainsKey("hscale_" + name)) {
 					var chip = new CChip();
 
-					chip.nChannelNo = 0xCE;
+					chip.nChannelNo = EChipType.ObjHScaleChange;
 					chip.n発声位置 = ((this.n現在の小節数) * 384);
 					chip.dbBPM = this.dbNowBPM;
 					chip.n発声時刻ms = (int)this.dbNowTime;
@@ -4025,7 +4041,7 @@ internal class CTja : CActivity {
 				if (!currentObjAnimations.ContainsKey("rotation_" + name)) {
 					var chip = new CChip();
 
-					chip.nChannelNo = 0xCF;
+					chip.nChannelNo = EChipType.ObjRotationChange;
 					chip.n発声位置 = ((this.n現在の小節数) * 384);
 					chip.dbBPM = this.dbNowBPM;
 					chip.n発声時刻ms = (int)this.dbNowTime;
@@ -4055,7 +4071,7 @@ internal class CTja : CActivity {
 				if (!currentObjAnimations.ContainsKey("opacity_" + name)) {
 					var chip = new CChip();
 
-					chip.nChannelNo = 0xD0;
+					chip.nChannelNo = EChipType.ObjOpacityChange;
 					chip.n発声位置 = ((this.n現在の小節数) * 384);
 					chip.dbBPM = this.dbNowBPM;
 					chip.n発声時刻ms = (int)this.dbNowTime;
@@ -4080,7 +4096,7 @@ internal class CTja : CActivity {
 		} else if (command == "#CHANGETEXTURE") {
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xD1;
+			chip.nChannelNo = EChipType.ChangeTexture;
 			chip.n発声位置 = ((this.n現在の小節数) * 384);
 			chip.dbBPM = this.dbNowBPM;
 			chip.n発声時刻ms = (int)this.dbNowTime;
@@ -4112,7 +4128,7 @@ internal class CTja : CActivity {
 		} else if (command == "#RESETTEXTURE") {
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xD2;
+			chip.nChannelNo = EChipType.ResetTexture;
 			chip.n発声位置 = ((this.n現在の小節数) * 384);
 			chip.dbBPM = this.dbNowBPM;
 			chip.n発声時刻ms = (int)this.dbNowTime;
@@ -4127,7 +4143,7 @@ internal class CTja : CActivity {
 		} else if (command == "#SETCONFIG") {
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xD3;
+			chip.nChannelNo = EChipType.SetConfig;
 			chip.n発声位置 = ((this.n現在の小節数) * 384);
 			chip.dbBPM = this.dbNowBPM;
 			chip.n発声時刻ms = (int)this.dbNowTime;
@@ -4142,7 +4158,7 @@ internal class CTja : CActivity {
 		} else if (command == "#OBJANIMSTART") {
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xD4;
+			chip.nChannelNo = EChipType.ObjAnimStart;
 			chip.n発声位置 = ((this.n現在の小節数) * 384);
 			chip.dbBPM = this.dbNowBPM;
 			chip.n発声時刻ms = (int)this.dbNowTime;
@@ -4163,7 +4179,7 @@ internal class CTja : CActivity {
 		} else if (command == "#OBJANIMSTARTLOOP") {
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xD5;
+			chip.nChannelNo = EChipType.ObjAnimStartLoop;
 			chip.n発声位置 = ((this.n現在の小節数) * 384);
 			chip.dbBPM = this.dbNowBPM;
 			chip.n発声時刻ms = (int)this.dbNowTime;
@@ -4184,7 +4200,7 @@ internal class CTja : CActivity {
 		} else if (command == "#OBJANIMEND") {
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xD6;
+			chip.nChannelNo = EChipType.ObjAnimEnd;
 			chip.n発声位置 = ((this.n現在の小節数) * 384);
 			chip.dbBPM = this.dbNowBPM;
 			chip.n発声時刻ms = (int)this.dbNowTime;
@@ -4199,7 +4215,7 @@ internal class CTja : CActivity {
 		} else if (command == "#OBJFRAME") {
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xD7;
+			chip.nChannelNo = EChipType.ObjFrameChange;
 			chip.n発声位置 = ((this.n現在の小節数) * 384);
 			chip.dbBPM = this.dbNowBPM;
 			chip.n発声時刻ms = (int)this.dbNowTime;
@@ -4220,7 +4236,7 @@ internal class CTja : CActivity {
 		} else if (command == "#GAMETYPE") {
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xD8;
+			chip.nChannelNo = EChipType.GameTypeChange;
 			chip.n発声位置 = ((this.n現在の小節数) * 384);
 			chip.dbBPM = this.dbNowBPM;
 			chip.n発声時刻ms = (int)this.dbNowTime;
@@ -4242,7 +4258,7 @@ internal class CTja : CActivity {
 		} else if (command == "#SPLITLANE") {
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xD9;
+			chip.nChannelNo = EChipType.SplitLaneChange;
 			chip.n発声位置 = ((this.n現在の小節数) * 384);
 			chip.dbBPM = this.dbNowBPM;
 			chip.n発声時刻ms = (int)this.dbNowTime;
@@ -4255,7 +4271,7 @@ internal class CTja : CActivity {
 		} else if (command == "#MERGELANE") {
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xE3;
+			chip.nChannelNo = EChipType.SplitLaneReset;
 			chip.n発声位置 = ((this.n現在の小節数) * 384);
 			chip.dbBPM = this.dbNowBPM;
 			chip.n発声時刻ms = (int)this.dbNowTime;
@@ -4268,7 +4284,7 @@ internal class CTja : CActivity {
 		} else if (command == "#BARLINE") {
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xE4;
+			chip.nChannelNo = EChipType.BarLineDummy;
 			chip.n発声位置 = ((this.n現在の小節数) * 384);
 			chip.dbBPM = this.dbNowBPM;
 			chip.dbSCROLL = this.dbNowScroll;
@@ -4285,7 +4301,7 @@ internal class CTja : CActivity {
 			//分岐:条件リセット
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xDD;
+			chip.nChannelNo = EChipType.BranchSectionReset;
 			chip.n発声位置 = ((this.n現在の小節数 - 1) * 384);
 			chip.n発声時刻ms = (int)this.dbNowTime;
 			chip.fNow_Measure_m = this.fNow_Measure_m;
@@ -4363,7 +4379,7 @@ internal class CTja : CActivity {
 				chip.n発声時刻ms = c小節前の小節線情報.n発声時刻ms;
 			} else chip.n発声時刻ms = c小節前の小節線情報.n発声時刻ms;
 
-			chip.nChannelNo = 0xDE;
+			chip.nChannelNo = EChipType.BranchVisual;
 			chip.fNow_Measure_m = c小節前の小節線情報.fNow_Measure_m;
 			chip.fNow_Measure_s = c小節前の小節線情報.fNow_Measure_s;
 
@@ -4395,7 +4411,7 @@ internal class CTja : CActivity {
 				this.n現在のコース = ECourse.eMaster;//分岐:達人譜面
 		} else if (command == "#LEVELHOLD") {
 			var chip = new CChip();
-			chip.nChannelNo = 0xE1;
+			chip.nChannelNo = EChipType.BranchLevelHold;
 			chip.n発声位置 = ((this.n現在の小節数) * 384) - 1;
 			chip.n発声時刻ms = (int)this.dbNowTime;
 			chip.fNow_Measure_m = this.fNow_Measure_m;
@@ -4407,7 +4423,7 @@ internal class CTja : CActivity {
 			var GoBranch = new CChip();
 
 			//End用チャンネルをEmptyから引っ張ってきた。
-			GoBranch.nChannelNo = 0x52;
+			GoBranch.nChannelNo = EChipType.BranchEnd;
 			GoBranch.n発声位置 = ((this.n現在の小節数) * 384) - 1;
 			GoBranch.n発声時刻ms = (int)this.dbNowTime;
 			GoBranch.fNow_Measure_m = this.fNow_Measure_m;
@@ -4426,7 +4442,7 @@ internal class CTja : CActivity {
 		} else if (command == "#BARLINEOFF") {
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xE0;
+			chip.nChannelNo = EChipType.BarLineVisibleChange;
 			chip.n発声位置 = ((this.n現在の小節数) * 384) - 1;
 			chip.n発声時刻ms = (int)this.dbNowTime + 1;
 			chip.n整数値_内部番号 = 1;
@@ -4437,7 +4453,7 @@ internal class CTja : CActivity {
 		} else if (command == "#BARLINEON") {
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xE0;
+			chip.nChannelNo = EChipType.BarLineVisibleChange;
 			chip.n発声位置 = ((this.n現在の小節数) * 384) - 1;
 			chip.n発声時刻ms = (int)this.dbNowTime + 1;
 			chip.fNow_Measure_m = this.fNow_Measure_m;
@@ -4454,7 +4470,7 @@ internal class CTja : CActivity {
 
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xF1;
+			chip.nChannelNo = EChipType.LyricChange;
 			chip.n発声時刻ms = (int)this.dbNowTime;
 			chip.fNow_Measure_m = this.fNow_Measure_m;
 			chip.fNow_Measure_s = this.fNow_Measure_s;
@@ -4472,7 +4488,7 @@ internal class CTja : CActivity {
 			//チップ追加して割り込んでみる。
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xF2;
+			chip.nChannelNo = EChipType.DirectionChange;
 			chip.n発声位置 = ((this.n現在の小節数) * 384) - 1;
 			chip.n発声時刻ms = (int)this.dbNowTime;
 			chip.fNow_Measure_m = this.fNow_Measure_m;
@@ -4495,7 +4511,7 @@ internal class CTja : CActivity {
 			//チップ追加して割り込んでみる。
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xF3;
+			chip.nChannelNo = EChipType.SuddenChange;
 			chip.n発声位置 = ((this.n現在の小節数) * 384) - 1;
 			chip.n発声時刻ms = (int)this.dbNowTime;
 			chip.fNow_Measure_m = this.fNow_Measure_m;
@@ -4528,7 +4544,7 @@ internal class CTja : CActivity {
 			//チップ追加して割り込んでみる。
 			var chip = new CChip();
 
-			chip.nChannelNo = 0xE2;
+			chip.nChannelNo = EChipType.JPosScrollStart;
 			chip.n発声位置 = ((this.n現在の小節数) * 384) - 1;
 			chip.n発声時刻ms = (int)this.dbNowTime;
 			chip.fNow_Measure_m = this.fNow_Measure_m;
@@ -4550,7 +4566,7 @@ internal class CTja : CActivity {
 											  //チップ追加して割り込んでみる。
 			var chip = new CChip();
 
-			chip.nChannelNo = 0x9B;
+			chip.nChannelNo = EChipType.NextSongStart;
 			chip.n発声位置 = ((this.n現在の小節数) * 384) - 1;
 			chip.n発声時刻ms = (int)this.dbNowTime;
 			chip.fNow_Measure_m = this.fNow_Measure_m;
@@ -4619,7 +4635,7 @@ internal class CTja : CActivity {
 
 			var nextSongnextSongChip = new CChip();
 
-			nextSongnextSongChip.nChannelNo = 0x01;
+			nextSongnextSongChip.nChannelNo = EChipType.Bgm;
 			nextSongnextSongChip.n発声位置 = 384;
 			nextSongnextSongChip.n発声時刻ms = (int)this.dbNowTime;
 			nextSongnextSongChip.fNow_Measure_m = this.fNow_Measure_m;
@@ -4638,7 +4654,7 @@ internal class CTja : CActivity {
 			//チップ追加して割り込んでみる。
 			var chip = new CChip();
 
-			chip.nChannelNo = 0x09;
+			chip.nChannelNo = EChipType.NMScroll;
 			chip.n発声位置 = ((this.n現在の小節数) * 384) - 1;
 			chip.n発声時刻ms = (int)this.dbNowTime;
 			chip.fNow_Measure_m = this.fNow_Measure_m;
@@ -4654,7 +4670,7 @@ internal class CTja : CActivity {
 			//チップ追加して割り込んでみる。
 			var chip = new CChip();
 
-			chip.nChannelNo = 0x0A;
+			chip.nChannelNo = EChipType.BMScroll;
 			chip.n発声位置 = ((this.n現在の小節数) * 384) - 1;
 			chip.n発声時刻ms = (int)this.dbNowTime;
 			chip.fNow_Measure_m = this.fNow_Measure_m;
@@ -4670,7 +4686,7 @@ internal class CTja : CActivity {
 			//チップ追加して割り込んでみる。
 			var chip = new CChip();
 
-			chip.nChannelNo = 0x0B;
+			chip.nChannelNo = EChipType.HBScroll;
 			chip.n発声位置 = ((this.n現在の小節数) * 384) - 1;
 			chip.n発声時刻ms = (int)this.dbNowTime;
 			chip.fNow_Measure_m = this.fNow_Measure_m;
@@ -4740,7 +4756,7 @@ internal class CTja : CActivity {
 					//ReturnChipがnullであったら適応
 				}
 			} else {
-				var Flag = e分岐種類 == EBranchConditionType.Drumroll ? 0x18 : 0x50;
+				var Flag = e分岐種類 == EBranchConditionType.Drumroll ? EChipType.T8EndRoll : EChipType.BarLine;
 
 				if (listChips[i].nChannelNo == Flag) {
 					if (nReturnChip == null)
@@ -4788,7 +4804,7 @@ internal class CTja : CActivity {
 					for (int i = 0; i < (IsEndedBranching == true ? 3 : 1); i++) {
 						CChip chip = new CChip();
 						chip.n発声位置 = ((this.n現在の小節数) * 384);
-						chip.nChannelNo = 0x50;
+						chip.nChannelNo = EChipType.BarLine;
 						chip.n発声時刻ms = (int)this.dbNowTime;
 						chip.n整数値 = this.n現在の小節数;
 						chip.n文字数 = n文字数;
@@ -4840,7 +4856,7 @@ internal class CTja : CActivity {
 						CChip hakusen = new CChip();
 						hakusen.n発声位置 = ((this.n現在の小節数) * 384);
 						hakusen.n発声時刻ms = (int)(this.dbNowTime + (((db1拍 * 4.0)) * measure) * 1000.0);
-						hakusen.nChannelNo = 0x51;
+						hakusen.nChannelNo = EChipType.BeatLine;
 						hakusen.fBMSCROLLTime = this.dbNowBMScollTime;
 						hakusen.n整数値_内部番号 = this.n現在の小節数;
 						hakusen.n整数値 = 0;
@@ -4901,7 +4917,7 @@ internal class CTja : CActivity {
 							chip.bVisible = true;
 							chip.bShow = true;
 							chip.bShowRoll = true;
-							chip.nChannelNo = 0x10 + nObjectNum;
+							chip.nChannelNo = EChipType.T0Blank + nObjectNum;
 							//chip.n発声位置 = (this.n現在の小節数 * 384) + ((384 * n) / n文字数);
 							chip.n発声位置 = (int)((this.n現在の小節数 * 384.0) + ((384.0 * n) / n文字数));
 							chip.db発声位置 = this.dbNowTime;
@@ -4934,7 +4950,7 @@ internal class CTja : CActivity {
 								if (IsEndedBranching) {
 								} else {
 									// Balloon in branches
-									chip.nChannelNo = 0x19;
+									chip.nChannelNo = EChipType.T9BalloonEx;
 								}
 							}
 
@@ -5445,7 +5461,7 @@ internal class CTja : CActivity {
 			//チップ追加して割り込んでみる。
 			var chip = new CChip();
 
-			chip.nChannelNo = 0x03;
+			chip.nChannelNo = EChipType.BpmInfoChange;
 			chip.n発声位置 = ((this.n現在の小節数 - 1) * 384);
 			chip.n整数値 = 0x00;
 			chip.n整数値_内部番号 = 1;
@@ -5578,7 +5594,7 @@ internal class CTja : CActivity {
 			//チップ追加して割り込んでみる。
 			var chip = new CChip();
 
-			chip.nChannelNo = 0x9D;
+			chip.nChannelNo = EChipType.ScrollChange;
 			chip.n発声位置 = ((this.n現在の小節数 - 2) * 384);
 			chip.n整数値 = 0x00;
 			chip.n整数値_内部番号 = this.n内部番号SCROLL1to;
@@ -5949,7 +5965,7 @@ internal class CTja : CActivity {
 	private void tSenotes_Core_V2(List<CChip> list音符のみのリスト, bool ignoreSENote = false) {
 		const int DATA = 3;
 		int doco_count = 0;
-		int[] sort = new int[7];
+		EChipType[] sort = new EChipType[7];
 		double[] time = new double[7];
 		double[] scroll = new double[7];
 		double time_tmp;
@@ -5957,11 +5973,11 @@ internal class CTja : CActivity {
 		for (int i = 0; i < list音符のみのリスト.Count; i++) {
 			for (int j = 0; j < 7; j++) {
 				if (i + (j - 3) < 0) {
-					sort[j] = -1;
+					sort[j] = EChipType.Error;
 					time[j] = -1000000000;
 					scroll[j] = 1.0;
 				} else if (i + (j - 3) >= list音符のみのリスト.Count) {
-					sort[j] = -1;
+					sort[j] = EChipType.Error;
 					time[j] = 1000000000;
 					scroll[j] = 1.0;
 				} else {
@@ -5979,16 +5995,23 @@ internal class CTja : CActivity {
 			if (ignoreSENote && list音符のみのリスト[i].IsFixedSENote) continue;
 
 			switch (list音符のみのリスト[i].nChannelNo) {
-				case 0x11:
+				case EChipType.T1DonReg:
 
 					//（左2より離れている｜）_右2_右ドン_右右4_右右ドン…
-					if ((time[DATA - 1] > 2/* || (sort[DATA-1] != 1 && time[DATA-1] >= 2 && time[DATA-2] >= 4 && time[DATA-3] <= 5)*/) && time[DATA + 1] == 2 && sort[DATA + 1] == 1 && time[DATA + 2] == 4 && sort[DATA + 2] == 0x11 && time[DATA + 3] == 6 && sort[DATA + 3] == 0x11) {
+					if ((time[DATA - 1] > 2
+						/* || (sort[DATA-1] != (EChipType)1 && time[DATA-1] >= 2 && time[DATA-2] >= 4 && time[DATA-3] <= 5)*/)
+						&& time[DATA + 1] == 2 && sort[DATA + 1] == (EChipType)1
+						&& time[DATA + 2] == 4 && sort[DATA + 2] == EChipType.T1DonReg
+						&& time[DATA + 3] == 6 && sort[DATA + 3] == EChipType.T1DonReg
+						) {
 						list音符のみのリスト[i].nSenote = 1;
 						doco_count = 1;
 						break;
 					}
 					//ドコドコ中_左2_右2_右ドン
-					else if (doco_count != 0 && time[DATA - 1] == 2 && time[DATA + 1] == 2 && (sort[DATA + 1] == 0x11 || sort[DATA + 1] == 0x11)) {
+					else if (doco_count != 0 && time[DATA - 1] == 2 && time[DATA + 1] == 2
+						&& (sort[DATA + 1] == EChipType.T1DonReg || sort[DATA + 1] == EChipType.T1DonReg)
+						) {
 						if (doco_count % 2 == 0)
 							list音符のみのリスト[i].nSenote = 1;
 						else
@@ -6000,7 +6023,10 @@ internal class CTja : CActivity {
 					}
 
 					//8分ドコドン
-					if ((time[DATA - 2] >= 4.1 && time[DATA - 1] == 2 && time[DATA + 1] == 2 && time[DATA + 2] >= 4.1) && (sort[DATA - 1] == 0x11 && sort[DATA + 1] == 0x11)) {
+					if ((time[DATA - 2] >= 4.1 && time[DATA - 1] == 2
+						&& time[DATA + 1] == 2 && time[DATA + 2] >= 4.1)
+						&& (sort[DATA - 1] == EChipType.T1DonReg && sort[DATA + 1] == EChipType.T1DonReg)
+						) {
 						if (list音符のみのリスト[i].dbBPM >= 120.0) {
 							list音符のみのリスト[i - 1].nSenote = 1;
 							list音符のみのリスト[i].nSenote = 2;
@@ -6025,7 +6051,11 @@ internal class CTja : CActivity {
 					}
 
 					//ドコドコドン
-					if (time[DATA - 3] >= 3.4 && time[DATA - 2] == 2 && time[DATA - 1] == 1 && time[DATA + 1] == 1 && time[DATA + 2] == 2 && time[DATA + 3] >= 3.4 && sort[DATA - 2] == 0x11 && sort[DATA - 1] == 0x11 && sort[DATA + 1] == 0x11 && sort[DATA + 2] == 0x11) {
+					if (time[DATA - 3] >= 3.4 && time[DATA - 2] == 2 && time[DATA - 1] == 1
+						&& time[DATA + 1] == 1 && time[DATA + 2] == 2 && time[DATA + 3] >= 3.4
+						&& sort[DATA - 2] == EChipType.T1DonReg && sort[DATA - 1] == EChipType.T1DonReg
+						&& sort[DATA + 1] == EChipType.T1DonReg && sort[DATA + 2] == EChipType.T1DonReg
+						) {
 						list音符のみのリスト[i - 2].nSenote = 1;
 						list音符のみのリスト[i - 1].nSenote = 2;
 						list音符のみのリスト[i + 0].nSenote = 1;
@@ -6035,7 +6065,10 @@ internal class CTja : CActivity {
 						//break;
 					}
 					//ドコドン
-					else if (time[DATA - 2] >= 2.4 && time[DATA - 1] == 1 && time[DATA + 1] == 1 && time[DATA + 2] >= 2.4 && sort[DATA - 1] == 0x11 && sort[DATA + 1] == 0x11) {
+					else if (time[DATA - 2] >= 2.4 && time[DATA - 1] == 1
+						&& time[DATA + 1] == 1 && time[DATA + 2] >= 2.4
+						&& sort[DATA - 1] == EChipType.T1DonReg && sort[DATA + 1] == EChipType.T1DonReg
+						) {
 						list音符のみのリスト[i].nSenote = 2;
 					}
 					//右の音符が2以上離れている
@@ -6051,13 +6084,15 @@ internal class CTja : CActivity {
 						list音符のみのリスト[i].nSenote = 0;
 					}
 					//右の音符が2以上_大音符
-					else if (time[DATA + 1] >= 2 && (sort[DATA + 1] == 0x13 || sort[DATA + 1] == 0x14)) {
+					else if (time[DATA + 1] >= 2
+						&& (sort[DATA + 1] == EChipType.T3DonBig || sort[DATA + 1] == EChipType.T4KaBig)
+						) {
 						list音符のみのリスト[i].nSenote = 0;
 					} else {
 						list音符のみのリスト[i].nSenote = 1;
 					}
 					break;
-				case 0x12:
+				case EChipType.T2KaReg:
 					doco_count = 0;
 
 					//BPM120以下のみ
@@ -6082,7 +6117,9 @@ internal class CTja : CActivity {
 						list音符のみのリスト[i].nSenote = 3;
 					}
 					//右の音符が2以上_大音符
-					else if (time[DATA + 1] >= 2 && (sort[DATA + 1] == 0x13 || sort[DATA + 1] == 0x14)) {
+					else if (time[DATA + 1] >= 2
+						&& (sort[DATA + 1] == EChipType.T3DonBig || sort[DATA + 1] == EChipType.T4KaBig)
+						) {
 						list音符のみのリスト[i].nSenote = 3;
 					} else {
 						list音符のみのリスト[i].nSenote = 4;
@@ -6109,7 +6146,7 @@ internal class CTja : CActivity {
 		List<CChip> listRemoveTiming = new List<CChip>(128);
 
 		foreach (CChip pChip in listChip) {
-			if (!(pChip.nChannelNo == 0x01 /* || pChip.isAudibleChip */)) {
+			if (!(pChip.nChannelNo == EChipType.Bgm /* || pChip.isAudibleChip */)) {
 				continue;
 			}
 			// BGM, 演奏チャネル, 不可視サウンド, フィルインサウンド, 空打ち音はミキサー管理の対象
@@ -6128,7 +6165,7 @@ internal class CTja : CActivity {
 			t発声時刻msと発声位置を取得する(pChip.n発声時刻ms - n発音前余裕ms, out nAddMixer時刻ms, out nAddMixer位置);
 
 			CChip c_AddMixer = new CChip() {
-				nChannelNo = 0xDA,
+				nChannelNo = EChipType.AddSound,
 				n整数値 = pChip.n整数値,
 				n整数値_内部番号 = pChip.n整数値_内部番号,
 				n発声時刻ms = nAddMixer時刻ms,
@@ -6179,7 +6216,7 @@ internal class CTja : CActivity {
 				}
 				CChip c = new CChip()                                           // mixer削除時刻を更新(遅延)する
 				{
-					nChannelNo = 0xDB,
+					nChannelNo = EChipType.RemoveSound,
 					n整数値 = listRemoveTiming[index].n整数値,
 					n整数値_内部番号 = listRemoveTiming[index].n整数値_内部番号,
 					n発声時刻ms = n新RemoveMixer時刻ms,
@@ -6190,7 +6227,7 @@ internal class CTja : CActivity {
 			{                                                                   // 発音していたが既にmixer削除確定していたなら
 				CChip c = new CChip()                                           // 新しくmixer削除候補として追加する
 				{
-					nChannelNo = 0xDB,
+					nChannelNo = EChipType.RemoveSound,
 					n整数値 = pChip.n整数値,
 					n整数値_内部番号 = pChip.n整数値_内部番号,
 					n発声時刻ms = n新RemoveMixer時刻ms,

@@ -9,25 +9,25 @@ class NotesManager {
 	#region [Parsing]
 
 	public static Dictionary<string, int> NoteCorrespondanceDictionnary = new Dictionary<string, int>() {
-		["0"] = 0, // Empty
-		["1"] = 1, // Small Don (Taiko) | Red (right) hit (Konga)
-		["2"] = 2, // Small Ka (Taiko) | Yellow (left) hit (Konga)
-		["3"] = 3, // Big Don (Taiko) | Pink note (Konga)
-		["4"] = 4, // Big Ka (Taiko) | Clap (Konga)
-		["5"] = 5, // Small roll start | Konga red roll
-		["6"] = 6, // Big roll start | Konga pink roll
-		["7"] = 7, // Balloon
-		["8"] = 8, // Roll/Balloon end
-		["9"] = 9, // Kusudama
-		["A"] = 10, // Joint Big Don (2P)
-		["B"] = 11, // Joint Big Ka (2P)
-		["C"] = 12, // Mine
-		["D"] = 13, // ProjectOutfox's Fuse roll
+		["0"] = EChipType.T0Blank - EChipType.T0Blank, // Empty
+		["1"] = EChipType.T1DonReg - EChipType.T0Blank, // Small Don (Taiko) | Red (right) hit (Konga)
+		["2"] = EChipType.T2KaReg - EChipType.T0Blank, // Small Ka (Taiko) | Yellow (left) hit (Konga)
+		["3"] = EChipType.T3DonBig - EChipType.T0Blank, // Big Don (Taiko) | Pink note (Konga)
+		["4"] = EChipType.T4KaBig - EChipType.T0Blank, // Big Ka (Taiko) | Clap (Konga)
+		["5"] = EChipType.T5RollReg - EChipType.T0Blank, // Small roll start | Konga red roll
+		["6"] = EChipType.T6RollBig - EChipType.T0Blank, // Big roll start | Konga pink roll
+		["7"] = EChipType.T7BalloonReg - EChipType.T0Blank, // Balloon
+		["8"] = EChipType.T8EndRoll - EChipType.T0Blank, // Roll/Balloon end
+		["9"] = EChipType.T9BalloonEx - EChipType.T0Blank, // Kusudama
+		["A"] = EChipType.TADonBigHand - EChipType.T0Blank, // Joint Big Don (2P)
+		["B"] = EChipType.TBKaBigHand - EChipType.T0Blank, // Joint Big Ka (2P)
+		["C"] = EChipType.TCMine - EChipType.T0Blank, // Mine
+		["D"] = EChipType.TDBalloonFuze - EChipType.T0Blank, // ProjectOutfox's Fuse roll
 		["E"] = 0, // Unused
-		["F"] = 15, // ADLib
-		["G"] = 0xF1, // Green (Purple) double hit note
-		["H"] = 16, // Konga clap roll | Taiko big roll
-		["I"] = 17, // Konga yellow roll | Taiko small roll
+		["F"] = EChipType.TFAdlib - EChipType.T0Blank, // ADLib
+		["G"] = EChipType.TGKadon - EChipType.T0Blank, // Green (Purple) double hit note
+		["H"] = EChipType.THClapRoll - EChipType.T0Blank, // Konga clap roll | Taiko big roll
+		["I"] = EChipType.TILeftRoll - EChipType.T0Blank, // Konga yellow roll | Taiko small roll
 	};
 
 	public static bool FastFlankedParsing(string s) {

@@ -740,7 +740,7 @@ internal class CActImplLaneTaiko : CActivity {
 
 	}
 
-	public virtual void Start(int nLane, ENoteJudge judge, bool b両手入力, int nPlayer) {
+	public virtual void Start(EChipType nLane, ENoteJudge judge, bool b両手入力, int nPlayer) {
 		//2017.08.15 kairera0467 排他なので番地をそのまま各レーンの状態として扱う
 
 		//for( int n = 0; n < 1; n++ )
@@ -750,14 +750,14 @@ internal class CActImplLaneTaiko : CActivity {
 			this.st状態[nPlayer].nPlayer = nPlayer;
 
 			switch (nLane) {
-				case 0x11:
-				case 0x12:
+				case EChipType.T1DonReg:
+				case EChipType.T2KaReg:
 					this.st状態[nPlayer].nIsBig = 0;
 					break;
-				case 0x13:
-				case 0x14:
-				case 0x1A:
-				case 0x1B: {
+				case EChipType.T3DonBig:
+				case EChipType.T4KaBig:
+				case EChipType.TADonBigHand:
+				case EChipType.TBKaBigHand: {
 						if (b両手入力)
 							this.st状態[nPlayer].nIsBig = 1;
 						else

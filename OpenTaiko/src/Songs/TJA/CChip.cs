@@ -29,7 +29,7 @@ internal class CChip : IComparable<CChip>, ICloneable {
 	public int nScrollDirection;
 	public int nDisplayPriority; //(特殊)現状連打との判断目的で使用
 	public ENoteState eNoteState;
-	public int nChannelNo;
+	public EChipType nChannelNo;
 	public int VideoStartTimeMs;
 	public int nHorizontalChipDistance;
 	public int nNoteTipDistance_X;
@@ -127,7 +127,7 @@ internal class CChip : IComparable<CChip>, ICloneable {
 	public bool isEmptyHitSoundRange => this.nChannelNo is >= 0xB0 and <= 0xBF;
 
 	public bool isAutoKeySoundChip => this.nChannelNo is
-		1
+		EChipType.Bgm
 		or (>= 0x61 and <= 0x69)
 		or (>= 0x70 and <= 0x79)
 		or (>= 0x80 and <= 0x89)
@@ -159,7 +159,7 @@ internal class CChip : IComparable<CChip>, ICloneable {
 	}
 	public void t初期化() {
 		this.bBranch = false;
-		this.nChannelNo = 0;
+		this.nChannelNo = EChipType.Unknown;
 		this.n整数値 = 0; //整数値をList上の番号として用いる。
 		this.n整数値_内部番号 = 0;
 		this.db実数値 = 0.0;
@@ -260,7 +260,7 @@ internal class CChip : IComparable<CChip>, ICloneable {
 		return string.Format("CChip: 位置:{0:D4}.{1:D3}, 時刻{2:D6}, Ch:{3:X2}({4}), Pn:{5}({11})(内部{6}), Pd:{7}, Sz:{8}, BMScroll:{9}, Auto:{10}, コース:{11}",
 			this.n発声位置 / 384, this.n発声位置 % 384,
 			this.n発声時刻ms,
-			this.nChannelNo, chToStr[this.nChannelNo],
+			this.nChannelNo, chToStr[(int)this.nChannelNo],
 			this.n整数値, this.n整数値_内部番号,
 			this.db実数値,
 			this.dbChipSizeRatio,
@@ -276,7 +276,7 @@ internal class CChip : IComparable<CChip>, ICloneable {
 	public int GetDuration() {
 		int nDuration = 0;
 
-		if (this.nChannelNo == 0x01)       // WAV
+		if (this.nChannelNo == EChipType.Bgm)       // WAV
 		{
 			CTja.CWAV wc;
 			OpenTaiko.TJA.listWAV.TryGetValue(this.n整数値_内部番号, out wc);
@@ -285,7 +285,7 @@ internal class CChip : IComparable<CChip>, ICloneable {
 			} else {
 				nDuration = (wc.rSound[0] == null) ? 0 : wc.rSound[0].TotalPlayTime;
 			}
-		} else if (this.nChannelNo == 0x54) // AVI
+		} else if (this.nChannelNo == EChipType.BgaOn) // AVI
 		{
 			CVideoDecoder wc;
 			OpenTaiko.TJA.listVD.TryGetValue(this.n整数値_内部番号, out wc);
@@ -355,7 +355,7 @@ internal class CChip : IComparable<CChip>, ICloneable {
 		}
 
 		// 位置が同じなら優先度で比較。
-		return n優先度[this.nChannelNo].CompareTo(n優先度[other.nChannelNo]);
+		return n優先度[(int)this.nChannelNo].CompareTo(n優先度[(int)other.nChannelNo]);
 	}
 	//-----------------
 	#endregion

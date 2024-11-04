@@ -377,7 +377,7 @@ internal class CActImplMtaiko : CActivity {
 		return base.Draw();
 	}
 
-	public void tMtaikoEvent(int nChannel, int nHand, int nPlayer) {
+	public void tMtaikoEvent(EChipType nChannel, int nHand, int nPlayer) {
 		CConfigIni configIni = OpenTaiko.ConfigIni;
 		bool bAutoPlay = configIni.bAutoPlay[nPlayer];
 		int playerShift = 5 * nPlayer;
@@ -391,19 +391,19 @@ internal class CActImplMtaiko : CActivity {
 
 		if (!bAutoPlay) {
 			switch (nChannel) {
-				case 0x11:
-				case 0x13:
-				case 0x15:
-				case 0x16:
-				case 0x17: {
+				case EChipType.T1DonReg:
+				case EChipType.T3DonBig:
+				case EChipType.T5RollReg:
+				case EChipType.T6RollBig:
+				case EChipType.T7BalloonReg: {
 						this.stパッド状態[2 + nHand + playerShift].n明るさ = 8;
 					}
 					break;
-				case 0x12: {
+				case EChipType.T2KaReg: {
 						this.stパッド状態[nHand + playerShift].n明るさ = 8;
 					}
 					break;
-				case 0x14: {
+				case EChipType.T4KaBig: {
 						if (_gt == EGameType.Konga) {
 							this.stパッド状態[4 + playerShift].n明るさ = 8;
 						} else {
@@ -415,17 +415,17 @@ internal class CActImplMtaiko : CActivity {
 			}
 		} else {
 			switch (nChannel) {
-				case 0x11:
-				case 0x15:
-				case 0x16:
-				case 0x17:
-				case 0x1F: {
+				case EChipType.T1DonReg:
+				case EChipType.T5RollReg:
+				case EChipType.T6RollBig:
+				case EChipType.T7BalloonReg:
+				case EChipType.TFAdlib: {
 						this.stパッド状態[2 + nHand + playerShift].n明るさ = 8;
 					}
 					break;
 
-				case 0x13:
-				case 0x1A: {
+				case EChipType.T3DonBig:
+				case EChipType.TADonBigHand: {
 						if (_gt == EGameType.Konga) {
 							this.stパッド状態[0 + playerShift].n明るさ = 8;
 							this.stパッド状態[2 + playerShift].n明るさ = 8;
@@ -436,13 +436,13 @@ internal class CActImplMtaiko : CActivity {
 					}
 					break;
 
-				case 0x12: {
+				case EChipType.T2KaReg: {
 						this.stパッド状態[nHand + playerShift].n明るさ = 8;
 					}
 					break;
 
-				case 0x14:
-				case 0x1B: {
+				case EChipType.T4KaBig:
+				case EChipType.TBKaBigHand: {
 						if (_gt == EGameType.Konga) {
 							this.stパッド状態[4 + playerShift].n明るさ = 8;
 						} else {
@@ -453,7 +453,7 @@ internal class CActImplMtaiko : CActivity {
 					}
 					break;
 
-				case 0x101: {
+				case EChipType.TGKadon: {
 						this.stパッド状態[nHand + playerShift].n明るさ = 8;
 						this.stパッド状態[2 + (nHand == 0 ? 1 : 0) + playerShift].n明るさ = 8;
 						break;

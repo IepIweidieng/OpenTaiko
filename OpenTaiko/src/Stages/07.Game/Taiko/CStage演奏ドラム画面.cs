@@ -1472,7 +1472,7 @@ internal class CStage演奏ドラム画面 : CStage演奏画面共通 {
 
 
 					double _scrollSpeed = pChip.dbSCROLL_Y * (this.actScrollSpeed.dbConfigScrollSpeed[nPlayer] + 1.0) / 10.0;
-					float play_bpm_time = this.GetNowPBMTime(dTX, 0);
+					float play_bpm_time = CTja.GetNowPBMTime(dTX, pChip.nBranch, SoundManager.PlayTimer.NowTimeMs);
 					double th16DBeat = pChip.fBMSCROLLTime - play_bpm_time;
 
 					y += NotesManager.GetNoteY(time, th16DBeat, pChip.dbBPM, _scrollSpeed, pChip.eScrollMode);
@@ -1690,7 +1690,7 @@ internal class CStage演奏ドラム画面 : CStage演奏画面共通 {
 				double _scrollSpeed = pChip.dbSCROLL_Y * (this.actScrollSpeed.dbConfigScrollSpeed[nPlayer] + 1.0) / 10.0;
 				long __dbt = nowTime;
 				long time = pChip.n発声時刻ms - __dbt;
-				float play_bpm_time = this.GetNowPBMTime(dTX, 0);
+				float play_bpm_time = CTja.GetNowPBMTime(dTX, pChip.nBranch, SoundManager.PlayTimer.NowTimeMs);
 				double th16DBeat = pChip.fBMSCROLLTime - play_bpm_time;
 				y += NotesManager.GetNoteY(time, th16DBeat, pChip.dbBPM, _scrollSpeed, pChip.eScrollMode);
 			}
@@ -1965,7 +1965,7 @@ internal class CStage演奏ドラム画面 : CStage演奏画面共通 {
 			double _scrollSpeed = pChip.dbSCROLL_Y * (this.actScrollSpeed.dbConfigScrollSpeed[nPlayer] + 1.0) / 10.0;
 			long __dbt = (long)(SoundManager.PlayTimer.NowTimeMs * OpenTaiko.ConfigIni.SongPlaybackSpeed);
 			long msDTime = pChip.n発声時刻ms - __dbt;
-			float play_bpm_time = this.GetNowPBMTime(dTX, 0);
+			float play_bpm_time = CTja.GetNowPBMTime(dTX, pChip.nBranch, SoundManager.PlayTimer.NowTimeMs);
 			double th16DBeat = pChip.fBMSCROLLTime - play_bpm_time;
 			y += NotesManager.GetNoteY(msDTime, th16DBeat, pChip.dbBPM, _scrollSpeed, pChip.eScrollMode);
 

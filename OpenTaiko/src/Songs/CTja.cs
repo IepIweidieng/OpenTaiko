@@ -39,23 +39,6 @@ internal class CTja : CActivity {
 			return builder.ToString();
 		}
 	}
-	public class CSCROLL {
-		public double dbSCROLL値;
-		public double dbSCROLL値Y;
-		public int n内部番号;
-		public int n表記上の番号;
-
-		public override string ToString() {
-			StringBuilder builder = new StringBuilder(0x80);
-			if (this.n内部番号 != this.n表記上の番号) {
-				builder.Append(string.Format("CSCROLL{0}(内部{1})", CTja.tZZ(this.n表記上の番号), this.n内部番号));
-			} else {
-				builder.Append(string.Format("CSCROLL{0}", CTja.tZZ(this.n表記上の番号)));
-			}
-			builder.Append(string.Format(", SCROLL:{0}", this.dbSCROLL値));
-			return builder.ToString();
-		}
-	}
 	/// <summary>
 	/// 判定ライン移動命令
 	/// </summary>
@@ -580,10 +563,6 @@ internal class CTja : CActivity {
 	public List<CChip> listChip;
 	public List<CChip>[] listChip_Branch;
 	public Dictionary<int, CWAV> listWAV;
-	public Dictionary<int, CSCROLL> listSCROLL;
-	public Dictionary<int, CSCROLL> listSCROLL_Normal;
-	public Dictionary<int, CSCROLL> listSCROLL_Expert;
-	public Dictionary<int, CSCROLL> listSCROLL_Master;
 	public Dictionary<int, CJPOSSCROLL> listJPOSSCROLL;
 	public List<DanSongs> List_DanSongs;
 	private EScrollMode eScrollMode;
@@ -2316,8 +2295,6 @@ internal class CTja : CActivity {
 				this.dbNowScroll = dbComplexNum[0];
 				this.dbNowScrollY = dbComplexNum[1];
 
-				this.listSCROLL.Add(this.n内部番号SCROLL1to, new CSCROLL() { n内部番号 = this.n内部番号SCROLL1to, n表記上の番号 = 0, dbSCROLL値 = dbComplexNum[0], dbSCROLL値Y = dbComplexNum[1] });
-
 				switch (this.n現在のコース) {
 					case ECourse.eNormal:
 						this.dbNowSCROLL_Normal[0] = dbComplexNum[0];
@@ -2362,8 +2339,6 @@ internal class CTja : CActivity {
 
 				this.dbNowScroll = dbSCROLL;
 				this.dbNowScrollY = 0.0;
-
-				this.listSCROLL.Add(this.n内部番号SCROLL1to, new CSCROLL() { n内部番号 = this.n内部番号SCROLL1to, n表記上の番号 = 0, dbSCROLL値 = dbSCROLL, dbSCROLL値Y = 0.0 });
 
 				switch (this.n現在のコース) {
 					case ECourse.eNormal:
@@ -5574,9 +5549,6 @@ internal class CTja : CActivity {
 
 			this.dbScrollSpeed = Convert.ToDouble(strCommandParam);
 
-			this.listSCROLL.Add(this.n内部番号SCROLL1to, new CSCROLL() { n内部番号 = this.n内部番号SCROLL1to, n表記上の番号 = 0, dbSCROLL値 = this.dbScrollSpeed, });
-
-
 			//チップ追加して割り込んでみる。
 			var chip = new CChip();
 
@@ -6297,10 +6269,6 @@ internal class CTja : CActivity {
 		}
 		this.listWAV = new Dictionary<int, CWAV>();
 		this.listBPM = new Dictionary<int, CBPM>();
-		this.listSCROLL = new Dictionary<int, CSCROLL>();
-		this.listSCROLL_Normal = new Dictionary<int, CSCROLL>();
-		this.listSCROLL_Expert = new Dictionary<int, CSCROLL>();
-		this.listSCROLL_Master = new Dictionary<int, CSCROLL>();
 		this.listJPOSSCROLL = new Dictionary<int, CJPOSSCROLL>();
 		this.listDELAY = new Dictionary<int, CDELAY>();
 		this.listBRANCH = new Dictionary<int, CBRANCH>();
@@ -6348,23 +6316,6 @@ internal class CTja : CActivity {
 		if (this.listBRANCH != null) {
 			this.listBRANCH.Clear();
 			this.listBRANCH = null;
-		}
-		if (this.listSCROLL != null) {
-			this.listSCROLL.Clear();
-			this.listSCROLL = null;
-		}
-
-		if (this.listSCROLL_Normal != null) {
-			this.listSCROLL_Normal.Clear();
-			this.listSCROLL_Normal = null;
-		}
-		if (this.listSCROLL_Expert != null) {
-			this.listSCROLL_Expert.Clear();
-			this.listSCROLL_Expert = null;
-		}
-		if (this.listSCROLL_Master != null) {
-			this.listSCROLL_Master.Clear();
-			this.listSCROLL_Master = null;
 		}
 		if (this.listJPOSSCROLL != null) {
 			this.listJPOSSCROLL.Clear();

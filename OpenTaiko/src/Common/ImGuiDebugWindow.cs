@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using FDK;
 using ImGuiNET;
 using SampleFramework;
+using static OpenTaiko.CTja;
 
 namespace OpenTaiko;
 
@@ -315,14 +316,35 @@ public static class ImGuiDebugWindow {
 							ImGui.Text("Subtitle: " + dtx.SUBTITLE.GetString(""));
 							ImGui.Text("Charter: " + dtx.MAKER);
 
-							ImGui.Text("BPM: " + dtx.BASEBPM + (dtx.listBPM.Count > 1 ? (" (Min: " + dtx.MinBPM + " / Max: " + dtx.MaxBPM + ")") : ""));
-							if (dtx.listBPM.Count > 1) {
-								if (ImGui.TreeNodeEx($"BPM List ({dtx.listBPM.Count})###GAME_BPM_LIST_{i}")) {
-									foreach (CTja.CBPM bpm in dtx.listBPM.Values) {
-										ImGui.Text($"(Time: {String.Format("{0:0.#}s", (bpm.bpm_change_time / 1000))}) {bpm.dbBPM値}");
+							ImGui.Text("BPM: " + dtx.BASEBPM + ((dtx.MaxBPM != dtx.MinBPM) ? (" (Min: " + dtx.MinBPM + " / Max: " + dtx.MaxBPM + ")") : ""));
+
+							double msTime = CTja.MixerTimeToChartTime(dtx, SoundManager.PlayTimer.NowTimeMs);
+							ImGui.Text($"Curr bpm: {OpenTaiko.stageGameScreen.actPlayInfo.dbBPM[0]}");
+							ImGui.Text($"Curr Time: {msTime / 1000:0.#}s");
+							ImGui.Text($"Curr Beat: {
+								string.Join("/",
+									CTja.GetNowPBMTimeByAllBranches(dtx, msTime)
+										.Select(x => $"{x:0.#}"))
+							}b");
+
+							for (int iBranch = 0; iBranch < dtx.TimingChangesByBranch.Length; ++iBranch) {
+								CTja.ECourse branch = (CTja.ECourse)iBranch;
+								var timingChanges = dtx.TimingChangesByBranch[iBranch];
+								if (ImGui.TreeNodeEx($"Timing Changes for {branch} ({timingChanges.Count})###GAME_TIMING_CHANGE_LIST_{i}_{branch}")) {
+									foreach (CTja.CTimingChange tc in timingChanges) {
+										ImGui.Text($"{tc.msTime / 1000:0.#}~{tc.msTime_end / 1000:0.#}s "
+											+ $"{tc.th16Beat / 4:0.#}~{tc.th16Beat_end / 4:0.#}b "
+											+ $"{tc.dbBPM}bpm {tc.measure_s}/{tc.measure_m}");
 									}
 									ImGui.TreePop();
 								}
+							}
+
+							if (false && ImGui.TreeNodeEx($"Chips ({dtx.listChip.Count})###GAME_CHIP_LIST")) {
+								foreach (var chip in dtx.listChip) {
+									ImGui.Text(chip.ToString());
+								}
+								ImGui.TreePop();
 							}
 
 							ImGui.Text("Lyrics: " + (dtx.usingLyricsFile ? dtx.listLyric2.Count : dtx.listLyric.Count));

@@ -110,6 +110,7 @@ internal class CChip : IComparable<CChip>, ICloneable {
 	public float fObjEnd;
 
 	public CSongObject obj;
+	public CTimingChange? timingChange;
 
 	public string strTargetTxName;
 	public string strNewPath;
@@ -252,7 +253,9 @@ internal class CChip : IComparable<CChip>, ICloneable {
 				"KaDon", "??", "??", "??", "??", "??", "??", "??",
 				"??", "??", "??", "??", "??", "??", "??", "??",
 			};
-		return string.Format("CChip: 位置:{0:D4}.{1:D3}, 時刻{2:D6}, Ch:{3:X2}({4}), Pn:{5}({11})(内部{6}), Pd:{7}, Sz:{8}, BMScroll:{9}, Auto:{10}, コース:{11}",
+		return string.Format(
+			"CChip: 位置:{0:D4}.{1:D3}, {2}~{12}ms, {9}~{13}b, {14}bpm HS ({15}, {16}), Ch:{3:X2}({4}), Pn:{5}({11})(内部{6}), Pd:{7}, Sz:{8}, "
+			+ "Auto:{10}, コース:{11}",
 			this.n発声位置 / 384, this.n発声位置 % 384,
 			this.n発声時刻ms,
 			this.nChannelNo, chToStr[this.nChannelNo],
@@ -262,7 +265,11 @@ internal class CChip : IComparable<CChip>, ICloneable {
 			this.fBMSCROLLTime,
 			this.b自動再生音チャンネルである,
 			this.nBranch,
-			CTja.tZZ(this.n整数値));
+			this.nNoteEndTimems,
+			this.fBMSCROLLTime_end,
+			this.dbBPM,
+			this.dbSCROLL,
+			this.dbSCROLL_Y);
 	}
 	/// <summary>
 	/// チップの再生長を取得する。現状、WAVチップとBGAチップでのみ使用可能。

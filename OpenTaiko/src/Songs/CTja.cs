@@ -20,7 +20,7 @@ internal class CTja : CActivity {
 	private int nNowReadLine;
 	// Class
 
-	public class CBPM {
+	public class CTimingChange {
 		public double dbBPM値;
 		public double bpm_change_time;
 		public double bpm_change_bmscroll_time;
@@ -559,7 +559,7 @@ internal class CTja : CActivity {
 	public Color DANTICKCOLOR = Color.White;
 
 	public Dictionary<int, CVideoDecoder> listVD;
-	public Dictionary<int, CBPM> listBPM;
+	public Dictionary<int, CTimingChange> listTimingChanges;
 	public List<CChip> listChip;
 	public List<CChip>[] listChip_Branch;
 	public Dictionary<int, CWAV> listWAV;
@@ -1289,19 +1289,19 @@ internal class CTja : CActivity {
 			if (!this.bヘッダのみ) {
 				#region [ BPM/BMP初期化 ]
 				int ch;
-				CBPM cbpm = null;
-				foreach (CBPM cbpm2 in this.listBPM.Values) {
+				CTimingChange cbpm = null;
+				foreach (CTimingChange cbpm2 in this.listTimingChanges.Values) {
 					if (cbpm2.n表記上の番号 == 0) {
 						cbpm = cbpm2;
 						break;
 					}
 				}
 				if (cbpm == null) {
-					cbpm = new CBPM();
+					cbpm = new CTimingChange();
 					cbpm.n内部番号 = this.n内部番号BPM1to++;
 					cbpm.n表記上の番号 = 0;
 					cbpm.dbBPM値 = 120.0;
-					this.listBPM.Add(cbpm.n内部番号, cbpm);
+					this.listTimingChanges.Add(cbpm.n内部番号, cbpm);
 					CChip chip = new CChip();
 					chip.n発声位置 = 0;
 					chip.nChannelNo = 8;      // 拡張BPM
@@ -1502,7 +1502,7 @@ internal class CTja : CActivity {
 								if (this.bOFFSETの値がマイナスである == false)
 									chip.n発声時刻ms += this.nOFFSET;
 								ms = chip.n発声時刻ms;
-								if (this.listBPM.TryGetValue(chip.n整数値_内部番号, out CBPM cBPM)) {
+								if (this.listTimingChanges.TryGetValue(chip.n整数値_内部番号, out CTimingChange cBPM)) {
 									bpm = (cBPM.n表記上の番号 == 0 ? 0.0 : this.BASEBPM) + cBPM.dbBPM値;
 									this.dbNowBPM = bpm;
 								}
@@ -1645,7 +1645,7 @@ internal class CTja : CActivity {
 					foreach (CWAV cwav in this.listWAV.Values) {
 						Trace.TraceInformation(cwav.ToString());
 					}
-					foreach (CBPM cbpm3 in this.listBPM.Values) {
+					foreach (CTimingChange cbpm3 in this.listTimingChanges.Values) {
 						Trace.TraceInformation(cbpm3.ToString());
 					}
 					foreach (CChip chip in this.listChip) {
@@ -2243,7 +2243,14 @@ internal class CTja : CActivity {
 				MinBPM = dbBPM;
 			}
 
-			this.listBPM.Add(this.n内部番号BPM1to - 1, new CBPM() { n内部番号 = this.n内部番号BPM1to - 1, n表記上の番号 = 0, dbBPM値 = dbBPM, bpm_change_time = this.dbNowTime - nNextSongOffset, bpm_change_bmscroll_time = this.dbNowBMScollTime, bpm_change_course = this.n現在のコース });
+			this.listTimingChanges.Add(this.n内部番号BPM1to - 1, new CTimingChange() {
+				n内部番号 = this.n内部番号BPM1to - 1,
+				n表記上の番号 = 0,
+				dbBPM値 = dbBPM,
+				bpm_change_time = this.dbNowTime - nNextSongOffset,
+				bpm_change_bmscroll_time = this.dbNowBMScollTime,
+				bpm_change_course = this.n現在のコース,
+			});
 
 
 			//チップ追加して割り込んでみる。
@@ -5439,7 +5446,7 @@ internal class CTja : CActivity {
 			this.MaxBPM = dbBPM;
 			this.dbNowBPM = dbBPM;
 
-			this.listBPM.Add(this.n内部番号BPM1to - 1, new CBPM() { n内部番号 = this.n内部番号BPM1to - 1, n表記上の番号 = this.n内部番号BPM1to - 1, dbBPM値 = dbBPM, });
+			this.listTimingChanges.Add(this.n内部番号BPM1to - 1, new CTimingChange() { n内部番号 = this.n内部番号BPM1to - 1, n表記上の番号 = this.n内部番号BPM1to - 1, dbBPM値 = dbBPM, });
 			this.n内部番号BPM1to++;
 
 
@@ -5487,7 +5494,7 @@ internal class CTja : CActivity {
 
 			this.bOFFSETの値がマイナスである = this.nOFFSET < 0 ? true : false;
 
-			this.listBPM[0].bpm_change_bmscroll_time = -2000 * this.dbNowBPM / 15000;
+			this.listTimingChanges[0].bpm_change_bmscroll_time = -2000 * this.dbNowBPM / 15000;
 			if (this.bOFFSETの値がマイナスである == true)
 				this.nOFFSET = this.nOFFSET * -1; //OFFSETは秒を加算するので、必ず正の数にすること。
 												  //tbOFFSET.Text = strCommandParam;
@@ -6292,7 +6299,7 @@ internal class CTja : CActivity {
 			}
 		}
 		this.listWAV = new Dictionary<int, CWAV>();
-		this.listBPM = new Dictionary<int, CBPM>();
+		this.listTimingChanges = new Dictionary<int, CTimingChange>();
 		this.listJPOSSCROLL = new Dictionary<int, CJPOSSCROLL>();
 		this.listDELAY = new Dictionary<int, CDELAY>();
 		this.listBRANCH = new Dictionary<int, CBRANCH>();
@@ -6329,9 +6336,9 @@ internal class CTja : CActivity {
 			}
 			this.listVD = null;
 		}
-		if (this.listBPM != null) {
-			this.listBPM.Clear();
-			this.listBPM = null;
+		if (this.listTimingChanges != null) {
+			this.listTimingChanges.Clear();
+			this.listTimingChanges = null;
 		}
 		if (this.listDELAY != null) {
 			this.listDELAY.Clear();

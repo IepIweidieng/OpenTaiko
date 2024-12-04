@@ -3319,7 +3319,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 					if (!pChip.bHit && time < 0) {
 						pChip.bHit = true;
 						if (pChip.nBranch == this.nCurrentBranch[nPlayer]) {
-							if (dTX.listBPM.TryGetValue(pChip.n整数値_内部番号, out CTja.CBPM cBPM)) {
+							if (dTX.listTimingChanges.TryGetValue(pChip.n整数値_内部番号, out CTja.CTimingChange cBPM)) {
 								this.actPlayInfo.dbBPM[nPlayer] = cBPM.dbBPM値;// + dTX.BASEBPM;
 							}
 
@@ -4301,25 +4301,25 @@ internal abstract class CStage演奏画面共通 : CStage {
 
 		for (int i = 1; ; i++) {
 			//BPMCHANGEの数越えた
-			if (i >= tja.listBPM.Count) {
-				CTja.CBPM cBPM = tja.listBPM[last_input];
+			if (i >= tja.listTimingChanges.Count) {
+				CTja.CTimingChange cBPM = tja.listTimingChanges[last_input];
 				bpm_time = (float)cBPM.bpm_change_bmscroll_time + ((play_time - (float)cBPM.bpm_change_time) * (float)cBPM.dbBPM値 / 15000.0f);
 				last_bpm_change_time = (float)cBPM.bpm_change_time;
 				break;
 			}
-			for (; i < tja.listBPM.Count; i++) {
-				CTja.CBPM cBPM = tja.listBPM[i];
+			for (; i < tja.listTimingChanges.Count; i++) {
+				CTja.CTimingChange cBPM = tja.listTimingChanges[i];
 				if (cBPM.bpm_change_time == 0 || cBPM.bpm_change_course == this.nCurrentBranch[0]) {
 					break;
 				}
 			}
-			if (i == tja.listBPM.Count) {
-				i = tja.listBPM.Count - 1;
+			if (i == tja.listTimingChanges.Count) {
+				i = tja.listTimingChanges.Count - 1;
 				continue;
 			}
 
-			if (play_time < tja.listBPM[i].bpm_change_time) {
-				CTja.CBPM cBPM = tja.listBPM[last_input];
+			if (play_time < tja.listTimingChanges[i].bpm_change_time) {
+				CTja.CTimingChange cBPM = tja.listTimingChanges[last_input];
 				bpm_time = (float)cBPM.bpm_change_bmscroll_time + ((play_time - (float)cBPM.bpm_change_time) * (float)cBPM.dbBPM値 / 15000.0f);
 				last_bpm_change_time = (float)cBPM.bpm_change_time;
 				break;

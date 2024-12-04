@@ -315,10 +315,10 @@ public static class ImGuiDebugWindow {
 							ImGui.Text("Subtitle: " + dtx.SUBTITLE.GetString(""));
 							ImGui.Text("Charter: " + dtx.MAKER);
 
-							ImGui.Text("BPM: " + dtx.BASEBPM + (dtx.listBPM.Count > 1 ? (" (Min: " + dtx.MinBPM + " / Max: " + dtx.MaxBPM + ")") : ""));
-							if (dtx.listBPM.Count > 1) {
-								if (ImGui.TreeNodeEx($"BPM List ({dtx.listBPM.Count})###GAME_BPM_LIST_{i}")) {
-									foreach (CTja.CBPM bpm in dtx.listBPM.Values) {
+							ImGui.Text("BPM: " + dtx.BASEBPM + (dtx.listTimingChanges.Count > 1 ? (" (Min: " + dtx.MinBPM + " / Max: " + dtx.MaxBPM + ")") : ""));
+							if (dtx.listTimingChanges.Count > 1) {
+								if (ImGui.TreeNodeEx($"BPM List ({dtx.listTimingChanges.Count})###GAME_BPM_LIST_{i}")) {
+									foreach (CTja.CTimingChange bpm in dtx.listTimingChanges.Values) {
 										ImGui.Text($"(Time: {String.Format("{0:0.#}s", (bpm.bpm_change_time / 1000))}) {bpm.dbBPM値}");
 									}
 									ImGui.TreePop();

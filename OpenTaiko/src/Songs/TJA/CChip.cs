@@ -35,9 +35,10 @@ internal class CChip : IComparable<CChip>, ICloneable {
 	public ENoteState eNoteState;
 	public int nChannelNo;
 	public int VideoStartTimeMs;
-	public int nHorizontalChipDistance;
-	public int nNoteTipDistance_X;
-	public int nNoteTipDistance_Y;
+	public int pxNoteX;
+	public int pxNoteY;
+	public int pxNoteEndX;
+	public int pxNoteEndY;
 	public int n整数値;
 	public int n文字数 = 16;
 
@@ -110,7 +111,7 @@ internal class CChip : IComparable<CChip>, ICloneable {
 	public float fObjEnd;
 
 	public CSongObject obj;
-	public CTimingChange? timingChange;
+	public CTimingPt? timingChange;
 
 	public string strTargetTxName;
 	public string strNewPath;
@@ -151,7 +152,7 @@ internal class CChip : IComparable<CChip>, ICloneable {
 	}
 
 	public CChip() {
-		this.nHorizontalChipDistance = 0;
+		this.pxNoteX = this.pxNoteY = 0;
 	}
 	public void t初期化() {
 		this.bBranch = false;
@@ -175,9 +176,10 @@ internal class CChip : IComparable<CChip>, ICloneable {
 		this.IsMissed = false;
 		this.bVisible = true;
 		this.nOpacity = 0xff;
-		this.nHorizontalChipDistance = 0;
-		this.nNoteTipDistance_X = 0;
-		this.nNoteTipDistance_Y = 0;
+		this.pxNoteX = 0;
+		this.pxNoteY = 0;
+		this.pxNoteEndX = 0;
+		this.pxNoteEndY = 0;
 		this.dbBPM_end = this.dbBPM = 120.0;
 		this.fNow_Measure_m = 4.0f;
 		this.fNow_Measure_s = 4.0f;

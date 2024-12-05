@@ -320,20 +320,29 @@ public static class ImGuiDebugWindow {
 
 							double msTime = CTja.MixerTimeToChartTime(dtx, SoundManager.PlayTimer.NowTimeMs);
 							ImGui.Text($"Curr bpm: {OpenTaiko.stageGameScreen.actPlayInfo.dbBPM[0]}");
-							ImGui.Text($"Curr Time: {msTime / 1000:0.#}s");
-							ImGui.Text($"Curr Beat: {
-								string.Join("/",
-									CTja.GetNowPBMTimeByAllBranches(dtx, msTime)
-										.Select(x => $"{x:0.#}"))
-							}b");
+							ImGui.Text($"Curr Time: {msTime / 1000:G6}s");
 
-							for (int iBranch = 0; iBranch < dtx.TimingChangesByBranch.Length; ++iBranch) {
+							CTja.CTimingPt[] tps = [
+								dtx.TimingPtsByBranch[0][CTja.GetIdxActiveTimingPt(dtx, ECourse.eNormal, msTime)],
+								dtx.TimingPtsByBranch[1][CTja.GetIdxActiveTimingPt(dtx, ECourse.eExpert, msTime)],
+								dtx.TimingPtsByBranch[2][CTja.GetIdxActiveTimingPt(dtx, ECourse.eMaster, msTime)],
+							];
+
+							string strCurrBeats = string.Join(" / ", tps.Select(tp => {
+								double th16Beat = CTja.GetTh16BeatFromTimingPt(tp, msTime);
+								CTja.CDELAY? delayActive = CTja.GetActiveDelayFromTimingPt(dtx, tp, msTime);
+								return $"{th16Beat:G8}" + ((delayActive == null) ? "" : $"(DELAY {(int)delayActive.msDelayDuration / 1000.0:G4}s)");
+							}));
+
+							ImGui.Text($"Curr Beat: {strCurrBeats}b");
+
+							for (int iBranch = 0; iBranch < dtx.TimingPtsByBranch.Length; ++iBranch) {
 								CTja.ECourse branch = (CTja.ECourse)iBranch;
-								var timingChanges = dtx.TimingChangesByBranch[iBranch];
+								var timingChanges = dtx.TimingPtsByBranch[iBranch];
 								if (ImGui.TreeNodeEx($"Timing Changes for {branch} ({timingChanges.Count})###GAME_TIMING_CHANGE_LIST_{i}_{branch}")) {
-									foreach (CTja.CTimingChange tc in timingChanges) {
-										ImGui.Text($"{tc.msTime / 1000:0.#}~{tc.msTime_end / 1000:0.#}s "
-											+ $"{tc.th16Beat / 4:0.#}~{tc.th16Beat_end / 4:0.#}b "
+									foreach (CTja.CTimingPt tc in timingChanges) {
+										ImGui.Text($"{tc.msTime / 1000:G4}~{tc.msTime_end / 1000:G4}s "
+											+ $"{tc.th16Beat / 4:G4}~{tc.th16Beat_end / 4:G4}b "
 											+ $"{tc.dbBPM}bpm {tc.measure_s}/{tc.measure_m}");
 									}
 									ImGui.TreePop();

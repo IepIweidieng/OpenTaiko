@@ -94,8 +94,11 @@ internal class FlyingNotes : CActivity {
 							endY = OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_Y[Flying[i].Player];
 						}
 
-						int movingDistanceX = endX - StartPointX[Flying[i].Player];
-						int movingDistanceY = endY - OpenTaiko.Skin.Game_Effect_FlyingNotes_StartPoint_Y[Flying[i].Player];
+						int startX = StartPointX[Flying[i].Player] + OpenTaiko.stageGameScreen.GetJPOSCROLLX(Flying[i].Player);
+						int startY = OpenTaiko.Skin.Game_Effect_FlyingNotes_StartPoint_Y[Flying[i].Player] + OpenTaiko.stageGameScreen.GetJPOSCROLLY(Flying[i].Player);
+
+						int movingDistanceX = endX - startX;
+						int movingDistanceY = endY - startY;
 
 						/*
                         if (TJAPlayer3.Skin.Game_Effect_FlyingNotes_IsUsingEasing)
@@ -109,16 +112,17 @@ internal class FlyingNotes : CActivity {
                         }
                         */
 
-						double value = (Flying[i].Counter.CurrentValue / 140.0);
+						double xProgress = Math.Sin((Flying[i].Counter.CurrentValue / 140.0) * Math.PI / 2); // 0 to 1 inclusive
 
-						Flying[i].X = StartPointX[Flying[i].Player] + OpenTaiko.stageGameScreen.GetJPOSCROLLX(Flying[i].Player) + (movingDistanceX * value);
-						Flying[i].Y = OpenTaiko.Skin.Game_Effect_FlyingNotes_StartPoint_Y[Flying[i].Player] + OpenTaiko.stageGameScreen.GetJPOSCROLLY(Flying[i].Player) + (int)(movingDistanceY * value);
+						Flying[i].X = startX + (movingDistanceX * xProgress);
+						Flying[i].Y = startY + (int)(movingDistanceY * xProgress);
 
-						if (OpenTaiko.ConfigIni.bAIBattleMode) {
-							Flying[i].Y += Math.Sin(value * Math.PI) * ((Flying[i].Player == 0 ? -OpenTaiko.Skin.Game_Effect_FlyingNotes_Sine : OpenTaiko.Skin.Game_Effect_FlyingNotes_Sine) / 3.0);
-						} else {
-							Flying[i].Y += Math.Sin(value * Math.PI) * (Flying[i].Player == 0 ? -OpenTaiko.Skin.Game_Effect_FlyingNotes_Sine : OpenTaiko.Skin.Game_Effect_FlyingNotes_Sine);
-						}
+						int flyingCurveHeight = (Flying[i].Player == 0 ? -OpenTaiko.Skin.Game_Effect_FlyingNotes_Sine : OpenTaiko.Skin.Game_Effect_FlyingNotes_Sine);
+						double flyingCurveHeightScaled = (OpenTaiko.ConfigIni.bAIBattleMode) ? (flyingCurveHeight / 3.0) : flyingCurveHeight;
+						double invSqrt2 = 1 / Math.Sqrt(2);
+						// top-left to top-right ellipse arc
+						double curveY = 2 * (1 + invSqrt2) * (Math.Sqrt((1 - 2 * Math.Pow(xProgress - 0.5, 2))) - invSqrt2);
+						this.Flying[i].Y += curveY * flyingCurveHeightScaled;
 
 						if (OpenTaiko.Skin.Game_Effect_FlyingNotes_IsUsingEasing) {
 						} else {

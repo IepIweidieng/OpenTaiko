@@ -2861,7 +2861,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 
 		//CDTXMania.act文字コンソール.tPrint(0, 0, C文字コンソール.Eフォント種別.灰, this.nLoopCount_Clear.ToString()  );
 
-		float[] play_bpm_time_by_branch = CTja.GetNowPBMTimeByAllBranches(dTX, SoundManager.PlayTimer.NowTimeMs);
+		float[] play_bpm_time_by_branch = CTja.GetNowPBMTimeByAllBranches(dTX, CTja.MixerTimeToChartTime(dTX, SoundManager.PlayTimer.NowTimeMs));
 
 		//for ( int nCurrentTopChip = this.n現在のトップChip; nCurrentTopChip < dTX.listChip.Count; nCurrentTopChip++ )
 		for (int nCurrentTopChip = dTX.listChip.Count - 1; nCurrentTopChip > 0; nCurrentTopChip--) {
@@ -2874,14 +2874,15 @@ internal abstract class CStage演奏画面共通 : CStage {
 
 			double _scrollSpeed = pChip.dbSCROLL * _scroll_rate;
 			double _scrollSpeed_Y = pChip.dbSCROLL_Y * _scroll_rate;
-			pChip.nHorizontalChipDistance = NotesManager.GetNoteX(time, th16DBeat, pChip.dbBPM, _scrollSpeed, pChip.eScrollMode);
+			pChip.pxNoteX = NotesManager.GetNoteX(time, th16DBeat, pChip.dbBPM, _scrollSpeed, pChip.eScrollMode);
+			pChip.pxNoteY = NotesManager.GetNoteY(time, th16DBeat, pChip.dbBPM, _scrollSpeed_Y, pChip.eScrollMode);
 			if (NotesManager.IsRoll(pChip) || NotesManager.IsFuzeRoll(pChip)) {
 				long msDTime_end = pChip.nNoteEndTimems - n現在時刻ms;
 				double th16DBeat_end = pChip.fBMSCROLLTime_end - play_bpm_time;
 				double _scrollSpeed_end = pChip.dbSCROLL_end * _scroll_rate;
 				double _scrollSpeed_Y_end = pChip.dbSCROLL_Y_end * _scroll_rate;
-				pChip.nNoteTipDistance_X = NotesManager.GetNoteX(msDTime_end, th16DBeat_end, pChip.dbBPM_end, _scrollSpeed_end, pChip.eScrollMode_end);
-				pChip.nNoteTipDistance_Y = NotesManager.GetNoteY(msDTime_end, th16DBeat_end, pChip.dbBPM_end, _scrollSpeed_Y_end, pChip.eScrollMode_end);
+				pChip.pxNoteEndX = NotesManager.GetNoteX(msDTime_end, th16DBeat_end, pChip.dbBPM_end, _scrollSpeed_end, pChip.eScrollMode_end);
+				pChip.pxNoteEndY = NotesManager.GetNoteY(msDTime_end, th16DBeat_end, pChip.dbBPM_end, _scrollSpeed_Y_end, pChip.eScrollMode_end);
 			}
 
 
@@ -2908,7 +2909,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 				}
 			}
 
-			if (pChip.nHorizontalChipDistance < -150) {
+			if (pChip.pxNoteX < -150) {
 				if (!(NotesManager.IsMissableNote(pChip))) {
 					//2016.02.11 kairera0467
 					//太鼓の単音符の場合は座標による判定を行わない。
@@ -2922,7 +2923,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 
 				//if( cChipCurrentlyInProcess.nチャンネル番号 >= 0x13 && cChipCurrentlyInProcess.nチャンネル番号 <= 0x15 )//|| pChip.nチャンネル番号 == 0x9A )
 				if (NotesManager.IsBigNote(cChipCurrentlyInProcess)) {
-					if (((cChipCurrentlyInProcess.nHorizontalChipDistance < -500) && (cChipCurrentlyInProcess.n発声時刻ms <= n現在時刻ms && cChipCurrentlyInProcess.nNoteEndTimems >= n現在時刻ms)))
+					if (((cChipCurrentlyInProcess.pxNoteX < -500) && (cChipCurrentlyInProcess.n発声時刻ms <= n現在時刻ms && cChipCurrentlyInProcess.nNoteEndTimems >= n現在時刻ms)))
 					//( ( chip現在処理中の連打チップ.nバーからのノーツ末端距離dot.Taiko < -500 ) && ( chip現在処理中の連打チップ.n発声時刻ms <= CSound管理.rc演奏用タイマ.n現在時刻ms && chip現在処理中の連打チップ.nノーツ終了時刻ms >= CSound管理.rc演奏用タイマ.n現在時刻ms ) ) )
 					//( ( pChip.n発声時刻ms <= CSound管理.rc演奏用タイマ.n現在時刻ms && pChip.nノーツ終了時刻ms >= CSound管理.rc演奏用タイマ.n現在時刻ms ) ) )
 					{
@@ -3312,7 +3313,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 					if (!pChip.bHit && time < 0) {
 						pChip.bHit = true;
 						if (pChip.nBranch == this.nCurrentBranch[nPlayer]) {
-							CTja.CTimingChange? cBPM = pChip.timingChange;
+							CTja.CTimingPt? cBPM = pChip.timingChange;
 							if (cBPM != null) {
 								this.actPlayInfo.dbBPM[nPlayer] = cBPM.dbBPM;// + dTX.BASEBPM;
 							}
@@ -4072,7 +4073,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 			if (!pChip.bHit) {
 				bool bRollChip = NotesManager.IsGenericRoll(pChip);// pChip.nチャンネル番号 >= 0x15 && pChip.nチャンネル番号 <= 0x19;
 				if (bRollChip) {
-					if (pChip.nHorizontalChipDistance < -40) {
+					if (pChip.pxNoteX < -40) {
 						if (this.e指定時刻からChipのJUDGEを返す(n現在時刻ms, pChip, nPlayer) == ENoteJudge.Miss) {
 							this.tチップのヒット処理(n現在時刻ms, pChip, EInstrumentPad.Taiko, false, 0, nPlayer);
 						}

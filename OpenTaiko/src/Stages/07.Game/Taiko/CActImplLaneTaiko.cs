@@ -584,24 +584,7 @@ internal class CActImplLaneTaiko : CActivity {
 		var nTime = (long)(SoundManager.PlayTimer.NowTimeMs * OpenTaiko.ConfigIni.SongPlaybackSpeed);
 
 		for (int i = 0; i < OpenTaiko.ConfigIni.nPlayerCount; i++) {
-			if (this.n総移動時間[i] != -1) {
-				if (n移動方向[i] == 1) {
-					OpenTaiko.stageGameScreen.JPOSCROLLX[i] = this.n移動開始X[i] + (int)((((int)nTime - this.n移動開始時刻[i]) / (double)(this.n総移動時間[i])) * this.n移動距離px[i]);
-					OpenTaiko.stageGameScreen.JPOSCROLLY[i] = this.n移動開始Y[i] + (int)((((int)nTime - this.n移動開始時刻[i]) / (double)(this.n総移動時間[i])) * this.nVerticalJSPos[i]);
-					//TJAPlayer3.stage演奏ドラム画面.FlyingNotes.StartPointX[i] = this.n移動開始X[i] + (int)((((int)nTime - this.n移動開始時刻[i]) / (double)(this.n総移動時間[i])) * this.n移動距離px[i]);
-				} else {
-					OpenTaiko.stageGameScreen.JPOSCROLLX[i] = this.n移動開始X[i] - (int)((((int)nTime - this.n移動開始時刻[i]) / (double)(this.n総移動時間[i])) * this.n移動距離px[i]);
-					OpenTaiko.stageGameScreen.JPOSCROLLY[i] = this.n移動開始Y[i] - (int)((((int)nTime - this.n移動開始時刻[i]) / (double)(this.n総移動時間[i])) * this.nVerticalJSPos[i]);
-					//TJAPlayer3.stage演奏ドラム画面.FlyingNotes.StartPointX[i] = this.n移動開始X[i] - (int)((((int)nTime - this.n移動開始時刻[i]) / (double)(this.n総移動時間[i])) * this.n移動距離px[i]);
-				}
-
-				if (((int)nTime) > this.n移動開始時刻[i] + this.n総移動時間[i]) {
-					this.n総移動時間[i] = -1;
-					OpenTaiko.stageGameScreen.JPOSCROLLX[i] = this.n移動目的場所X[i];
-					OpenTaiko.stageGameScreen.JPOSCROLLY[i] = this.n移動目的場所Y[i];
-					//TJAPlayer3.stage演奏ドラム画面.FlyingNotes.StartPointX[i] = this.n移動目的場所X[i];
-				}
-			}
+			this.UpdateJPosScrollValue(i, nTime);
 		}
 
 
@@ -620,6 +603,29 @@ internal class CActImplLaneTaiko : CActivity {
 		}
 
 		return base.Draw();
+	}
+
+	public void UpdateJPosScrollValue(int iPlayer, long msTimeNote) {
+		if (this.n総移動時間[iPlayer] < 0) {
+			return;
+		}
+		double jPosScrollX;
+		double jPosScrollY;
+		if (n移動方向[iPlayer] == 1) {
+			jPosScrollX = this.n移動開始X[iPlayer] + (int)((((int)msTimeNote - this.n移動開始時刻[iPlayer]) / (double)(this.n総移動時間[iPlayer])) * this.n移動距離px[iPlayer]);
+			jPosScrollY = this.n移動開始Y[iPlayer] + (int)((((int)msTimeNote - this.n移動開始時刻[iPlayer]) / (double)(this.n総移動時間[iPlayer])) * this.nVerticalJSPos[iPlayer]);
+		} else {
+			jPosScrollX = this.n移動開始X[iPlayer] - (int)((((int)msTimeNote - this.n移動開始時刻[iPlayer]) / (double)(this.n総移動時間[iPlayer])) * this.n移動距離px[iPlayer]);
+			jPosScrollY = this.n移動開始Y[iPlayer] - (int)((((int)msTimeNote - this.n移動開始時刻[iPlayer]) / (double)(this.n総移動時間[iPlayer])) * this.nVerticalJSPos[iPlayer]);
+		}
+
+		if (msTimeNote >= this.n移動開始時刻[iPlayer] + this.n総移動時間[iPlayer]) {
+			this.n総移動時間[iPlayer] = -1;
+			jPosScrollX = this.n移動目的場所X[iPlayer];
+			jPosScrollY = this.n移動目的場所Y[iPlayer];
+		}
+		OpenTaiko.stageGameScreen.JPOSCROLLX[iPlayer] = jPosScrollX;
+		OpenTaiko.stageGameScreen.JPOSCROLLY[iPlayer] = jPosScrollY;
 	}
 
 	public void ゴーゴー炎() {
@@ -790,14 +796,17 @@ internal class CActImplLaneTaiko : CActivity {
 		OpenTaiko.stageGameScreen.actLane.t分岐レイヤー_コース変化(n現在, n次回, nPlayer);
 	}
 
-	public void t判定枠移動(double db移動時間, int n移動px, int n移動方向, int nPlayer, int vJs) {
-		this.n移動開始時刻[nPlayer] = (int)(SoundManager.PlayTimer.NowTimeMs * OpenTaiko.ConfigIni.SongPlaybackSpeed);
+	public void t判定枠移動(int nPlayer, CTja.CJPOSSCROLL jposscroll, int msTimeNote) {
+		// Handle truncated previous movement
+		this.UpdateJPosScrollValue(nPlayer, msTimeNote);
+
+		this.n移動開始時刻[nPlayer] = msTimeNote;
 		this.n移動開始X[nPlayer] = OpenTaiko.stageGameScreen.JPOSCROLLX[nPlayer];
 		this.n移動開始Y[nPlayer] = OpenTaiko.stageGameScreen.JPOSCROLLY[nPlayer];
-		this.n総移動時間[nPlayer] = (int)(db移動時間 * 1000);
-		this.n移動方向[nPlayer] = n移動方向;
-		this.n移動距離px[nPlayer] = n移動px;
-		this.nVerticalJSPos[nPlayer] = vJs;
+		this.n総移動時間[nPlayer] = (int)(jposscroll.db移動時間 * 1000);
+		int n移動方向 = this.n移動方向[nPlayer] = jposscroll.n移動方向;
+		int n移動px = this.n移動距離px[nPlayer] = jposscroll.n移動距離px;
+		int vJs = this.nVerticalJSPos[nPlayer] = jposscroll.nVerticalMove;
 		if (n移動方向 == 0) {
 			this.n移動目的場所X[nPlayer] = OpenTaiko.stageGameScreen.JPOSCROLLX[nPlayer] - n移動px;
 			this.n移動目的場所Y[nPlayer] = OpenTaiko.stageGameScreen.JPOSCROLLY[nPlayer] - vJs;
@@ -863,13 +872,13 @@ internal class CActImplLaneTaiko : CActivity {
 
 
 	private int[] n総移動時間 = new int[5];
-	private int[] n移動開始X = new int[5];
-	private int[] n移動開始Y = new int[5];
+	private double[] n移動開始X = new double[5];
+	private double[] n移動開始Y = new double[5];
 	private int[] n移動開始時刻 = new int[5];
 	private int[] n移動距離px = new int[5];
 	private int[] nVerticalJSPos = new int[5];
-	private int[] n移動目的場所X = new int[5];
-	private int[] n移動目的場所Y = new int[5];
+	private double[] n移動目的場所X = new double[5];
+	private double[] n移動目的場所Y = new double[5];
 	private int[] n移動方向 = new int[5];
 
 	//-----------------

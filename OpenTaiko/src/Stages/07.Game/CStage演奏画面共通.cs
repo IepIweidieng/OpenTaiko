@@ -343,10 +343,9 @@ internal abstract class CStage演奏画面共通 : CStage {
 		for (int i = 0; i < 2; i++) {
 			ShownLyric[i] = 0;
 		}
-		this.nJPOSSCROLL = new int[5];
 		this.bLEVELHOLD = new bool[] { false, false, false, false, false };
-		this.JPOSCROLLX = new int[5];
-		this.JPOSCROLLY = new int[5];
+		this.JPOSCROLLX = new double[5];
+		this.JPOSCROLLY = new double[5];
 		eFirstGameType = new EGameType[5];
 		bSplitLane = new bool[5];
 
@@ -589,7 +588,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 		public int nMine;
 	}
 
-	public int[] JPOSCROLLX = new int[5];
+	public double[] JPOSCROLLX = new double[5];
 	public int GetJPOSCROLLX(int player) {
 		double screen_ratio = OpenTaiko.Skin.Resolution[0] / 1280.0;
 		return (int)(JPOSCROLLX[player] * screen_ratio);
@@ -620,7 +619,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 		}
 	}
 
-	public int[] JPOSCROLLY = new int[5];
+	public double[] JPOSCROLLY = new double[5];
 	public int GetJPOSCROLLY(int player) {
 		double screen_ratio = OpenTaiko.Skin.Resolution[1] / 720.0;
 		return (int)(JPOSCROLLY[player] * screen_ratio);
@@ -746,7 +745,6 @@ internal abstract class CStage演奏画面共通 : CStage {
 	public CTja.ECourse[] nDisplayedBranchLane = new CTja.ECourse[5];
 	protected bool[] bBranchedChart = new bool[] { false, false, false, false, false };
 	protected int[] n分岐した回数 = new int[5];
-	protected int[] nJPOSSCROLL = new int[5];
 
 	public bool[] b強制的に分岐させた = new bool[] { false, false, false, false, false };
 	public bool[] bLEVELHOLD = new bool[] { false, false, false, false, false };
@@ -3821,8 +3819,8 @@ internal abstract class CStage演奏画面共通 : CStage {
 					break;
 				case 0xE2:
 					if (!pChip.bHit && time < 0) {
-						OpenTaiko.stageGameScreen.actLaneTaiko.t判定枠移動(dTX.listJPOSSCROLL[nJPOSSCROLL[nPlayer]].db移動時間, dTX.listJPOSSCROLL[nJPOSSCROLL[nPlayer]].n移動距離px, dTX.listJPOSSCROLL[nJPOSSCROLL[nPlayer]].n移動方向, nPlayer, dTX.listJPOSSCROLL[nJPOSSCROLL[nPlayer]].nVerticalMove);
-						this.nJPOSSCROLL[nPlayer]++;
+						CTja.CJPOSSCROLL jposs = dTX.listJPOSSCROLL[pChip.n整数値_内部番号];
+						OpenTaiko.stageGameScreen.actLaneTaiko.t判定枠移動(nPlayer, jposs, pChip.n発声時刻ms);
 						pChip.bHit = true;
 					}
 					break;

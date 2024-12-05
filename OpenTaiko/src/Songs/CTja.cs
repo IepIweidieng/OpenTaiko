@@ -70,6 +70,7 @@ internal class CTja : CActivity {
 		public int n内部番号;
 		public int n表記上の番号;
 		public int nVerticalMove;
+		public CChip? chip;
 
 		public override string ToString() {
 			StringBuilder builder = new StringBuilder(0x80);
@@ -592,7 +593,7 @@ internal class CTja : CActivity {
 	public List<CChip> listChip;
 	public List<CChip>[] listChip_Branch;
 	public Dictionary<int, CWAV> listWAV;
-	public Dictionary<int, CJPOSSCROLL> listJPOSSCROLL;
+	public Dictionary<int, CJPOSSCROLL> listJPOSSCROLL = new Dictionary<int, CJPOSSCROLL>();
 	public List<DanSongs> List_DanSongs;
 	private EScrollMode eScrollMode;
 
@@ -4531,12 +4532,20 @@ internal class CTja : CActivity {
 			chip.n発声時刻ms = (int)this.dbNowTime;
 			chip.fNow_Measure_m = this.fNow_Measure_m;
 			chip.fNow_Measure_s = this.fNow_Measure_s;
-			chip.n整数値_内部番号 = 0;
+			chip.n整数値_内部番号 = this.n内部番号JSCROLL1to;
 			chip.nBranch = this.n現在のコース;
 
 			// チップを配置。
 
-			this.listJPOSSCROLL.Add(this.n内部番号JSCROLL1to, new CJPOSSCROLL() { n内部番号 = this.n内部番号JSCROLL1to, n表記上の番号 = 0, db移動時間 = db移動時刻, n移動距離px = n移動px, n移動方向 = n移動方向, nVerticalMove = nComplexMove });
+			this.listJPOSSCROLL.Add(this.n内部番号JSCROLL1to, new CJPOSSCROLL() {
+				n内部番号 = this.n内部番号JSCROLL1to,
+				n表記上の番号 = 0,
+				db移動時間 = db移動時刻,
+				n移動距離px = n移動px,
+				n移動方向 = n移動方向,
+				nVerticalMove = nComplexMove,
+				chip = chip,
+			});
 			this.listChip.Add(chip);
 			this.n内部番号JSCROLL1to++;
 		} else if (command == "#SENOTECHANGE") {

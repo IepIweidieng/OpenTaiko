@@ -1640,8 +1640,16 @@ internal class CStage演奏ドラム画面 : CStage演奏画面共通 {
 
 		#region[ 作り直したもの ]
 		if (pChip.bVisible) {
-			bool pHasBar = NotesManager.IsRoll(pChip) || NotesManager.IsFuzeRoll(pChip);
+			bool pHasBar = (NotesManager.IsRoll(pChip) || NotesManager.IsFuzeRoll(pChip));
+
 			if (pHasBar) {
+				HandleBarNoteSuddenMove(dTX, pChip, nowTime, ref nノート座標, ref nノート座標_Y, ref nノート末端座標, ref nノート末端座標_Y);
+			} else {
+				HandleNoBarNoteSuddenMove(dTX, pChip, nowTime, ref nノート座標, ref nノート座標_Y);
+			}
+
+			bool pBarVisible = pHasBar && pChip.bShowRoll;
+			if (pBarVisible) {
 				bool headVisible = (pChip.nノーツ出現時刻ms == int.MaxValue || (nowTime >= pChip.n発声時刻ms - pChip.nノーツ出現時刻ms));
 				bool endVisible = (pChip.nノーツ出現時刻ms == int.MaxValue || (nowTime >= pChip.nNoteEndTimems - pChip.nノーツ出現時刻ms));
 				pChip.bShow = (headVisible || endVisible);
@@ -1656,12 +1664,6 @@ internal class CStage演奏ドラム画面 : CStage演奏画面共通 {
 				} else {
 					pChip.bShow = false;
 				}
-			}
-
-			if (pHasBar) {
-				HandleBarNoteSuddenMove(dTX, pChip, nowTime, ref nノート座標, ref nノート座標_Y, ref nノート末端座標, ref nノート末端座標_Y);
-			} else {
-				HandleNoBarNoteSuddenMove(dTX, pChip, nowTime, ref nノート座標, ref nノート座標_Y);
 			}
 
 			int x = NoteOriginX[nPlayer] + nノート座標;
@@ -1682,6 +1684,16 @@ internal class CStage演奏ドラム画面 : CStage演奏画面共通 {
 				}
 			}
 
+			if (pChip.bShow && NotesManager.IsGenericBalloon(pChip)) {
+				if (nowTime >= pChip.n発声時刻ms && nowTime < pChip.nNoteEndTimems) {
+					x = NoteOriginX[nPlayer];
+					y = NoteOriginY[nPlayer];
+				} else if (nowTime >= pChip.nNoteEndTimems) {
+					x = x末端 = (NoteOriginX[nPlayer] + pChip.pxNoteEndX);
+					y = y末端 = (NoteOriginY[nPlayer] + pChip.pxNoteEndY);
+				}
+			}
+
 			bool isBodyXInScreen = (Math.Min(x, x末端) < OpenTaiko.Skin.Resolution[0] && Math.Max(x, x末端) > 0 - OpenTaiko.Skin.Game_Notes_Size[0]);
 			if (pHasBar) {
 				HideObscuringRoll(nPlayer, pChip, x, y, x末端, y末端, isBodyXInScreen, nowTime);
@@ -1698,7 +1710,7 @@ internal class CStage演奏ドラム画面 : CStage演奏画面共通 {
 			//if( CDTXMania.ConfigIni.eScrollMode != EScrollMode.Normal )
 			//x -= 10;
 
-			if (pChip.bShowRoll && isBodyXInScreen) {
+			if (isBodyXInScreen) {
 				if (OpenTaiko.Tx.Notes[(int)_gt] != null) {
 					//int num9 = this.actCombo.n現在のコンボ数.Drums >= 50 ? this.ctチップ模様アニメ.Drums.n現在の値 * 130 : 0;
 					//int num9 = this.actCombo.n現在のコンボ数.Drums >= 50 ? base.n現在の音符の顔番号 * 130 : 0;
@@ -1775,14 +1787,7 @@ internal class CStage演奏ドラム画面 : CStage演奏画面共通 {
 					int _58_cut = 58 * _size[0] / 136;
 					int _78_cut = 78 * _size[0] / 136;
 
-					if (pHasBar) {
-						if (NotesManager.IsFuzeRoll(pChip)
-							&& nowTime >= pChip.n発声時刻ms && nowTime < pChip.nNoteEndTimems) {
-							x = NoteOriginX[nPlayer];
-							y = NoteOriginY[nPlayer];
-						}
-
-
+					if (pBarVisible) {
 						NotesManager.DisplayRoll(nPlayer, x, y, pChip, num9, normalColor, effectedColor, x末端, y末端);
 
 						if (OpenTaiko.Tx.SENotes[(int)_gt] != null) {
@@ -1800,15 +1805,8 @@ internal class CStage演奏ドラム画面 : CStage演奏画面共通 {
 
 						}
 
-					}
-
-					if (NotesManager.IsBalloon(pChip) || NotesManager.IsKusudama(pChip)) {
+					} else if (!NotesManager.IsRollEnd(pChip)) {
 						if (pChip.bShow) {
-							if (nowTime >= pChip.n発声時刻ms && nowTime < pChip.nNoteEndTimems)
-								x = NoteOriginX[nPlayer];
-							else if (nowTime >= pChip.nNoteEndTimems)
-								x = (NoteOriginX[nPlayer] + pChip.pxNoteEndX);
-
 							NotesManager.DisplayNote(nPlayer, x, y, pChip, num9, OpenTaiko.Skin.Game_Notes_Size[0] * 2);
 							NotesManager.DisplaySENotes(nPlayer, x + nSenotesX, y + nSenotesY, pChip);
 
@@ -1819,8 +1817,7 @@ internal class CStage演奏ドラム画面 : CStage演奏画面共通 {
 
 							//TJAPlayer3.Tx.SENotes.t2D描画(x - 2, y + nSenotesY, new Rectangle(0, 30 * pChip.nSenote, 136, 30));
 						}
-					}
-					if (NotesManager.IsRollEnd(pChip) && pChip.bShow) {
+					} else if (pChip.bShow) {
 						//大きい連打か小さい連打かの区別方法を考えてなかったよちくしょう
 						if (OpenTaiko.Tx.Notes[(int)_gt] != null)
 							OpenTaiko.Tx.Notes[(int)_gt].vcScaleRatio.X = 1.0f;

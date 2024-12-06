@@ -112,17 +112,19 @@ internal class FlyingNotes : CActivity {
                         }
                         */
 
-						double xProgress = Math.Sin((Flying[i].Counter.CurrentValue / 140.0) * Math.PI / 2); // 0 to 1 inclusive
 
-						Flying[i].X = startX + (movingDistanceX * xProgress);
-						Flying[i].Y = startY + (int)(movingDistanceY * xProgress);
+						double xProgress = Flying[i].Counter.CurrentValue / 140.0;
 
 						int flyingCurveHeight = (Flying[i].Player == 0 ? -OpenTaiko.Skin.Game_Effect_FlyingNotes_Sine : OpenTaiko.Skin.Game_Effect_FlyingNotes_Sine);
 						double flyingCurveHeightScaled = (OpenTaiko.ConfigIni.bAIBattleMode) ? (flyingCurveHeight / 3.0) : flyingCurveHeight;
 						double invSqrt2 = 1 / Math.Sqrt(2);
 						// top-left to top-right ellipse arc
-						double curveY = 2 * (1 + invSqrt2) * (Math.Sqrt((1 - 2 * Math.Pow(xProgress - 0.5, 2))) - invSqrt2);
-						this.Flying[i].Y += curveY * flyingCurveHeightScaled;
+						double theta = (Math.PI / 2) * (1 + (xProgress - 0.5));
+						double curveX = 0.5 - invSqrt2 * Math.Cos(theta);
+						double curveY = 2 * (1 + invSqrt2) * (Math.Sin(theta) - invSqrt2);
+
+						Flying[i].X = startX + movingDistanceX * curveX;
+						Flying[i].Y = startY + (movingDistanceY * xProgress) + flyingCurveHeightScaled * curveY;
 
 						if (OpenTaiko.Skin.Game_Effect_FlyingNotes_IsUsingEasing) {
 						} else {

@@ -2874,7 +2874,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 			double _scrollSpeed_Y = pChip.dbSCROLL_Y * _scroll_rate;
 			pChip.pxNoteX = NotesManager.GetNoteX(time, th16DBeat, pChip.dbBPM, _scrollSpeed, pChip.eScrollMode);
 			pChip.pxNoteY = NotesManager.GetNoteY(time, th16DBeat, pChip.dbBPM, _scrollSpeed_Y, pChip.eScrollMode);
-			if (NotesManager.IsRoll(pChip) || NotesManager.IsFuzeRoll(pChip)) {
+			if (NotesManager.IsGenericRoll(pChip)) {
 				long msDTime_end = pChip.nNoteEndTimems - n現在時刻ms;
 				double th16DBeat_end = pChip.fBMSCROLLTime_end - play_bpm_time;
 				double _scrollSpeed_end = pChip.dbSCROLL_end * _scroll_rate;

@@ -233,7 +233,7 @@ static class CScoreIni_Importer {
                             0,
                             0
                         )
-                       ON CONFLICT(ChartUniqueId,ChartDifficulty,SaveId,PlayMods) DO NOTHING
+                       ON CONFLICT(ChartUniqueId,ChartDifficulty,PlayMods,SaveId) DO NOTHING
                 ";
 						if (cmd.ExecuteNonQuery() > 0) { successcount++; success = true; }
 					}

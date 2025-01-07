@@ -15,16 +15,55 @@ internal class DBSaves {
 		try {
 			if (SavesDBConnection != null && SavesDBConnection.State == ConnectionState.Closed) {
 				SavesDBConnection.Open();
-				FixSaveDB_IdxUniquePlay(SavesDBConnection);
+				SaveDB_ResetIdxUniquePlay(SavesDBConnection);
 			}
 			return SavesDBConnection;
-		} catch {
+		} catch (Exception e) {
 			LogNotification.PopError(_DBNotFoundError);
 			return null;
 		}
 	}
 
-	private static void FixSaveDB_IdxUniquePlay(SqliteConnection connection) {
+	// for OpenTaiko 0.6.0.0 to 0.6.0.35
+	private static readonly Dictionary<int, (int cid, string name)> _ColsIdxUniquePlay_v1 = new() {
+		[0] = (1, "ChartUniqueId"),
+		[1] = (5, "PlayMods"),
+		[2] = (6, "ChartDifficulty"),
+	};
+
+	// for OpenTaiko 0.6.0.36 and on
+	private static readonly Dictionary<int, (int cid, string name)> _ColsIdxUniquePlay = new() {
+		[0] = (1, "ChartUniqueId"),
+		[1] = (6, "ChartDifficulty"),
+		[2] = (5, "PlayMods"),
+		[3] = (11, "SaveId"),
+	};
+
+	private static bool CheckIndexColumns(SqliteConnection connection, string indexId, Dictionary<int, (int cid, string name)> columns) {
+		var command = connection.CreateCommand();
+		command.CommandText = @"PRAGMA index_info(@indexId);";
+		command.Parameters.Add("@indexId", SqliteType.Text).Value = indexId;
+		using SqliteDataReader reader = command.ExecuteReader();
+		if (!reader.HasRows) {
+			return false;
+		}
+		while (reader.Read()) {
+			if (!columns.TryGetValue((int)(Int64)reader["seqno"], out var col)) {
+				return false;
+			}
+			if (!((int)(Int64)reader["cid"] == col.cid
+				&& (string)reader["name"] == col.name)
+			) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static void SaveDB_ResetIdxUniquePlay(SqliteConnection connection) {
+		if (CheckIndexColumns(connection, "idx_unique_play", _ColsIdxUniquePlay)) {
+			return;
+		}
 		var command = connection.CreateCommand();
 		command.CommandText = $"""
 			DROP INDEX IF EXISTS idx_unique_play;
@@ -343,8 +382,8 @@ internal class DBSaves {
 			SqliteCommand cmd = connection.CreateCommand();
 			cmd.CommandText =
 				@$"
-                        SELECT * FROM best_plays WHERE ChartUniqueId='{currentPlay.ChartUniqueId}' AND PlayMods={currentPlay.PlayMods} and ChartDifficulty={currentPlay.ChartDifficulty} AND SaveId={saveData.SaveId};
-                    ";
+                        SELECT * FROM best_plays WHERE ChartUniqueId='{currentPlay.ChartUniqueId}' AND ChartDifficulty={currentPlay.ChartDifficulty} AND PlayMods={currentPlay.PlayMods} AND SaveId={saveData.SaveId};
+                    "; // should be in the same order as INDEX idx_best_player
 			SqliteDataReader reader = cmd.ExecuteReader();
 			while (reader.Read()) {
 				// Overwrite multiple variables at once if the highscore is replaced
@@ -451,7 +490,7 @@ internal class DBSaves {
                             {currentPlay.HighScoreADLibCount},
                             {currentPlay.HighScoreBoomCount}
                         )
-                       ON CONFLICT(ChartUniqueId,ChartDifficulty,SaveId,PlayMods) DO UPDATE SET
+                       ON CONFLICT(ChartUniqueId,ChartDifficulty,PlayMods,SaveId) DO UPDATE SET
                             PlayCount=best_plays.PlayCount+1,
                             ClearStatus=EXCLUDED.ClearStatus,
                             ScoreRank=EXCLUDED.ScoreRank,

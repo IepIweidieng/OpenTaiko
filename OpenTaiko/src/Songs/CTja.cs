@@ -1350,7 +1350,8 @@ internal class CTja : CActivity {
 				#endregion
 				#region [ 拍子_拍線の挿入 ]
 				if (this.listChip.Count > 0) {
-					this.listChip.Sort();       // 高速化のためにはこれを削りたいが、listChipの最後がn発声位置の終端である必要があるので、
+					this.listChip = this.listChip.OrderBy(x => x).ToList();
+												// 高速化のためにはこれを削りたいが、listChipの最後がn発声位置の終端である必要があるので、
 												// 保守性確保を優先してここでのソートは残しておく
 												// なお、093時点では、このソートを削除しても動作するようにはしてある。
 												// (ここまでの一部チップ登録を、listChip.Add(c)から同Insert(0,c)に変更してある)
@@ -1592,7 +1593,7 @@ internal class CTja : CActivity {
 
 				#region[listlyricを時間順に並び替え。]
 				this.listLyric2 = tmplistlyric;
-				this.listLyric2.Sort((a, b) => a.Time.CompareTo(b.Time));
+				this.listLyric2 = this.listLyric2.OrderBy(x => x.Time).ToList();
 				#endregion
 
 				this.nBGMAdjust = 0;
@@ -6217,7 +6218,7 @@ internal class CTja : CActivity {
 		listChip.AddRange(listAddMixerChannel);
 		listChip.AddRange(listRemoveMixerChannel);
 		listChip.AddRange(listRemoveTiming);
-		listChip.Sort();
+		listChip = listChip.OrderBy(x => x).ToList();
 	}
 	private void DebugOut_CChipList(List<CChip> c) {
 		for (int i = 0; i < c.Count; i++) {

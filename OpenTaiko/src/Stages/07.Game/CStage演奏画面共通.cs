@@ -3668,8 +3668,8 @@ internal abstract class CStage演奏画面共通 : CStage {
 					break;
 				case 0xE2:
 					if (!pChip.bHit && time < 0) {
-						OpenTaiko.stageGameScreen.actLaneTaiko.t判定枠移動(dTX.listJPOSSCROLL[nJPOSSCROLL[nPlayer]].db移動時間, dTX.listJPOSSCROLL[nJPOSSCROLL[nPlayer]].n移動距離px, dTX.listJPOSSCROLL[nJPOSSCROLL[nPlayer]].n移動方向, nPlayer, dTX.listJPOSSCROLL[nJPOSSCROLL[nPlayer]].nVerticalMove);
-						this.nJPOSSCROLL[nPlayer]++;
+						CTja.CJPOSSCROLL jposs = dTX.listJPOSSCROLL[pChip.n整数値_内部番号];
+						OpenTaiko.stageGameScreen.actLaneTaiko.t判定枠移動(nPlayer, jposs, pChip.n発声時刻ms);
 						pChip.bHit = true;
 					}
 					break;

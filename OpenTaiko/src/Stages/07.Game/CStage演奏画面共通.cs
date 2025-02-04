@@ -345,8 +345,8 @@ internal abstract class CStage演奏画面共通 : CStage {
 		}
 		this.nJPOSSCROLL = new int[5];
 		this.bLEVELHOLD = new bool[] { false, false, false, false, false };
-		this.JPOSCROLLX = new int[5];
-		this.JPOSCROLLY = new int[5];
+		this.JPOSCROLLX = new double[5];
+		this.JPOSCROLLY = new double[5];
 		eFirstGameType = new EGameType[5];
 		bSplitLane = new bool[5];
 
@@ -589,7 +589,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 		public int nMine;
 	}
 
-	public int[] JPOSCROLLX = new int[5];
+	public double[] JPOSCROLLX = new double[5];
 	public int GetJPOSCROLLX(int player) {
 		double screen_ratio = OpenTaiko.Skin.Resolution[0] / 1280.0;
 		return (int)(JPOSCROLLX[player] * screen_ratio);
@@ -620,7 +620,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 		}
 	}
 
-	public int[] JPOSCROLLY = new int[5];
+	public double[] JPOSCROLLY = new double[5];
 	public int GetJPOSCROLLY(int player) {
 		double screen_ratio = OpenTaiko.Skin.Resolution[1] / 720.0;
 		return (int)(JPOSCROLLY[player] * screen_ratio);

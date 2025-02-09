@@ -2523,34 +2523,7 @@ internal class CTja : CActivity {
 					chip.fCamScrollStartY = float.Parse(args[0]);
 					chip.fCamScrollEndY = float.Parse(args[1]);
 					chip.strCamEaseType = args[2];
-
-					var type = args[3];
-					var eType = Easing.CalcType.Quadratic;
-					switch (type) {
-						case "CUBIC":
-							eType = Easing.CalcType.Cubic;
-							break;
-						case "QUARTIC":
-							eType = Easing.CalcType.Quartic;
-							break;
-						case "QUINTIC":
-							eType = Easing.CalcType.Quintic;
-							break;
-						case "SINUSOIDAL":
-							eType = Easing.CalcType.Sinusoidal;
-							break;
-						case "EXPONENTIAL":
-							eType = Easing.CalcType.Exponential;
-							break;
-						case "CIRCULAR":
-							eType = Easing.CalcType.Circular;
-							break;
-						case "LINEAR":
-							eType = Easing.CalcType.Linear;
-							break;
-					}
-
-					chip.fCamMoveType = eType;
+					chip.fCamMoveType = TjaArgToEasingCalcType(args[3]);
 
 					currentCamVMoveChip = chip;
 
@@ -2609,36 +2582,7 @@ internal class CTja : CActivity {
 					chip.fCamScrollStartX = float.Parse(args[0]);
 					chip.fCamScrollEndX = float.Parse(args[1]);
 					chip.strCamEaseType = args[2];
-
-					var type = args[3];
-					var eType = Easing.CalcType.Quadratic;
-					switch (type) {
-						case "CUBIC":
-							eType = Easing.CalcType.Cubic;
-							break;
-						case "QUARTIC":
-							eType = Easing.CalcType.Quartic;
-							break;
-						case "QUINTIC":
-							eType = Easing.CalcType.Quintic;
-							break;
-						case "SINUSOIDAL":
-							eType = Easing.CalcType.Sinusoidal;
-							break;
-						case "EXPONENTIAL":
-							eType = Easing.CalcType.Exponential;
-							break;
-						case "CIRCULAR":
-							eType = Easing.CalcType.Circular;
-							break;
-						case "LINEAR":
-							eType = Easing.CalcType.Linear;
-							break;
-						default:
-							break;
-					}
-
-					chip.fCamMoveType = eType;
+					chip.fCamMoveType = TjaArgToEasingCalcType(args[3]);
 
 					currentCamHMoveChip = chip;
 
@@ -2697,34 +2641,7 @@ internal class CTja : CActivity {
 					chip.fCamZoomStart = float.Parse(args[0]);
 					chip.fCamZoomEnd = float.Parse(args[1]);
 					chip.strCamEaseType = args[2];
-
-					var type = args[3];
-					var eType = Easing.CalcType.Quadratic;
-					switch (type) {
-						case "CUBIC":
-							eType = Easing.CalcType.Cubic;
-							break;
-						case "QUARTIC":
-							eType = Easing.CalcType.Quartic;
-							break;
-						case "QUINTIC":
-							eType = Easing.CalcType.Quintic;
-							break;
-						case "SINUSOIDAL":
-							eType = Easing.CalcType.Sinusoidal;
-							break;
-						case "EXPONENTIAL":
-							eType = Easing.CalcType.Exponential;
-							break;
-						case "CIRCULAR":
-							eType = Easing.CalcType.Circular;
-							break;
-						case "LINEAR":
-							eType = Easing.CalcType.Linear;
-							break;
-					}
-
-					chip.fCamMoveType = eType;
+					chip.fCamMoveType = TjaArgToEasingCalcType(args[3]);
 
 					currentCamZoomChip = chip;
 
@@ -2783,36 +2700,7 @@ internal class CTja : CActivity {
 					chip.fCamRotationStart = float.Parse(args[0]);
 					chip.fCamRotationEnd = float.Parse(args[1]);
 					chip.strCamEaseType = args[2];
-
-					var type = args[3];
-					var eType = Easing.CalcType.Quadratic;
-					switch (type) {
-						case "CUBIC":
-							eType = Easing.CalcType.Cubic;
-							break;
-						case "QUARTIC":
-							eType = Easing.CalcType.Quartic;
-							break;
-						case "QUINTIC":
-							eType = Easing.CalcType.Quintic;
-							break;
-						case "SINUSOIDAL":
-							eType = Easing.CalcType.Sinusoidal;
-							break;
-						case "EXPONENTIAL":
-							eType = Easing.CalcType.Exponential;
-							break;
-						case "CIRCULAR":
-							eType = Easing.CalcType.Circular;
-							break;
-						case "LINEAR":
-							eType = Easing.CalcType.Linear;
-							break;
-						default:
-							break;
-					}
-
-					chip.fCamMoveType = eType;
+					chip.fCamMoveType = TjaArgToEasingCalcType(args[3]);
 
 					currentCamRotateChip = chip;
 
@@ -2871,36 +2759,7 @@ internal class CTja : CActivity {
 					chip.fCamScaleStartY = float.Parse(args[0]);
 					chip.fCamScaleEndY = float.Parse(args[1]);
 					chip.strCamEaseType = args[2];
-
-					var type = args[3];
-					var eType = Easing.CalcType.Quadratic;
-					switch (type) {
-						case "CUBIC":
-							eType = Easing.CalcType.Cubic;
-							break;
-						case "QUARTIC":
-							eType = Easing.CalcType.Quartic;
-							break;
-						case "QUINTIC":
-							eType = Easing.CalcType.Quintic;
-							break;
-						case "SINUSOIDAL":
-							eType = Easing.CalcType.Sinusoidal;
-							break;
-						case "EXPONENTIAL":
-							eType = Easing.CalcType.Exponential;
-							break;
-						case "CIRCULAR":
-							eType = Easing.CalcType.Circular;
-							break;
-						case "LINEAR":
-							eType = Easing.CalcType.Linear;
-							break;
-						default:
-							break;
-					}
-
-					chip.fCamMoveType = eType;
+					chip.fCamMoveType = TjaArgToEasingCalcType(args[3]);
 
 					currentCamVScaleChip = chip;
 
@@ -2959,36 +2818,7 @@ internal class CTja : CActivity {
 					chip.fCamScaleStartX = float.Parse(args[0]);
 					chip.fCamScaleEndX = float.Parse(args[1]);
 					chip.strCamEaseType = args[2];
-
-					var type = args[3];
-					var eType = Easing.CalcType.Quadratic;
-					switch (type) {
-						case "CUBIC":
-							eType = Easing.CalcType.Cubic;
-							break;
-						case "QUARTIC":
-							eType = Easing.CalcType.Quartic;
-							break;
-						case "QUINTIC":
-							eType = Easing.CalcType.Quintic;
-							break;
-						case "SINUSOIDAL":
-							eType = Easing.CalcType.Sinusoidal;
-							break;
-						case "EXPONENTIAL":
-							eType = Easing.CalcType.Exponential;
-							break;
-						case "CIRCULAR":
-							eType = Easing.CalcType.Circular;
-							break;
-						case "LINEAR":
-							eType = Easing.CalcType.Linear;
-							break;
-						default:
-							break;
-					}
-
-					chip.fCamMoveType = eType;
+					chip.fCamMoveType = TjaArgToEasingCalcType(args[3]);
 
 					currentCamHScaleChip = chip;
 
@@ -3342,36 +3172,7 @@ internal class CTja : CActivity {
 					chip.fObjStart = float.Parse(args[1]);
 					chip.fObjEnd = float.Parse(args[2]);
 					chip.strObjEaseType = args[3];
-
-					var type = args[4];
-					var eType = Easing.CalcType.Quadratic;
-					switch (type) {
-						case "CUBIC":
-							eType = Easing.CalcType.Cubic;
-							break;
-						case "QUARTIC":
-							eType = Easing.CalcType.Quartic;
-							break;
-						case "QUINTIC":
-							eType = Easing.CalcType.Quintic;
-							break;
-						case "SINUSOIDAL":
-							eType = Easing.CalcType.Sinusoidal;
-							break;
-						case "EXPONENTIAL":
-							eType = Easing.CalcType.Exponential;
-							break;
-						case "CIRCULAR":
-							eType = Easing.CalcType.Circular;
-							break;
-						case "LINEAR":
-							eType = Easing.CalcType.Linear;
-							break;
-						default:
-							break;
-					}
-
-					chip.objCalcType = eType;
+					chip.objCalcType = TjaArgToEasingCalcType(args[4]);
 
 					currentObjAnimations.Add("vmove_" + name, chip);
 
@@ -3438,36 +3239,7 @@ internal class CTja : CActivity {
 					chip.fObjStart = float.Parse(args[1]);
 					chip.fObjEnd = float.Parse(args[2]);
 					chip.strObjEaseType = args[3];
-
-					var type = args[4];
-					var eType = Easing.CalcType.Quadratic;
-					switch (type) {
-						case "CUBIC":
-							eType = Easing.CalcType.Cubic;
-							break;
-						case "QUARTIC":
-							eType = Easing.CalcType.Quartic;
-							break;
-						case "QUINTIC":
-							eType = Easing.CalcType.Quintic;
-							break;
-						case "SINUSOIDAL":
-							eType = Easing.CalcType.Sinusoidal;
-							break;
-						case "EXPONENTIAL":
-							eType = Easing.CalcType.Exponential;
-							break;
-						case "CIRCULAR":
-							eType = Easing.CalcType.Circular;
-							break;
-						case "LINEAR":
-							eType = Easing.CalcType.Linear;
-							break;
-						default:
-							break;
-					}
-
-					chip.objCalcType = eType;
+					chip.objCalcType = TjaArgToEasingCalcType(args[4]);
 
 					currentObjAnimations.Add("hmove_" + name, chip);
 
@@ -3532,36 +3304,7 @@ internal class CTja : CActivity {
 					chip.fObjStart = float.Parse(args[1]);
 					chip.fObjEnd = float.Parse(args[2]);
 					chip.strObjEaseType = args[3];
-
-					var type = args[4];
-					var eType = Easing.CalcType.Quadratic;
-					switch (type) {
-						case "CUBIC":
-							eType = Easing.CalcType.Cubic;
-							break;
-						case "QUARTIC":
-							eType = Easing.CalcType.Quartic;
-							break;
-						case "QUINTIC":
-							eType = Easing.CalcType.Quintic;
-							break;
-						case "SINUSOIDAL":
-							eType = Easing.CalcType.Sinusoidal;
-							break;
-						case "EXPONENTIAL":
-							eType = Easing.CalcType.Exponential;
-							break;
-						case "CIRCULAR":
-							eType = Easing.CalcType.Circular;
-							break;
-						case "LINEAR":
-							eType = Easing.CalcType.Linear;
-							break;
-						default:
-							break;
-					}
-
-					chip.objCalcType = eType;
+					chip.objCalcType = TjaArgToEasingCalcType(args[4]);
 
 					currentObjAnimations.Add("vscale_" + name, chip);
 
@@ -3625,34 +3368,7 @@ internal class CTja : CActivity {
 					chip.fObjStart = float.Parse(args[1]);
 					chip.fObjEnd = float.Parse(args[2]);
 					chip.strObjEaseType = args[3];
-
-					var type = args[4];
-					var eType = Easing.CalcType.Quadratic;
-					switch (type) {
-						case "CUBIC":
-							eType = Easing.CalcType.Cubic;
-							break;
-						case "QUARTIC":
-							eType = Easing.CalcType.Quartic;
-							break;
-						case "QUINTIC":
-							eType = Easing.CalcType.Quintic;
-							break;
-						case "SINUSOIDAL":
-							eType = Easing.CalcType.Sinusoidal;
-							break;
-						case "EXPONENTIAL":
-							eType = Easing.CalcType.Exponential;
-							break;
-						case "CIRCULAR":
-							eType = Easing.CalcType.Circular;
-							break;
-						case "LINEAR":
-							eType = Easing.CalcType.Linear;
-							break;
-					}
-
-					chip.objCalcType = eType;
+					chip.objCalcType = TjaArgToEasingCalcType(args[4]);
 
 					currentObjAnimations.Add("hscale_" + name, chip);
 
@@ -3716,36 +3432,7 @@ internal class CTja : CActivity {
 					chip.fObjStart = float.Parse(args[1]);
 					chip.fObjEnd = float.Parse(args[2]);
 					chip.strObjEaseType = args[3];
-
-					var type = args[4];
-					var eType = Easing.CalcType.Quadratic;
-					switch (type) {
-						case "CUBIC":
-							eType = Easing.CalcType.Cubic;
-							break;
-						case "QUARTIC":
-							eType = Easing.CalcType.Quartic;
-							break;
-						case "QUINTIC":
-							eType = Easing.CalcType.Quintic;
-							break;
-						case "SINUSOIDAL":
-							eType = Easing.CalcType.Sinusoidal;
-							break;
-						case "EXPONENTIAL":
-							eType = Easing.CalcType.Exponential;
-							break;
-						case "CIRCULAR":
-							eType = Easing.CalcType.Circular;
-							break;
-						case "LINEAR":
-							eType = Easing.CalcType.Linear;
-							break;
-						default:
-							break;
-					}
-
-					chip.objCalcType = eType;
+					chip.objCalcType = TjaArgToEasingCalcType(args[4]);
 
 					currentObjAnimations.Add("rotation_" + name, chip);
 
@@ -3809,34 +3496,7 @@ internal class CTja : CActivity {
 					chip.fObjStart = float.Parse(args[1]);
 					chip.fObjEnd = float.Parse(args[2]);
 					chip.strObjEaseType = args[3];
-
-					var type = args[4];
-					var eType = Easing.CalcType.Quadratic;
-					switch (type) {
-						case "CUBIC":
-							eType = Easing.CalcType.Cubic;
-							break;
-						case "QUARTIC":
-							eType = Easing.CalcType.Quartic;
-							break;
-						case "QUINTIC":
-							eType = Easing.CalcType.Quintic;
-							break;
-						case "SINUSOIDAL":
-							eType = Easing.CalcType.Sinusoidal;
-							break;
-						case "EXPONENTIAL":
-							eType = Easing.CalcType.Exponential;
-							break;
-						case "CIRCULAR":
-							eType = Easing.CalcType.Circular;
-							break;
-						case "LINEAR":
-							eType = Easing.CalcType.Linear;
-							break;
-					}
-
-					chip.objCalcType = eType;
+					chip.objCalcType = TjaArgToEasingCalcType(args[4]);
 
 					currentObjAnimations.Add("opacity_" + name, chip);
 
@@ -4691,6 +4351,19 @@ internal class CTja : CActivity {
 			this.listChip.Add(chip);
 		}
 	}
+
+	private static Easing.CalcType TjaArgToEasingCalcType(string type)
+		=> type switch {
+			"CUBIC" => Easing.CalcType.Cubic,
+			"QUARTIC" => Easing.CalcType.Quartic,
+			"QUINTIC" => Easing.CalcType.Quintic,
+			"SINUSOIDAL" => Easing.CalcType.Sinusoidal,
+			"EXPONENTIAL" => Easing.CalcType.Exponential,
+			"CIRCULAR" => Easing.CalcType.Circular,
+			"LINEAR" => Easing.CalcType.Linear,
+			"QUADRATIC" or _ => Easing.CalcType.Quadratic,
+		};
+
 	void t現在のチップ情報を記録する(bool bInPut) {
 		//2020.04.21 こうなってしまったのは仕方がないな。。
 		if (bInPut) {

@@ -3233,6 +3233,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 					// 段位認定モードの幕アニメーション
 					if (!pChip.bHit && time < 0) {
 						pChip.bHit = true;
+						this.ListDan_Number = pChip.n整数値_内部番号;
 						this.actPanel.t歌詞テクスチャを削除する();
 						if (pChip.nBranch == this.nCurrentBranch[nPlayer]) {
 							this.actDan.Update();
@@ -3245,7 +3246,6 @@ internal abstract class CStage演奏画面共通 : CStage {
 
 								// Play next song here
 								this.actDan.Start(this.ListDan_Number);
-								ListDan_Number++;
 							} else {
 								actDan.FirstSectionAnime = true;
 							}

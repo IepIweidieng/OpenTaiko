@@ -2809,6 +2809,8 @@ internal abstract class CStage演奏画面共通 : CStage {
 
 		//CDTXMania.act文字コンソール.tPrint(0, 0, C文字コンソール.Eフォント種別.灰, this.nLoopCount_Clear.ToString()  );
 
+		int actual = OpenTaiko.GetActualPlayer(nPlayer);
+		CConfigIni.CTimingZones tz = this.GetTimingZones(actual);
 		float play_bpm_time = this.GetNowPBMTime(dTX, 0);
 
 		//for ( int nCurrentTopChip = this.n現在のトップChip; nCurrentTopChip < dTX.listChip.Count; nCurrentTopChip++ )
@@ -2855,7 +2857,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 				}
 			}
 
-			if (pChip.nHorizontalChipDistance < -150) {
+			if (time < -CTja.GameDurationToTjaDuration(tz.nBadZone)) {
 				if (NotesManager.IsHittableNote(pChip) && !(NotesManager.IsMissableNote(pChip))) {
 					//2016.02.11 kairera0467
 					//太鼓の単音符の場合は座標による判定を行わない。
@@ -2869,7 +2871,8 @@ internal abstract class CStage演奏画面共通 : CStage {
 
 				//if( cChipCurrentlyInProcess.nチャンネル番号 >= 0x13 && cChipCurrentlyInProcess.nチャンネル番号 <= 0x15 )//|| pChip.nチャンネル番号 == 0x9A )
 				if (NotesManager.IsBigNote(cChipCurrentlyInProcess)) {
-					if (((cChipCurrentlyInProcess.nHorizontalChipDistance < -500) && (cChipCurrentlyInProcess.n発声時刻ms <= n現在時刻ms && cChipCurrentlyInProcess.nNoteEndTimems >= n現在時刻ms)))
+					if ((cChipCurrentlyInProcess.n発声時刻ms - n現在時刻ms) < -CTja.GameDurationToTjaDuration(OpenTaiko.ConfigIni.nBigNoteWaitTimems)
+						&& (cChipCurrentlyInProcess.n発声時刻ms <= n現在時刻ms && cChipCurrentlyInProcess.nNoteEndTimems >= n現在時刻ms))
 					//( ( chip現在処理中の連打チップ.nバーからのノーツ末端距離dot.Taiko < -500 ) && ( chip現在処理中の連打チップ.n発声時刻ms <= CSound管理.rc演奏用タイマ.n現在時刻ms && chip現在処理中の連打チップ.nノーツ終了時刻ms >= CSound管理.rc演奏用タイマ.n現在時刻ms ) ) )
 					//( ( pChip.n発声時刻ms <= CSound管理.rc演奏用タイマ.n現在時刻ms && pChip.nノーツ終了時刻ms >= CSound管理.rc演奏用タイマ.n現在時刻ms ) ) )
 					{
@@ -3988,6 +3991,8 @@ internal abstract class CStage演奏画面共通 : CStage {
 
 		var n現在時刻ms = (long)dTX.GameTimeToTjaTime(SoundManager.PlayTimer.NowTimeMs);
 
+		int actual = OpenTaiko.GetActualPlayer(nPlayer);
+		CConfigIni.CTimingZones tz = GetTimingZones(actual);
 		//for ( int nCurrentTopChip = this.n現在のトップChip; nCurrentTopChip < dTX.listChip.Count; nCurrentTopChip++ )
 		for (int nCurrentTopChip = dTX.listChip.Count - 1; nCurrentTopChip > 0; nCurrentTopChip--) {
 			CChip pChip = dTX.listChip[nCurrentTopChip];
@@ -3995,7 +4000,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 			if (!pChip.bHit) {
 				bool bRollChip = NotesManager.IsGenericRoll(pChip);// pChip.nチャンネル番号 >= 0x15 && pChip.nチャンネル番号 <= 0x19;
 				if (bRollChip) {
-					if (pChip.nHorizontalChipDistance < -40) {
+					if ((pChip.n発声時刻ms - n現在時刻ms) < -CTja.GameDurationToTjaDuration(tz.nGoodZone)) {
 						if (this.e指定時刻からChipのJUDGEを返す(n現在時刻ms, pChip, nPlayer) == ENoteJudge.Miss) {
 							this.tチップのヒット処理(n現在時刻ms, pChip, EInstrumentPad.Taiko, false, 0, nPlayer);
 						}

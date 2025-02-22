@@ -1299,7 +1299,8 @@ internal abstract class CStage演奏画面共通 : CStage {
 					OpenTaiko.Skin.soundKusudama.tPlay();
 					pChip.bHit = true;
 					pChip.IsHitted = true;
-					chip現在処理中の連打チップ[player].bHit = true;
+					if (chip現在処理中の連打チップ[player] != null)
+						chip現在処理中の連打チップ[player].bHit = true;
 					pChip.bVisible = false;
 					nCurrentKusudamaCount = 0;
 
@@ -1317,7 +1318,8 @@ internal abstract class CStage演奏画面共通 : CStage {
 					//CDTXMania.stage演奏ドラム画面.actChipFireD.Start( 0, player );
 					pChip.bHit = true;
 					pChip.IsHitted = true;
-					chip現在処理中の連打チップ[player].bHit = true;
+					if (chip現在処理中の連打チップ[player] != null)
+						chip現在処理中の連打チップ[player].bHit = true;
 					//this.b連打中 = false;
 					//this.actChara.b風船連打中 = false;
 					pChip.bVisible = false;
@@ -1509,7 +1511,8 @@ internal abstract class CStage演奏画面共通 : CStage {
 				if (pChip.nNoteEndTimems <= tja.GameTimeToTjaTime(SoundManager.PlayTimer.NowTimeMs)) {
 					if (NotesManager.IsKusudama(pChip)) {
 						for (int i = 0; i < OpenTaiko.ConfigIni.nPlayerCount; i++) {
-							chip現在処理中の連打チップ[i].bHit = true;
+							if (chip現在処理中の連打チップ[i] != null)
+								chip現在処理中の連打チップ[i].bHit = true;
 							this.bCurrentlyDrumRoll[i] = false;
 						}
 					} else {
@@ -4370,7 +4373,8 @@ internal abstract class CStage演奏画面共通 : CStage {
 				OpenTaiko.stageGameScreen.actBackground.ClearOut(i);
 			}
 
-			if (NotesManager.IsKusudama(this.chip現在処理中の連打チップ[i]) && this.actChara.b風船連打中[i]) actBalloon.KusuMiss();
+			if (chip現在処理中の連打チップ[i] != null && NotesManager.IsKusudama(this.chip現在処理中の連打チップ[i]) && this.actChara.b風船連打中[i])
+				actBalloon.KusuMiss();
 			this.chip現在処理中の連打チップ[i] = null;
 			this.actChara.b風船連打中[i] = false;
 			this.actChara.ReturnDefaultAnime(i, true);

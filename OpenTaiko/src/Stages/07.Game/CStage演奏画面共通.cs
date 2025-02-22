@@ -4310,42 +4310,6 @@ internal abstract class CStage演奏画面共通 : CStage {
 	}
 
 	public void t演奏やりなおし() {
-		_AIBattleState = 0;
-		_AIBattleStateBatch = new Queue<float>[] { new Queue<float>(), new Queue<float>() };
-
-		NowAIBattleSectionCount = 0;
-		NowAIBattleSectionTime = 0;
-
-		CFloorManagement.reload();
-
-		for (int i = 0; i < AIBattleSections.Count; i++) {
-			AIBattleSections[i].End = AIBattleSection.EndType.None;
-			AIBattleSections[i].IsAnimated = false;
-		}
-
-		OpenTaiko.fCamXOffset = 0;
-
-		OpenTaiko.fCamYOffset = 0;
-
-		OpenTaiko.fCamZoomFactor = 1.0f;
-		OpenTaiko.fCamRotation = 0;
-
-		OpenTaiko.fCamXScale = 1.0f;
-		OpenTaiko.fCamYScale = 1.0f;
-
-		OpenTaiko.borderColor = new Color4(1f, 0f, 0f, 0f);
-
-		foreach (var chip in OpenTaiko.TJA.listChip) {
-			chip.ResetRollEffect();
-			if (chip.obj == null) continue;
-			chip.obj.isVisible = false;
-			chip.obj.yScale = 1.0f;
-			chip.obj.xScale = 1.0f;
-			chip.obj.rotation = 0.0f;
-			chip.obj.opacity = 255;
-			chip.obj.frame = 0;
-		}
-
 		OpenTaiko.TJA.t全チップの再生停止とミキサーからの削除();
 		this.t数値の初期化(true, true);
 		//this.actAVI.Stop();
@@ -4358,16 +4322,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 		for (int i = 0; i < 5; i++) {
 			cleared[i] = bIsAlreadyCleared[i];
 			this.t演奏位置の変更(0, i);
-			this.actPlayInfo.NowMeasure[i] = 0;
-			JPOSCROLLX[i] = 0;
-			JPOSCROLLY[i] = 0;
-			ifp[i] = false;
-			isDeniedPlaying[i] = false;
-
-			OpenTaiko.ConfigIni.nGameType[i] = eFirstGameType[i];
-			bSplitLane[i] = false;
 		}
-		OpenTaiko.stageGameScreen.Activate();
 		for (int i = 0; i < OpenTaiko.ConfigIni.nPlayerCount; i++) {
 			if (!bIsAlreadyCleared[i] && cleared[i]) {
 				OpenTaiko.stageGameScreen.actBackground.ClearOut(i);
@@ -4396,7 +4351,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 		// 自分自身のOn活性化()相当の処理もすべき。
 	}
 
-	public void t数値の初期化(bool b演奏記録, bool b演奏状態) {
+	public virtual void t数値の初期化(bool b演奏記録, bool b演奏状態) {
 		if (b演奏記録) {
 			this.nHitCount_InclAuto.Taiko.Perfect = 0;
 			this.nHitCount_InclAuto.Taiko.Great = 0;
@@ -4417,28 +4372,129 @@ internal abstract class CStage演奏画面共通 : CStage {
 			}
 		}
 		if (b演奏状態) {
+			_AIBattleStateBatch = new Queue<float>[] { new Queue<float>(), new Queue<float>() };
+
 			for (int i = 0; i < OpenTaiko.ConfigIni.nPlayerCount; i++) {
-				this.bIsGOGOTIME[i] = false;
 				this.bIsMiss[i] = false;
 				this.bLEVELHOLD[i] = false;
 				this.b強制的に分岐させた[i] = false;
-				this.bBranchedChart[i] = false;
-				this.bCurrentlyDrumRoll[i] = false;
 				this.nCurrentBranch[i] = 0;
 				this.nNextBranch[i] = 0;
 				this.nCurrentRollCount[i] = 0;
 				this.nTotalRollCount[i] = 0;
-				this.n分岐した回数[i] = 0;
+
+				#region [ 演奏済みフラグのついたChipをリセットする ]
+				foreach (var chip in OpenTaiko.GetTJA(i)!.listNoteChip) {
+					chip.bHit = false;
+					chip.bShow = true;
+					chip.bShowRoll = true;
+					chip.bProcessed = false;
+					chip.bVisible = true;
+					chip.IsHitted = false;
+					chip.IsMissed = false;
+					chip.eNoteState = ENoteState.None;
+					chip.nProcessTime = 0;
+					chip.nRollCount = 0;
+					chip.nRollCount = 0;
+					chip.ResetRollEffect();
+				}
+				#endregion
 			}
 			for (int i = 0; i < 5; i++) {
 				this.actComboVoice.tReset(i);
+				this.ifp[i] = false;
+				this.isDeniedPlaying[i] = false;
+			}
+
+			this.nBranch条件数値A = 0;
+			this.nBranch条件数値B = 0;
+
+			this.ePhaseID = CStage.EPhase.Common_NORMAL;//初期化すれば、リザルト変遷は止まる。
+
+			this.ReSetScore(OpenTaiko.TJA.nScoreInit[0, OpenTaiko.stageSongSelect.nChoosenSongDifficulty[0]], OpenTaiko.TJA.nScoreDiff[OpenTaiko.stageSongSelect.nChoosenSongDifficulty[0]]);
+			this.nHand = new int[] { 0, 0, 0, 0, 0 };
+		}
+
+		// rewind nCurrentTopChip
+		int prevTopChip = this.nCurrentTopChip;
+		this.nCurrentTopChip = (this.listChip[0].Count > 0) ? 0 : -1;
+
+		if (prevTopChip <= 0)
+			return; // no needs to reset
+
+		// reset accumulated chip state
+		_AIBattleState = 0;
+
+		NowAIBattleSectionCount = 0;
+		NowAIBattleSectionTime = 0;
+
+		CFloorManagement.reload();
+
+		for (int i = 0; i < AIBattleSections.Count; i++) {
+			AIBattleSections[i].End = AIBattleSection.EndType.None;
+			AIBattleSections[i].IsAnimated = false;
+		}
+
+		OpenTaiko.fCamXOffset = 0;
+
+		OpenTaiko.fCamYOffset = 0;
+
+		OpenTaiko.fCamZoomFactor = 1.0f;
+		OpenTaiko.fCamRotation = 0;
+
+		OpenTaiko.fCamXScale = 1.0f;
+		OpenTaiko.fCamYScale = 1.0f;
+
+		OpenTaiko.borderColor = new Color4(1f, 0f, 0f, 0f);
+
+		for (int i = 0; i < OpenTaiko.ConfigIni.nPlayerCount; i++) {
+			CTja tja = OpenTaiko.GetTJA(i)!;
+
+			this.bIsGOGOTIME[i] = false;
+			this.bBranchedChart[i] = false;
+			this.bCurrentlyDrumRoll[i] = false;
+			this.n分岐した回数[i] = 0;
+
+			this.actPlayInfo.dbBPM[i] = tja.BASEBPM;
+			this.UpdateCharaCounter(i);
+
+			this.actPlayInfo.NowMeasure[i] = 0;
+			this.JPOSCROLLX[i] = 0;
+			this.JPOSCROLLY[i] = 0;
+
+			OpenTaiko.ConfigIni.nGameType[i] = this.eFirstGameType[i];
+			this.bSplitLane[i] = false;
+
+			for (int iChip = 0; iChip < prevTopChip; ++iChip) {
+				CChip chip = tja.listChip[iChip];
+				if (!NotesManager.IsHittableNote(chip))
+					chip.bHit = false;
 			}
 		}
+
+		foreach (var chip in this.objHandlers.Keys) {
+			if (chip.obj == null) continue;
+			chip.obj.isVisible = false;
+			chip.obj.yScale = 1.0f;
+			chip.obj.xScale = 1.0f;
+			chip.obj.rotation = 0.0f;
+			chip.obj.opacity = 255;
+			chip.obj.frame = 0;
+		}
+		this.objHandlers.Clear();
+
 		nCurrentKusudamaCount = 0;
 		nCurrentKusudamaRollCount = 0;
 
-		this.ReSetScore(OpenTaiko.TJA.nScoreInit[0, OpenTaiko.stageSongSelect.nChoosenSongDifficulty[0]], OpenTaiko.TJA.nScoreDiff[OpenTaiko.stageSongSelect.nChoosenSongDifficulty[0]]);
-		this.nHand = new int[] { 0, 0, 0, 0, 0 };
+		if ((OpenTaiko.TJA.listVD.TryGetValue(1, out CVideoDecoder vd2))) {
+			ShowVideo = true;
+		} else {
+			ShowVideo = false;
+		}
+
+		dtLastQueueOperation = DateTime.MinValue;
+
+		this.nStoredHit = new int[OpenTaiko.ConfigIni.nPlayerCount];
 	}
 
 	public void t演奏位置の変更(int nStartBar, int nPlayer) {
@@ -4448,27 +4504,8 @@ internal abstract class CStage演奏画面共通 : CStage {
 		CTja? dTX = OpenTaiko.GetTJA(nPlayer);
 		if (dTX == null) return; //CDTXがnullの場合はプレイヤーが居ないのでその場で処理終了
 
-
 		#region [ 再生開始小節の変更 ]
 		//nStartBar++;									// +1が必要
-
-		#region [ 演奏済みフラグのついたChipをリセットする ]
-		for (int i = 0; i < dTX.listChip.Count; i++) {
-			//if(dTX.listChip[i].bHit) フラグが付いてなくてもすべてのチップをリセットする。(必要がある).2020.04.23.akasoko26
-
-			dTX.listChip[i].bHit = false;
-			dTX.listChip[i].bShow = true;
-			dTX.listChip[i].bShowRoll = true;
-			dTX.listChip[i].bProcessed = false;
-			dTX.listChip[i].bVisible = true;
-			dTX.listChip[i].IsHitted = false;
-			dTX.listChip[i].IsMissed = false;
-			dTX.listChip[i].eNoteState = ENoteState.None;
-			dTX.listChip[i].nProcessTime = 0;
-			dTX.listChip[i].nRollCount = 0;
-			dTX.listChip[i].nRollCount = 0;
-		}
-		#endregion
 
 		#region [ 処理を開始するチップの特定 ]
 		//for ( int i = this.n現在のトップChip; i < CDTXMania.DTX.listChip.Count; i++ )

@@ -4508,32 +4508,21 @@ internal abstract class CStage演奏画面共通 : CStage {
 		//nStartBar++;									// +1が必要
 
 		#region [ 処理を開始するチップの特定 ]
-		//for ( int i = this.n現在のトップChip; i < CDTXMania.DTX.listChip.Count; i++ )
-		bool bSuccessSeek = false;
-		for (int i = 0; i < dTX.listChip.Count; i++) {
-			CChip pChip = dTX.listChip[i];
-			if ((nStartBar == 0) ?
-				pChip.n発声時刻ms >= 0
-				: (pChip.nChannelNo == 0x50 && pChip.n整数値_内部番号 >= nStartBar)
-				) {
-				bSuccessSeek = true;
-				this.nCurrentTopChip = i;
-				break;
-			}
-		}
-		int idxCurrentTopMostChip;
-		if (!bSuccessSeek) {
-			// this.n現在のトップChip = CDTXMania.DTX.listChip.Count - 1;
-			idxCurrentTopMostChip = this.nCurrentTopChip = 0;       // 対象小節が存在しないなら、最初から再生
-		} else {
-			idxCurrentTopMostChip = this.nCurrentTopChip;
-			while (this.nCurrentTopChip != 0 && dTX.listChip[this.nCurrentTopChip].n発声時刻ms == dTX.listChip[this.nCurrentTopChip - 1].n発声時刻ms)
-				this.nCurrentTopChip--;
+		int iStartChip = dTX.GetListChipIndexOfMeasure(nStartBar);
+		if (iStartChip < this.nCurrentTopChip) {
+			this.t数値の初期化(false, false); // reset to handle past chips
 		}
 		#endregion
 		#region [ 演奏開始の発声時刻msを取得し、タイマに設定 ]
 		int nStartTime = (nStartBar == 0) ? 0
-			: ((int)dTX.TjaTimeToGameTime(dTX.listChip[this.nCurrentTopChip].n発声時刻ms) - OpenTaiko.ConfigIni.MusicPreTimeMs);
+			: ((int)dTX.TjaTimeToGameTime(dTX.listChip[iStartChip].n発声時刻ms) - OpenTaiko.ConfigIni.MusicPreTimeMs);
+
+		// re-seek for the correct iStartChip
+		while (iStartChip > 0 && dTX.listChip[iStartChip].n発声時刻ms > nStartTime)
+			iStartChip--;
+		// forward to cover simultaneous chips
+		while (iStartChip + 1 < dTX.listChip.Count && dTX.listChip[iStartChip + 1].n発声時刻ms == nStartTime)
+			iStartChip++;
 
 		SoundManager.PlayTimer.Reset(); // これでPAUSE解除されるので、次のPAUSEチェックは不要
 										//if ( !this.bPAUSE )
@@ -4546,7 +4535,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 		List<CSound> pausedCSound = new List<CSound>();
 
 		#region [ BGMやギターなど、演奏開始のタイミングで再生がかかっているサウンドのの途中再生開始 ] // (CDTXのt入力_行解析_チップ配置()で小節番号が+1されているのを削っておくこと)
-		for (int i = 0; i <= idxCurrentTopMostChip; ++i) {
+		for (int i = 0; i <= iStartChip; ++i) {
 			CChip pChip = dTX.listChip[i];
 			int nDuration = (int)CTja.TjaDurationToGameDuration(pChip.GetDuration());
 			long n発声時刻ms = (long)dTX.TjaTimeToGameTime(pChip.n発声時刻ms);

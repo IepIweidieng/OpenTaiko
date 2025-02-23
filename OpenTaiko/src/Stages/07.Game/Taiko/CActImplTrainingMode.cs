@@ -212,7 +212,7 @@ class CActImplTrainingMode : CActivity {
 					this.bCurrentlyScrolling = false;
 				}
 				CChip? lastTopChip = OpenTaiko.TJA!.listChip.ElementAtOrDefault(OpenTaiko.stageGameScreen.nCurrentTopChip - 1);
-				if (lastTopChip != null && OpenTaiko.TJA!.GameTimeToTjaTime(msTargetTime) <= lastTopChip.n発声時刻ms) // need to un-process
+				if (lastTopChip != null && OpenTaiko.TJA!.GameTimeToTjaTime(msTargetTime) < lastTopChip.n発声時刻ms) // need to un-process
 					OpenTaiko.stageGameScreen.t数値の初期化(false, false);
 
 				SoundManager.PlayTimer.NowTimeMs = msTargetTime;
@@ -351,14 +351,12 @@ class CActImplTrainingMode : CActivity {
 
 		this.bCurrentlyScrolling = false;
 		SoundManager.PlayTimer.NowTimeMs = this.nスクロール後ms;
-
-		int n演奏開始Chip = OpenTaiko.stageGameScreen.nCurrentTopChip;
 		int finalStartBar;
 
 		finalStartBar = this.nCurrentMeasure;
 		if (finalStartBar < 0) finalStartBar = 0;
 
-		OpenTaiko.stageGameScreen.t演奏位置の変更(finalStartBar, 0);
+		int n演奏開始Chip = OpenTaiko.stageGameScreen.t演奏位置の変更(finalStartBar, 0);
 
 		OpenTaiko.stageGameScreen.t数値の初期化(true, true);
 		if (OpenTaiko.ConfigIni.bTokkunMode && OpenTaiko.stageGameScreen.actBalloon.KusudamaIsActive) OpenTaiko.stageGameScreen.actBalloon.KusuMiss();

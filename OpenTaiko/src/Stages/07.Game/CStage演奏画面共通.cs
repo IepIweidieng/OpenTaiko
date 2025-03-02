@@ -3066,18 +3066,20 @@ internal abstract class CStage演奏画面共通 : CStage {
 					if (!pChip.bHit) {
 						pChip.bHit = true;
 
-						dTX.listObj.TryGetValue(pChip.strObjName, out CSongObject obj);
-						obj.x = pChip.fObjX;
-						obj.y = pChip.fObjY;
-						obj.isVisible = true;
+						if (dTX.listObj.TryGetValue(pChip.strObjName, out CSongObject? obj)) {
+							obj.x = pChip.fObjX;
+							obj.y = pChip.fObjY;
+							obj.isVisible = true;
+						}
 					}
 					break;
 				case 0xbd: //remove object
 					if (!pChip.bHit) {
 						pChip.bHit = true;
 
-						dTX.listObj.TryGetValue(pChip.strObjName, out CSongObject obj);
-						obj.isVisible = false;
+						if (dTX.listObj.TryGetValue(pChip.strObjName, out CSongObject? obj)) {
+							obj.isVisible = false;
+						}
 					}
 					break;
 				case 0xbe: //object animation start
@@ -3089,8 +3091,9 @@ internal abstract class CStage演奏画面共通 : CStage {
 					if (!pChip.bHit) {
 						pChip.bHit = true;
 
-						dTX.listObj.TryGetValue(pChip.strObjName, out pChip.obj);
-						this.objHandlers[GetObjHandlerKeys(pChip)[0]] = (pChip, new CCounter(0, pChip.fObjTimeMs, 1, OpenTaiko.Timer), GetObjHandlerSetter(pChip));
+						if (dTX.listObj.TryGetValue(pChip.strObjName, out pChip.obj)) {
+							this.objHandlers[GetObjHandlerKeys(pChip)[0]] = (pChip, new CCounter(0, pChip.fObjTimeMs, 1, OpenTaiko.Timer), GetObjHandlerSetter(pChip));
+						}
 					}
 					break;
 				case 0xbf: //object animation end
@@ -3107,8 +3110,9 @@ internal abstract class CStage演奏画面共通 : CStage {
 					if (!pChip.bHit) {
 						pChip.bHit = true;
 
-						dTX.listObj.TryGetValue(pChip.strObjName, out CSongObject obj);
-						obj.color = pChip.borderColor;
+						if (dTX.listObj.TryGetValue(pChip.strObjName, out CSongObject? obj)) {
+							obj.color = pChip.borderColor;
+						}
 					}
 					break;
 				case 0xcb: //set object y
@@ -3120,8 +3124,9 @@ internal abstract class CStage演奏画面共通 : CStage {
 					if (!pChip.bHit) {
 						pChip.bHit = true;
 
-						dTX.listObj.TryGetValue(pChip.strObjName, out pChip.obj);
-						this.objHandlers[GetObjHandlerKeys(pChip)[0]] = (pChip, new CCounter(0, 0, 1, OpenTaiko.Timer), GetObjHandlerSetter(pChip));
+						if (dTX.listObj.TryGetValue(pChip.strObjName, out pChip.obj)) {
+							this.objHandlers[GetObjHandlerKeys(pChip)[0]] = (pChip, new CCounter(0, 0, 1, OpenTaiko.Timer), GetObjHandlerSetter(pChip));
+						}
 					}
 					break;
 				case 0xd1: //change texture
@@ -3168,33 +3173,33 @@ internal abstract class CStage演奏画面共通 : CStage {
 				case 0xd4: //start object animation
 					if (!pChip.bHit) {
 						pChip.bHit = true;
-						dTX.listObj.TryGetValue(pChip.strObjName, out CSongObject obj);
-
-						obj.tStartAnimation(pChip.dbAnimInterval, false);
+						if (dTX.listObj.TryGetValue(pChip.strObjName, out CSongObject? obj)) {
+							obj.tStartAnimation(pChip.dbAnimInterval, false);
+						}
 					}
 					break;
 				case 0xd5: //start object animation (looping)
 					if (!pChip.bHit) {
 						pChip.bHit = true;
-						dTX.listObj.TryGetValue(pChip.strObjName, out CSongObject obj);
-
-						obj.tStartAnimation(pChip.dbAnimInterval, true);
+						if (dTX.listObj.TryGetValue(pChip.strObjName, out CSongObject? obj)) {
+							obj.tStartAnimation(pChip.dbAnimInterval, true);
+						}
 					}
 					break;
 				case 0xd6: //end object animation
 					if (!pChip.bHit) {
 						pChip.bHit = true;
-						dTX.listObj.TryGetValue(pChip.strObjName, out CSongObject obj);
-
-						obj.tStopAnimation();
+						if (dTX.listObj.TryGetValue(pChip.strObjName, out CSongObject? obj)) {
+							obj.tStopAnimation();
+						}
 					}
 					break;
 				case 0xd7: //set object frame
 					if (!pChip.bHit) {
 						pChip.bHit = true;
-						dTX.listObj.TryGetValue(pChip.strObjName, out CSongObject obj);
-
-						obj.frame = pChip.intFrame;
+						if (dTX.listObj.TryGetValue(pChip.strObjName, out CSongObject? obj)) {
+							obj.frame = pChip.intFrame;
+						}
 					}
 					break;
 				#endregion
@@ -3538,12 +3543,12 @@ internal abstract class CStage演奏画面共通 : CStage {
 				OpenTaiko.fCamXScale = 1.0f;
 				OpenTaiko.fCamYScale = 1.0f;
 			},
-			0xBE or 0xCB => (value) => chip.obj.y = value,
-			0xC0 or 0xCC => (value) => chip.obj.x = value,
-			0xC2 or 0xCD => (value) => chip.obj.yScale = value,
-			0xC4 or 0xCE => (value) => chip.obj.xScale = value,
-			0xC6 or 0xCF => (value) => chip.obj.rotation = value,
-			0xC8 or 0xD0 => (value) => chip.obj.opacity = (int)value,
+			0xBE or 0xCB => (value) => chip.obj!.y = value,
+			0xC0 or 0xCC => (value) => chip.obj!.x = value,
+			0xC2 or 0xCD => (value) => chip.obj!.yScale = value,
+			0xC4 or 0xCE => (value) => chip.obj!.xScale = value,
+			0xC6 or 0xCF => (value) => chip.obj!.rotation = value,
+			0xC8 or 0xD0 => (value) => chip.obj!.opacity = (int)value,
 			_ => throw new ArgumentOutOfRangeException(nameof(chip)),
 		};
 

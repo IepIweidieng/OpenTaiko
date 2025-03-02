@@ -82,7 +82,7 @@ internal class CChip : IComparable<CChip>, ICloneable {
 	public float fObjStart;
 	public float fObjEnd;
 
-	public CSongObject obj;
+	public CSongObject? obj;
 
 	public string strTargetTxName;
 	public string strNewPath;

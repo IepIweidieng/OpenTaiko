@@ -385,6 +385,15 @@ internal abstract class CStage演奏画面共通 : CStage {
 
 
 	public override void DeActivate() {
+		OpenTaiko.TJA.t全チップの再生停止とミキサーからの削除();
+		foreach (var vd in OpenTaiko.TJA.listVD) {
+			vd.Value.Stop();
+		}
+		this.actAVI.Stop();
+		this.actPanel.Stop();               // PANEL表示停止
+
+		// 自分自身のOn活性化()相当の処理もすべき。
+
 		this.bgmlength = 1;
 		this.ctチップ模様アニメ.Drums = null;
 
@@ -395,6 +404,13 @@ internal abstract class CStage演奏画面共通 : CStage {
 			ctChipAnimeLag[i] = null;
 			OpenTaiko.ConfigIni.nGameType[i] = eFirstGameType[i];
 			bSplitLane[i] = false;
+
+			var listObj = OpenTaiko.GetTJA(i)?.listObj;
+			if (listObj != null) {
+				foreach (var obj in listObj.Values) {
+					obj.ResetStates();
+				}
+			}
 		}
 
 		this.nowProcessingKusudama = null;
@@ -4037,21 +4053,6 @@ internal abstract class CStage演奏画面共通 : CStage {
 			}
 		}
 		this.bPAUSE = false;
-	}
-
-	public void t停止() {
-		OpenTaiko.TJA.t全チップの再生停止とミキサーからの削除();
-		foreach (var vd in OpenTaiko.TJA.listVD) {
-			vd.Value.Stop();
-		}
-		this.actAVI.Stop();
-		this.actPanel.Stop();               // PANEL表示停止
-		OpenTaiko.Timer.Pause();       // 再生時刻カウンタ停止
-
-		for (int i = 0; i < OpenTaiko.ConfigIni.nPlayerCount; ++i)
-			this.nCurrentTopChip[i] = OpenTaiko.GetTJA(i)!.listChip.Count - 1;   // 終端にシーク
-
-		// 自分自身のOn活性化()相当の処理もすべき。
 	}
 
 	public virtual void t数値の初期化(bool b演奏記録, bool b演奏状態) {

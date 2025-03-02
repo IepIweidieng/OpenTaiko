@@ -3,7 +3,7 @@
 namespace OpenTaiko;
 
 class Easing {
-	public int EaseIn(CCounter counter, float startPoint, float endPoint, CalcType type) {
+	public float EaseIn(CCounter counter, float startPoint, float endPoint, CalcType type) {
 		StartPoint = startPoint;
 		EndPoint = endPoint;
 		Sa = EndPoint - StartPoint;
@@ -43,9 +43,9 @@ class Easing {
 				break;
 		}
 
-		return (int)Value;
+		return (float)Value;
 	}
-	public int EaseOut(CCounter counter, float startPoint, float endPoint, CalcType type) {
+	public float EaseOut(CCounter counter, float startPoint, float endPoint, CalcType type) {
 		StartPoint = startPoint;
 		EndPoint = endPoint;
 		Sa = EndPoint - StartPoint;
@@ -90,7 +90,7 @@ class Easing {
 				break;
 		}
 
-		return (int)Value;
+		return (float)Value;
 	}
 	public float EaseInOut(CCounter counter, float startPoint, float endPoint, CalcType type) {
 		StartPoint = startPoint;

@@ -1982,11 +1982,11 @@ internal class CStage演奏ドラム画面 : CStage演奏画面共通 {
 				}
 				//if (this.chip現在処理中の連打チップ.n発声時刻ms <= (int)CSound管理.rc演奏用タイマ.n現在時刻ms && this.chip現在処理中の連打チップ.nノーツ終了時刻ms >= (int)CSound管理.rc演奏用タイマ.n現在時刻ms)
 				if (chkChip.n発声時刻ms <= (int)nowTime
-					&& chkChip.end.n発声時刻ms + 500 >= (int)nowTime
+					&& chkChip.end.n発声時刻ms + (!chkChip.bProcessed ? 0 : 500) >= (int)nowTime
 					) {
 					var balloon = NotesManager.IsKusudama(chkChip) ? nCurrentKusudamaCount : chkChip.nBalloon;
 					var rollCount = NotesManager.IsKusudama(chkChip) ? nCurrentKusudamaRollCount : chkChip.nRollCount;
-					if (!NotesManager.IsFuzeRoll(chkChip))
+					if (chkChip.bProcessed && !NotesManager.IsFuzeRoll(chkChip))
 						chkChip.bShow = false;
 					this.actBalloon.On進行描画(
 						balloon,

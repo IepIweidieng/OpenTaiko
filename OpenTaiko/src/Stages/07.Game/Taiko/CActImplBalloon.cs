@@ -97,8 +97,7 @@ internal class CActImplBalloon : CActivity {
 			}
 		}
 		#endregion
-
-		if (n連打数 != 0) {
+		if ((OpenTaiko.stageGameScreen.bPAUSE && OpenTaiko.ConfigIni.bTokkunMode) || n連打数 != 0) {
 			int x;
 			int y;
 			int frame_x;
@@ -130,12 +129,14 @@ internal class CActImplBalloon : CActivity {
 			//1P:0 2P:245
 			//if (CDTXMania.Tx.Chara_Balloon_Breaking != null && CDTXMania.ConfigIni.ShowChara)
 			//    CDTXMania.Tx.Chara_Balloon_Breaking.t2D描画(CDTXMania.app.Device, CDTXMania.Skin.Game_Chara_Balloon_X[player], CDTXMania.Skin.Game_Chara_Balloon_Y[player]);
-			for (int j = 0; j < 5; j++) {
+			if (!(OpenTaiko.stageGameScreen.bPAUSE && OpenTaiko.ConfigIni.bTokkunMode) && n連打数 != 0) {
+				for (int j = 0; j < 5; j++) {
 
-				if (n残り打数[j] < n連打数 && btype == EBalloonType.BALLOON) {
-					if (OpenTaiko.Tx.Balloon_Breaking[j] != null)
-						OpenTaiko.Tx.Balloon_Breaking[j].t2D描画(x + (this.ct風船ふきだしアニメ.CurrentValue == 1 ? 3 : 0), y);
-					break;
+					if (n残り打数[j] < n連打数 && btype == EBalloonType.BALLOON) {
+						if (OpenTaiko.Tx.Balloon_Breaking[j] != null)
+							OpenTaiko.Tx.Balloon_Breaking[j].t2D描画(x + (this.ct風船ふきだしアニメ.CurrentValue == 1 ? 3 : 0), y);
+						break;
+					}
 				}
 			}
 			//1P:31 2P:329
@@ -155,8 +156,7 @@ internal class CActImplBalloon : CActivity {
                 if (TJAPlayer3.Tx.Kusudama != null)
                     TJAPlayer3.Tx.Kusudama.t2D描画(0, 0);
                     */
-				if (!(OpenTaiko.stageGameScreen.bPAUSE && OpenTaiko.ConfigIni.bTokkunMode))
-					this.tKusudamaNumber(n連打数);
+				this.tKusudamaNumber(n連打数);
 			}
 
 			//CDTXMania.act文字コンソール.tPrint( 0, 0, C文字コンソール.Eフォント種別.白, n連打数.ToString() );

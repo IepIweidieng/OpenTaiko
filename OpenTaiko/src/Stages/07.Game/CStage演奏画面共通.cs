@@ -357,7 +357,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 		this.ListDan_Number = 0;
 		this.IsDanFailed = false;
 
-		this.objHandlers = new Dictionary<CChip, CCounter>();
+		this.objHandlers = new();
 
 		this.t背景テクスチャの生成();
 
@@ -387,13 +387,6 @@ internal abstract class CStage演奏画面共通 : CStage {
 	public override void DeActivate() {
 		this.bgmlength = 1;
 		this.ctチップ模様アニメ.Drums = null;
-
-		this.ctCamHMove = null;
-		this.ctCamVMove = null;
-		this.ctCamHScale = null;
-		this.ctCamVScale = null;
-		this.ctCamRotation = null;
-		this.ctCamZoom = null;
 
 		OpenTaiko.borderColor = new Color4(0f, 0f, 0f, 0f);
 		OpenTaiko.fCamXOffset = 0.0f;
@@ -3009,72 +3002,21 @@ internal abstract class CStage演奏画面共通 : CStage {
 
 				#region [ EXTENDED COMMANDS ]
 				case 0xa0: //camera vertical move start
-					if (!pChip.bHit) {
-						pChip.bHit = true;
-						this.currentCamVMoveChip = pChip;
-						this.ctCamVMove = new CCounter(0, pChip.fCamTimeMs, 1, OpenTaiko.Timer);
-					}
-					break;
-				case 0xa1: //camera vertical move end
-					if (!pChip.bHit) {
-						pChip.bHit = true;
-					}
-					break;
 				case 0xa2: //camera horizontal move start
-					if (!pChip.bHit) {
-						pChip.bHit = true;
-						this.currentCamHMoveChip = pChip;
-						this.ctCamHMove = new CCounter(0, pChip.fCamTimeMs, 1, OpenTaiko.Timer);
-					}
-					break;
-				case 0xa3: //camera horizontal move end
-					if (!pChip.bHit) {
-						pChip.bHit = true;
-					}
-					break;
 				case 0xa4: //camera zoom start
-					if (!pChip.bHit) {
-						pChip.bHit = true;
-						this.currentCamZoomChip = pChip;
-						this.ctCamZoom = new CCounter(0, pChip.fCamTimeMs, 1, OpenTaiko.Timer);
-					}
-					break;
-				case 0xa5: //camera zoom end
-					if (!pChip.bHit) {
-						pChip.bHit = true;
-					}
-					break;
 				case 0xa6: //camera rotation start
-					if (!pChip.bHit) {
-						pChip.bHit = true;
-						this.currentCamRotateChip = pChip;
-						this.ctCamRotation = new CCounter(0, pChip.fCamTimeMs, 1, OpenTaiko.Timer);
-					}
-					break;
-				case 0xa7: //camera rotation end
-					if (!pChip.bHit) {
-						pChip.bHit = true;
-					}
-					break;
 				case 0xa8: //camera vertical scaling start
-					if (!pChip.bHit) {
-						pChip.bHit = true;
-						this.currentCamVScaleChip = pChip;
-						this.ctCamVScale = new CCounter(0, pChip.fCamTimeMs, 1, OpenTaiko.Timer);
-					}
-					break;
-				case 0xa9: //camera vertical scaling end
-					if (!pChip.bHit) {
-						pChip.bHit = true;
-					}
-					break;
 				case 0xb0: //camera horizontal scaling start
 					if (!pChip.bHit) {
 						pChip.bHit = true;
-						this.currentCamHScaleChip = pChip;
-						this.ctCamHScale = new CCounter(0, pChip.fCamTimeMs, 1, OpenTaiko.Timer);
+						this.objHandlers.Add((pChip, new CCounter(0, pChip.fObjTimeMs, 1, OpenTaiko.Timer), GetObjHandlerSetter(pChip)));
 					}
 					break;
+				case 0xa1: //camera vertical move end
+				case 0xa3: //camera horizontal move end
+				case 0xa5: //camera zoom end
+				case 0xa7: //camera rotation end
+				case 0xa9: //camera vertical scaling end
 				case 0xb1: //camera horizontal scaling end
 					if (!pChip.bHit) {
 						pChip.bHit = true;
@@ -3087,51 +3029,14 @@ internal abstract class CStage演奏画面共通 : CStage {
 					}
 					break;
 				case 0xb3: //set camera x offset
-					if (!pChip.bHit) {
-						pChip.bHit = true;
-
-						this.currentCamHMoveChip = pChip;
-						this.ctCamHMove = new CCounter(0, 0, 1, OpenTaiko.Timer);
-					}
-					break;
 				case 0xb4: //set camera y offset
-					if (!pChip.bHit) {
-						pChip.bHit = true;
-
-						this.currentCamVMoveChip = pChip;
-						this.ctCamVMove = new CCounter(0, 0, 1, OpenTaiko.Timer);
-					}
-					break;
 				case 0xb5: //set camera zoom factor
-					if (!pChip.bHit) {
-						pChip.bHit = true;
-
-						this.currentCamZoomChip = pChip;
-						this.ctCamZoom = new CCounter(0, 0, 1, OpenTaiko.Timer);
-					}
-					break;
 				case 0xb6: //set camera rotation
-					if (!pChip.bHit) {
-						pChip.bHit = true;
-
-						this.currentCamRotateChip = pChip;
-						this.ctCamRotation = new CCounter(0, 0, 1, OpenTaiko.Timer);
-					}
-					break;
 				case 0xb7: //set camera x scale
-					if (!pChip.bHit) {
-						pChip.bHit = true;
-
-						this.currentCamHScaleChip = pChip;
-						this.ctCamHScale = new CCounter(0, 0, 1, OpenTaiko.Timer);
-					}
-					break;
 				case 0xb8: //set camera y scale
 					if (!pChip.bHit) {
 						pChip.bHit = true;
-
-						this.currentCamVScaleChip = pChip;
-						this.ctCamVScale = new CCounter(0, 0, 1, OpenTaiko.Timer);
+						this.objHandlers.Add((pChip, new CCounter(0, 0, 1, OpenTaiko.Timer), GetObjHandlerSetter(pChip)));
 					}
 					break;
 				case 0xb9: //reset camera
@@ -3139,24 +3044,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 						pChip.bHit = true;
 
 						OpenTaiko.borderColor = new Color4(0f, 0f, 0f, 0f);
-
-						this.currentCamVMoveChip = pChip;
-						this.currentCamHMoveChip = pChip;
-
-						this.currentCamZoomChip = pChip;
-						this.currentCamRotateChip = pChip;
-
-						this.currentCamVScaleChip = pChip;
-						this.currentCamHScaleChip = pChip;
-
-						this.ctCamVMove = new CCounter(0, 0, 1, OpenTaiko.Timer);
-						this.ctCamHMove = new CCounter(0, 0, 1, OpenTaiko.Timer);
-
-						this.ctCamZoom = new CCounter(0, 0, 1, OpenTaiko.Timer);
-						this.ctCamRotation = new CCounter(0, 0, 1, OpenTaiko.Timer);
-
-						this.ctCamVScale = new CCounter(0, 0, 1, OpenTaiko.Timer);
-						this.ctCamHScale = new CCounter(0, 0, 1, OpenTaiko.Timer);
+						this.objHandlers.Add((pChip, new CCounter(0, 0, 1, OpenTaiko.Timer), GetObjHandlerSetter(pChip)));
 					}
 					break;
 				case 0xba: //enable doron
@@ -3199,7 +3087,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 						pChip.bHit = true;
 
 						dTX.listObj.TryGetValue(pChip.strObjName, out pChip.obj);
-						objHandlers.Add(pChip, new CCounter(0, pChip.fObjTimeMs, 1, OpenTaiko.Timer));
+						this.objHandlers.Add((pChip, new CCounter(0, pChip.fObjTimeMs, 1, OpenTaiko.Timer), GetObjHandlerSetter(pChip)));
 					}
 					break;
 				case 0xbf: //object animation end
@@ -3230,7 +3118,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 						pChip.bHit = true;
 
 						dTX.listObj.TryGetValue(pChip.strObjName, out pChip.obj);
-						objHandlers.Add(pChip, new CCounter(0, 0, 1, OpenTaiko.Timer));
+						objHandlers.Add((pChip, new CCounter(0, 0, 1, OpenTaiko.Timer), GetObjHandlerSetter(pChip)));
 					}
 					break;
 				case 0xd1: //change texture
@@ -3606,133 +3494,51 @@ internal abstract class CStage演奏画面共通 : CStage {
 		#endregion
 
 		#region [ EXTENDED CONTROLS ]
-		if (ctCamVMove != null) //vertical camera move
-		{
-			ctCamVMove.Tick();
+		for (int i = 0; i < this.objHandlers.Count; ++i) {
+			var (chip, counter, setter) = this.objHandlers[i];
+			counter.Tick();
+
 			float value = 0.0f;
-			if (currentCamVMoveChip.strCamEaseType.Equals("IN")) value = easing.EaseIn(ctCamVMove, currentCamVMoveChip.fCamScrollStartY, currentCamVMoveChip.fCamScrollEndY, currentCamVMoveChip.fCamMoveType);
-			if (currentCamVMoveChip.strCamEaseType.Equals("OUT")) value = easing.EaseOut(ctCamVMove, currentCamVMoveChip.fCamScrollStartY, currentCamVMoveChip.fCamScrollEndY, currentCamVMoveChip.fCamMoveType);
-			if (currentCamVMoveChip.strCamEaseType.Equals("IN_OUT")) value = easing.EaseInOut(ctCamVMove, currentCamVMoveChip.fCamScrollStartY, currentCamVMoveChip.fCamScrollEndY, currentCamVMoveChip.fCamMoveType);
-			OpenTaiko.fCamYOffset = float.IsNaN(value) ? currentCamVMoveChip.fCamScrollStartY : value;
-
-			if (ctCamVMove.IsEnded) {
-				ctCamVMove = null;
-				OpenTaiko.fCamYOffset = currentCamVMoveChip.fCamScrollEndY;
+			if (counter.IsEnded) {
+				value = chip.fObjEnd;
+			} else {
+				if (chip.strObjEaseType.Equals("IN")) value = easing.EaseIn(counter, chip.fObjStart, chip.fObjEnd, chip.objCalcType);
+				if (chip.strObjEaseType.Equals("OUT")) value = easing.EaseOut(counter, chip.fObjStart, chip.fObjEnd, chip.objCalcType);
+				if (chip.strObjEaseType.Equals("IN_OUT")) value = easing.EaseInOut(counter, chip.fObjStart, chip.fObjEnd, chip.objCalcType);
+				value = float.IsNaN(value) ? chip.fObjStart : value;
 			}
-		}
 
-		if (ctCamHMove != null) //horizontal camera move
-		{
-			ctCamHMove.Tick();
-			float value = 0.0f;
-			if (currentCamHMoveChip.strCamEaseType.Equals("IN")) value = easing.EaseIn(ctCamHMove, currentCamHMoveChip.fCamScrollStartX, currentCamHMoveChip.fCamScrollEndX, currentCamHMoveChip.fCamMoveType);
-			if (currentCamHMoveChip.strCamEaseType.Equals("OUT")) value = easing.EaseOut(ctCamHMove, currentCamHMoveChip.fCamScrollStartX, currentCamHMoveChip.fCamScrollEndX, currentCamHMoveChip.fCamMoveType);
-			if (currentCamHMoveChip.strCamEaseType.Equals("IN_OUT")) value = easing.EaseInOut(ctCamHMove, currentCamHMoveChip.fCamScrollStartX, currentCamHMoveChip.fCamScrollEndX, currentCamHMoveChip.fCamMoveType);
-			OpenTaiko.fCamXOffset = float.IsNaN(value) ? currentCamHMoveChip.fCamScrollStartX : value;
-
-			if (ctCamHMove.IsEnded) {
-				ctCamHMove = null;
-				OpenTaiko.fCamXOffset = currentCamHMoveChip.fCamScrollEndX;
-			}
-		}
-
-		if (ctCamZoom != null) //camera zoom
-		{
-			ctCamZoom.Tick();
-			float value = 0.0f;
-			if (currentCamZoomChip.strCamEaseType.Equals("IN")) value = easing.EaseIn(ctCamZoom, currentCamZoomChip.fCamZoomStart, currentCamZoomChip.fCamZoomEnd, currentCamZoomChip.fCamMoveType);
-			if (currentCamZoomChip.strCamEaseType.Equals("OUT")) value = easing.EaseOut(ctCamZoom, currentCamZoomChip.fCamZoomStart, currentCamZoomChip.fCamZoomEnd, currentCamZoomChip.fCamMoveType);
-			if (currentCamZoomChip.strCamEaseType.Equals("IN_OUT")) value = easing.EaseInOut(ctCamZoom, currentCamZoomChip.fCamZoomStart, currentCamZoomChip.fCamZoomEnd, currentCamZoomChip.fCamMoveType);
-			OpenTaiko.fCamZoomFactor = float.IsNaN(value) ? currentCamZoomChip.fCamZoomStart : value;
-
-			if (ctCamZoom.IsEnded) {
-				ctCamZoom = null;
-				OpenTaiko.fCamZoomFactor = currentCamZoomChip.fCamZoomEnd;
-			}
-		}
-
-		if (ctCamRotation != null) //camera rotation
-		{
-			ctCamRotation.Tick();
-			float value = 0.0f;
-			if (currentCamRotateChip.strCamEaseType.Equals("IN")) value = easing.EaseIn(ctCamRotation, currentCamRotateChip.fCamRotationStart, currentCamRotateChip.fCamRotationEnd, currentCamRotateChip.fCamMoveType);
-			if (currentCamRotateChip.strCamEaseType.Equals("OUT")) value = easing.EaseOut(ctCamRotation, currentCamRotateChip.fCamRotationStart, currentCamRotateChip.fCamRotationEnd, currentCamRotateChip.fCamMoveType);
-			if (currentCamRotateChip.strCamEaseType.Equals("IN_OUT")) value = easing.EaseInOut(ctCamRotation, currentCamRotateChip.fCamRotationStart, currentCamRotateChip.fCamRotationEnd, currentCamRotateChip.fCamMoveType);
-			OpenTaiko.fCamRotation = float.IsNaN(value) ? currentCamRotateChip.fCamRotationStart : value;
-
-			if (ctCamRotation.IsEnded) {
-				ctCamRotation = null;
-				OpenTaiko.fCamRotation = currentCamRotateChip.fCamRotationEnd;
-			}
-		}
-
-		if (ctCamVScale != null) //vertical camera scaling
-		{
-			ctCamVScale.Tick();
-			float value = 0.0f;
-			if (currentCamVScaleChip.strCamEaseType.Equals("IN")) value = easing.EaseIn(ctCamVScale, currentCamVScaleChip.fCamScaleStartY, currentCamVScaleChip.fCamScaleEndY, currentCamVScaleChip.fCamMoveType);
-			if (currentCamVScaleChip.strCamEaseType.Equals("OUT")) value = easing.EaseOut(ctCamVScale, currentCamVScaleChip.fCamScaleStartY, currentCamVScaleChip.fCamScaleEndY, currentCamVScaleChip.fCamMoveType);
-			if (currentCamVScaleChip.strCamEaseType.Equals("IN_OUT")) value = easing.EaseInOut(ctCamVScale, currentCamVScaleChip.fCamScaleStartY, currentCamVScaleChip.fCamScaleEndY, currentCamVScaleChip.fCamMoveType);
-			OpenTaiko.fCamYScale = float.IsNaN(value) ? currentCamVScaleChip.fCamScaleStartY : value;
-
-			if (ctCamVScale.IsEnded) {
-				ctCamVScale = null;
-				OpenTaiko.fCamYScale = currentCamVScaleChip.fCamScaleEndY;
-			}
-		}
-
-		if (ctCamHScale != null) //horizontal camera scaling
-		{
-			ctCamHScale.Tick();
-			float value = 0.0f;
-			if (currentCamHScaleChip.strCamEaseType.Equals("IN")) value = easing.EaseIn(ctCamHScale, currentCamHScaleChip.fCamScaleStartX, currentCamHScaleChip.fCamScaleEndX, currentCamHScaleChip.fCamMoveType);
-			if (currentCamHScaleChip.strCamEaseType.Equals("OUT")) value = easing.EaseOut(ctCamHScale, currentCamHScaleChip.fCamScaleStartX, currentCamHScaleChip.fCamScaleEndX, currentCamHScaleChip.fCamMoveType);
-			if (currentCamHScaleChip.strCamEaseType.Equals("IN_OUT")) value = easing.EaseInOut(ctCamHScale, currentCamHScaleChip.fCamScaleStartX, currentCamHScaleChip.fCamScaleEndX, currentCamHScaleChip.fCamMoveType);
-			OpenTaiko.fCamXScale = float.IsNaN(value) ? currentCamHScaleChip.fCamScaleStartX : value;
-
-			if (ctCamHScale.IsEnded) {
-				ctCamHScale = null;
-				OpenTaiko.fCamXScale = currentCamHScaleChip.fCamScaleEndX;
-			}
-		}
-
-		foreach (KeyValuePair<CChip, CCounter> pair in objHandlers) {
-			CChip chip = pair.Key;
-			CCounter counter = pair.Value;
-
-			if (counter != null) {
-				counter.Tick();
-
-				float value = 0.0f;
-				if (counter.IsEnded) {
-					value = chip.fObjEnd;
-					counter = null;
-				} else {
-					if (chip.strObjEaseType.Equals("IN")) value = easing.EaseIn(counter, chip.fObjStart, chip.fObjEnd, chip.objCalcType);
-					if (chip.strObjEaseType.Equals("OUT")) value = easing.EaseOut(counter, chip.fObjStart, chip.fObjEnd, chip.objCalcType);
-					if (chip.strObjEaseType.Equals("IN_OUT")) value = easing.EaseInOut(counter, chip.fObjStart, chip.fObjEnd, chip.objCalcType);
-					value = float.IsNaN(value) ? chip.fObjStart : value;
-				}
-
-				if (chip.nChannelNo == 0xBE) chip.obj.y = value;
-				if (chip.nChannelNo == 0xC0) chip.obj.x = value;
-				if (chip.nChannelNo == 0xC2) chip.obj.yScale = value;
-				if (chip.nChannelNo == 0xC4) chip.obj.xScale = value;
-				if (chip.nChannelNo == 0xC6) chip.obj.rotation = value;
-				if (chip.nChannelNo == 0xC8) chip.obj.opacity = (int)value;
-
-				if (chip.nChannelNo == 0xCB) chip.obj.y = value;
-				if (chip.nChannelNo == 0xCC) chip.obj.x = value;
-				if (chip.nChannelNo == 0xCD) chip.obj.yScale = value;
-				if (chip.nChannelNo == 0xCE) chip.obj.xScale = value;
-				if (chip.nChannelNo == 0xCF) chip.obj.rotation = value;
-				if (chip.nChannelNo == 0xD0) chip.obj.opacity = (int)value;
-			}
+			setter(value);
 		}
 		#endregion
 
 		return false;
 	}
+
+	private static Action<float> GetObjHandlerSetter(CChip chip)
+		=> chip.nChannelNo switch {
+			0xA0 or 0xB4 => (value) => OpenTaiko.fCamYOffset = value,
+			0xA2 or 0xB3 => (value) => OpenTaiko.fCamXOffset = value,
+			0xA4 or 0xB5 => (value) => OpenTaiko.fCamZoomFactor = value,
+			0xA6 or 0xB6 => (value) => OpenTaiko.fCamRotation = value,
+			0xA8 or 0xB8 => (value) => OpenTaiko.fCamYScale = value,
+			0xB0 or 0xB7 => (value) => OpenTaiko.fCamXScale = value,
+			0xB9 => (value) => {
+				OpenTaiko.fCamXOffset = 0.0f;
+				OpenTaiko.fCamYOffset = 0.0f;
+				OpenTaiko.fCamZoomFactor = 1.0f;
+				OpenTaiko.fCamRotation = 0.0f;
+				OpenTaiko.fCamXScale = 1.0f;
+				OpenTaiko.fCamYScale = 1.0f;
+			},
+			0xBE or 0xCB => (value) => chip.obj.y = value,
+			0xC0 or 0xCC => (value) => chip.obj.x = value,
+			0xC2 or 0xCD => (value) => chip.obj.yScale = value,
+			0xC4 or 0xCE => (value) => chip.obj.xScale = value,
+			0xC6 or 0xCF => (value) => chip.obj.rotation = value,
+			0xC8 or 0xD0 => (value) => chip.obj.opacity = (int)value,
+			_ => throw new ArgumentOutOfRangeException(nameof(chip)),
+		};
 
 	private void AddNowProcessingRollChip(int iPlayer, CChip chip) {
 		//if( this.n現在のコース == pChip.nコース )
@@ -4395,7 +4201,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 			}
 		}
 
-		foreach (var chip in this.objHandlers.Keys) {
+		foreach (var (chip, counter, setter) in this.objHandlers) {
 			if (chip.obj == null) continue;
 			chip.obj.isVisible = false;
 			chip.obj.yScale = 1.0f;
@@ -4679,22 +4485,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 
 
 	#region [EXTENDED COMMANDS]
-	private CCounter ctCamVMove;
-	private CCounter ctCamHMove;
-	private CCounter ctCamZoom;
-	private CCounter ctCamRotation;
-	private CCounter ctCamVScale;
-	private CCounter ctCamHScale;
-
-	private CChip currentCamVMoveChip;
-	private CChip currentCamHMoveChip;
-	private CChip currentCamZoomChip;
-	private CChip currentCamRotateChip;
-	private CChip currentCamVScaleChip;
-	private CChip currentCamHScaleChip;
-
-	private Dictionary<CChip, CCounter> camHandlers;
-	private Dictionary<CChip, CCounter> objHandlers;
+	private List<(CChip chip, CCounter counter, Action<float> setter)> objHandlers;
 
 	private Easing easing = new Easing();
 

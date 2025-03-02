@@ -2646,26 +2646,28 @@ internal abstract class CStage演奏画面共通 : CStage {
 				pChip.nNoteTipDistance_Y = NotesManager.GetNoteY(msDTime_end, th16DBeat_end, pChip.end.dbBPM, _scrollSpeed_Y_end, pChip.end.eScrollMode);
 			}
 
-			if (!pChip.IsMissed && !pChip.bHit) {
-				if (NotesManager.IsMissableNote(pChip))//|| pChip.nチャンネル番号 == 0x9A )
-				{
-					//こっちのほうが適格と考えたためフラグを変更.2020.04.20 Akasoko26
-					if (time <= 0) {
-						if (this.e指定時刻からChipのJUDGEを返す(n現在時刻ms, pChip, nPlayer) == ENoteJudge.Miss) {
-							pChip.IsMissed = true;
-							pChip.eNoteState = ENoteState.Bad;
-							this.tチップのヒット処理(n現在時刻ms, pChip, EInstrumentPad.Taiko, false, 0, nPlayer);
+			if (!this.bPAUSE && !this.isRewinding) {
+				if (!pChip.IsMissed && !pChip.bHit) {
+					if (NotesManager.IsMissableNote(pChip))//|| pChip.nチャンネル番号 == 0x9A )
+					{
+						//こっちのほうが適格と考えたためフラグを変更.2020.04.20 Akasoko26
+						if (time <= 0) {
+							if (this.e指定時刻からChipのJUDGEを返す(n現在時刻ms, pChip, nPlayer) == ENoteJudge.Miss) {
+								pChip.IsMissed = true;
+								pChip.eNoteState = ENoteState.Bad;
+								this.tチップのヒット処理(n現在時刻ms, pChip, EInstrumentPad.Taiko, false, 0, nPlayer);
+							}
 						}
 					}
 				}
-			}
 
-			if (time < -CTja.GameDurationToTjaDuration(tz.nBadZone)) {
-				if (!NotesManager.IsMissableNote(pChip)) {
-					//2016.02.11 kairera0467
-					//太鼓の単音符の場合は座標による判定を行わない。
-					//(ここで判定をすると高スピードでスクロールしている時に見逃し不可判定が行われない。)
-					pChip.bHit = true;
+				if (time < -CTja.GameDurationToTjaDuration(tz.nBadZone)) {
+					if (!NotesManager.IsMissableNote(pChip)) {
+						//2016.02.11 kairera0467
+						//太鼓の単音符の場合は座標による判定を行わない。
+						//(ここで判定をすると高スピードでスクロールしている時に見逃し不可判定が行われない。)
+						pChip.bHit = true;
+					}
 				}
 			}
 		}
@@ -3405,18 +3407,20 @@ internal abstract class CStage演奏画面共通 : CStage {
 			this.bWasGOGOTIME[nPlayer] = this.bIsGOGOTIME[nPlayer];
 		}
 
-		foreach (var cChipCurrentlyInProcess in chip現在処理中の連打チップ[nPlayer]) {
-			if (cChipCurrentlyInProcess.bHit)
-				continue;
-			//if( cChipCurrentlyInProcess.nチャンネル番号 >= 0x13 && cChipCurrentlyInProcess.nチャンネル番号 <= 0x15 )//|| pChip.nチャンネル番号 == 0x9A )
-			if (NotesManager.IsBigNote(cChipCurrentlyInProcess)) {
-				if ((cChipCurrentlyInProcess.n発声時刻ms - n現在時刻ms) < -CTja.GameDurationToTjaDuration(OpenTaiko.ConfigIni.nBigNoteWaitTimems)
-					&& (cChipCurrentlyInProcess.n発声時刻ms <= n現在時刻ms && cChipCurrentlyInProcess.end.n発声時刻ms >= n現在時刻ms))
-				//( ( chip現在処理中の連打チップ.nバーからのノーツ末端距離dot.Taiko < -500 ) && ( chip現在処理中の連打チップ.n発声時刻ms <= CSound管理.rc演奏用タイマ.n現在時刻ms && chip現在処理中の連打チップ.nノーツ終了時刻ms >= CSound管理.rc演奏用タイマ.n現在時刻ms ) ) )
-				//( ( pChip.n発声時刻ms <= CSound管理.rc演奏用タイマ.n現在時刻ms && pChip.nノーツ終了時刻ms >= CSound管理.rc演奏用タイマ.n現在時刻ms ) ) )
-				{
-					if (bAutoPlay)
-						this.tチップのヒット処理(n現在時刻ms, cChipCurrentlyInProcess, EInstrumentPad.Taiko, false, 0, nPlayer);
+		if (!this.bPAUSE) {
+			foreach (var cChipCurrentlyInProcess in chip現在処理中の連打チップ[nPlayer]) {
+				if (cChipCurrentlyInProcess.bHit)
+					continue;
+				//if( cChipCurrentlyInProcess.nチャンネル番号 >= 0x13 && cChipCurrentlyInProcess.nチャンネル番号 <= 0x15 )//|| pChip.nチャンネル番号 == 0x9A )
+				if (NotesManager.IsBigNote(cChipCurrentlyInProcess)) {
+					if ((cChipCurrentlyInProcess.n発声時刻ms - n現在時刻ms) < -CTja.GameDurationToTjaDuration(OpenTaiko.ConfigIni.nBigNoteWaitTimems)
+						&& (cChipCurrentlyInProcess.n発声時刻ms <= n現在時刻ms && cChipCurrentlyInProcess.end.n発声時刻ms >= n現在時刻ms))
+					//( ( chip現在処理中の連打チップ.nバーからのノーツ末端距離dot.Taiko < -500 ) && ( chip現在処理中の連打チップ.n発声時刻ms <= CSound管理.rc演奏用タイマ.n現在時刻ms && chip現在処理中の連打チップ.nノーツ終了時刻ms >= CSound管理.rc演奏用タイマ.n現在時刻ms ) ) )
+					//( ( pChip.n発声時刻ms <= CSound管理.rc演奏用タイマ.n現在時刻ms && pChip.nノーツ終了時刻ms >= CSound管理.rc演奏用タイマ.n現在時刻ms ) ) )
+					{
+						if (bAutoPlay)
+							this.tチップのヒット処理(n現在時刻ms, cChipCurrentlyInProcess, EInstrumentPad.Taiko, false, 0, nPlayer);
+					}
 				}
 			}
 		}
@@ -3763,20 +3767,22 @@ internal abstract class CStage演奏画面共通 : CStage {
 		int actual = OpenTaiko.GetActualPlayer(nPlayer);
 		CConfigIni.CTimingZones tz = GetTimingZones(actual);
 		//for ( int nCurrentTopChip = this.n現在のトップChip; nCurrentTopChip < dTX.listChip.Count; nCurrentTopChip++ )
-		for (int iChip = dTX.listNoteChip.Count; iChip-- > 0;) {
-			CChip pChip = dTX.listNoteChip[iChip];
+		if (!this.bPAUSE) {
+			for (int iChip = dTX.listNoteChip.Count; iChip-- > 0;) {
+				CChip pChip = dTX.listNoteChip[iChip];
 
-			if (!pChip.bHit) {
-				bool bRollChip = NotesManager.IsGenericRoll(pChip) && !NotesManager.IsRollEnd(pChip);
-				if (bRollChip) {
-					if ((pChip.n発声時刻ms - n現在時刻ms) < -CTja.GameDurationToTjaDuration(tz.nGoodZone)) {
-						if (this.e指定時刻からChipのJUDGEを返す(n現在時刻ms, pChip, nPlayer) == ENoteJudge.Miss) {
-							this.tチップのヒット処理(n現在時刻ms, pChip, EInstrumentPad.Taiko, false, 0, nPlayer);
+				if (!pChip.bHit) {
+					bool bRollChip = NotesManager.IsGenericRoll(pChip) && !NotesManager.IsRollEnd(pChip);
+					if (bRollChip) {
+						if ((pChip.n発声時刻ms - n現在時刻ms) < -CTja.GameDurationToTjaDuration(tz.nGoodZone)) {
+							if (this.e指定時刻からChipのJUDGEを返す(n現在時刻ms, pChip, nPlayer) == ENoteJudge.Miss) {
+								this.tチップのヒット処理(n現在時刻ms, pChip, EInstrumentPad.Taiko, false, 0, nPlayer);
+							}
 						}
 					}
 				}
-			}
 
+			}
 		}
 		return false;
 	}

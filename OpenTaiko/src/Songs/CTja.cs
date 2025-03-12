@@ -1481,6 +1481,7 @@ internal class CTja : CActivity {
 					divPerMeasure = 0;
 				}
 			}
+			this.divsPerMeasureAllBranches.Add(divPerMeasure); // after last comma
 		} catch (Exception ex) {
 			Trace.TraceError(ex.ToString());
 			Trace.TraceError("例外が発生しましたが処理を継続します。 (9e401212-0b78-4073-88d0-f7e791f36a91)");
@@ -2580,8 +2581,7 @@ internal class CTja : CActivity {
 			return;
 		}
 
-		int n文字数 = (this.iNowMeasureAllBranches < this.divsPerMeasureAllBranches.Count) ? 16 // after last comma
-			: this.divsPerMeasureAllBranches[this.iNowMeasureAllBranches];
+		int n文字数 = this.divsPerMeasureAllBranches[this.iNowMeasureAllBranches];
 
 		if (InputText.StartsWith("#")) {
 			// Call orders here

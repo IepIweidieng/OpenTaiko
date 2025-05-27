@@ -975,8 +975,6 @@ internal class CTja : CActivity {
 												// これにより、数ms程度ながらここでのソートも高速化されている。
 				}
 				#region [ 発声時刻の計算 ]
-				double bpm = this.BASEBPM;
-
 				List<STLYRIC> tmplistlyric = new List<STLYRIC>();
 				int BGM番号 = 0;
 
@@ -1077,8 +1075,7 @@ internal class CTja : CActivity {
 								if (this.isOFFSET_Negative)
 									chip.n発声時刻ms += this.msOFFSET_Abs;
 								if (this.listBPM.TryGetValue(chip.n整数値_内部番号, out CBPM cBPM)) {
-									bpm = (cBPM.n表記上の番号 == 0 ? 0.0 : this.BASEBPM) + cBPM.dbBPM値;
-									this.dbNowBPM = bpm;
+									this.dbNowBPM = cBPM.dbBPM値;
 								}
 								continue;
 							}
@@ -2589,7 +2586,7 @@ internal class CTja : CActivity {
 		this.listChip.Add(chipInitScroll);
 
 		// apply initial BPM
-		CBPM bpmInit = new() { n内部番号 = this.n内部番号BPM1to - 1, n表記上の番号 = this.n内部番号BPM1to - 1, dbBPM値 = this.BASEBPM, };
+		CBPM bpmInit = new() { n内部番号 = this.n内部番号BPM1to - 1, n表記上の番号 = 0, dbBPM値 = this.BASEBPM, };
 		this.listBPM.Add(this.n内部番号BPM1to - 1, bpmInit);
 		this.n内部番号BPM1to++;
 

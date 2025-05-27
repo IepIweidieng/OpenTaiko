@@ -20,22 +20,31 @@ internal class CTja : CActivity {
 	private int nNowReadLine;
 	// Class
 
-	public class CBPM {
-		public double dbBPM値;
-		public double bpm_change_time;
-		public double bpm_change_bmscroll_time;
-		public ECourse bpm_change_course = ECourse.eNormal;
+	public enum ETimingChangeType {
+		Bpm,
+		Measure,
+	}
+	public class CTimingChange {
+		public double msTime;
+		public double msTime_end;
+		public double th16Beat;
+		public double th16Beat_end;
+		public double dbBPM;
+		public double measure_s;
+		public double measure_m;
+		public ECourse branch;
+		public ETimingChangeType type;
 		public int n内部番号;
 		public int n表記上の番号;
 
 		public override string ToString() {
 			StringBuilder builder = new StringBuilder(0x80);
 			if (this.n内部番号 != this.n表記上の番号) {
-				builder.Append(string.Format("CBPM{0}(内部{1})", CTja.tZZ(this.n表記上の番号), this.n内部番号));
+				builder.Append(string.Format("CTimingChange{0}(内部{1})", CTja.tZZ(this.n表記上の番号), this.n内部番号));
 			} else {
-				builder.Append(string.Format("CBPM{0}", CTja.tZZ(this.n表記上の番号)));
+				builder.Append(string.Format("CTimingChange{0}", CTja.tZZ(this.n表記上の番号)));
 			}
-			builder.Append(string.Format(", BPM:{0}", this.dbBPM値));
+			builder.Append($", BPM:{this.dbBPM}, Measure:{this.measure_s}/{this.measure_m}");
 			return builder.ToString();
 		}
 	}
@@ -272,7 +281,7 @@ internal class CTja : CActivity {
 	public Color DANTICKCOLOR = Color.White;
 
 	public Dictionary<int, CVideoDecoder> listVD;
-	public Dictionary<int, CBPM> listBPM;
+	public List<CTimingChange>[] TimingChangesByBranch = [[], [], []]; // must be sorted by msTime
 	public List<CChip> listChip; // increasing time > chip priority > definition order
 	public List<CChip> listBarLineChip; // increasing definition order
 	public List<CChip> listNoteChip; // increasing definition order
@@ -926,7 +935,7 @@ internal class CTja : CActivity {
 				this.n無限管理SIZE[j] = -j;
 			}
 			this.n内部番号WAV1to = 1;
-			this.n内部番号BPM1to = 1;
+			this.idxTimingChange1to = 1;
 			this.bstackIFからENDIFをスキップする = new Stack<bool>();
 			this.bstackIFからENDIFをスキップする.Push(false);
 			this.n現在の乱数 = 0;
@@ -1216,8 +1225,10 @@ internal class CTja : CActivity {
 					foreach (CWAV cwav in this.listWAV.Values) {
 						Trace.TraceInformation(cwav.ToString());
 					}
-					foreach (CBPM cbpm3 in this.listBPM.Values) {
-						Trace.TraceInformation(cbpm3.ToString());
+					foreach (var branch in this.TimingChangesByBranch) {
+						foreach (CTimingChange cbpm3 in branch) {
+							Trace.TraceInformation(cbpm3.ToString());
+						}
 					}
 					foreach (CChip chip in this.listChip) {
 						Trace.TraceInformation(chip.ToString());
@@ -1737,12 +1748,16 @@ internal class CTja : CActivity {
 				MinBPM = dbBPM;
 			}
 
-			this.listBPM.Add(this.n内部番号BPM1to - 1, new CBPM() { n内部番号 = this.n内部番号BPM1to - 1, n表記上の番号 = 0, dbBPM値 = dbBPM, bpm_change_time = this.dbNowTime, bpm_change_bmscroll_time = this.dbNowBMScollTime, bpm_change_course = this.n現在のコース });
+			// TaikoJiro compatibility: #BPMCHANGE applies to all branches
+			for (int iBranch = 0; iBranch < 3; ++iBranch) {
+				CTimingChange? tc = this.InsertTimingChangeAtDefCursor(ETimingChangeType.Bpm, (ECourse)iBranch);
+				if (tc == null) {
+					continue;
+				}
+			}
 
 			this.listChip.Add(this.NewEventChipAtDefCursor(0x08, this.n内部番号BPM1to - 1));
 			this.listChip.Add(this.NewEventChipAtDefCursor(0x9C, this.n内部番号BPM1to - 1));
-
-			this.n内部番号BPM1to++;
 		} else if (command == "#SCROLL") {
 			double[] dbComplexNum = new double[2];
 			//2016.08.13 kairera0467 複素数スクロールもどきのテスト

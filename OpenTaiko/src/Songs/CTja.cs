@@ -1309,8 +1309,6 @@ internal class CTja : CActivity {
 				for (int i = 0; i < str.Length; i++) {
 					if (s[i] == '\t')
 						s[i] = ' ';
-					else if (s[i] == '\r')
-						s[i] = '\n';
 				}
 			}
 		}
@@ -3537,7 +3535,6 @@ internal class CTja : CActivity {
 						timestring = timeRegex.Match(strSplit後[i]);
 						timestringO = timeRegexO.Match(strSplit後[i]);
 					}
-					strSplit後[i] = strSplit後[i].Replace("\r", "").Replace("\n", "");
 
 					for (int listindex = 0; listindex < list.Count; listindex++) {
 						STLYRIC stlrc;

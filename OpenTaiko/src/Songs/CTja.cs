@@ -3033,27 +3033,6 @@ internal class CTja : CActivity {
 		if (strArray.Length == 2) {
 			strCommandName = strArray[0].Trim();
 			strCommandParam = strArray[1].Trim();
-		} else if (strArray.Length > 2) {
-			//strArrayが2じゃない場合、ヘッダのSplitを通していない可能性がある。
-			//この処理自体は「t入力」を改造したもの。STARTでSplitしていない等、一部の処理が異なる。
-
-			#region [Header]
-			InputText = InputText.Replace(Environment.NewLine, "\n"); //改行文字を別の文字列に差し替え。
-			InputText = InputText.Replace('\t', ' '); //何の文字か知らないけどスペースに差し替え。
-			InputText = InputText + "\n";
-
-			string[] strDelimiter2 = { "\n" };
-			strArray = InputText.Split(strDelimiter2, StringSplitOptions.RemoveEmptyEntries);
-
-
-			strArray = strArray[0].Split(new char[] { ':' });
-			WarnSplitLength("Header Name & Value", strArray, 2);
-
-			strCommandName = strArray[0].Trim();
-			strCommandParam = strArray[1].Trim();
-
-			#endregion
-			//lblMessage.Text = "おや?strArrayのLengthが2じゃないようですね。お兄様。";
 		}
 
 		void ParseOptionalInt16(Action<short> setValue) {

@@ -36,6 +36,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 	public int[] nBalloonCount = new int[5];
 	public double[] nRollTimeMs = new double[5];
 	public double[] nAddScoreNiji = new double[5];
+	public int[] scoreMode = new int[5];
 
 	public override void Activate() {
 		listChip = new List<CChip>[5];
@@ -62,6 +63,8 @@ internal abstract class CStage演奏画面共通 : CStage {
 
 		for (int i = 0; i < OpenTaiko.ConfigIni.nPlayerCount; i++) {
 			CTja _dtx = OpenTaiko.GetTJA(i)!;
+
+			this.scoreMode[i] = (_dtx.nScoreMode >= 0) ? _dtx.nScoreMode : OpenTaiko.ConfigIni.nScoreMode;
 
 			if (OpenTaiko.ConfigIni.nPlayerCount >= 2) {
 				for (int j = 0; j < balloonChips[i].Count; j++) {
@@ -1012,7 +1015,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 
 			if (!OpenTaiko.ConfigIni.ShinuchiMode) {
 				// 旧配点・旧筐体配点
-				if (OpenTaiko.TJA.nScoreModeTmp == 0 || OpenTaiko.TJA.nScoreModeTmp == 1) {
+				if (this.scoreMode[0] == 0 || this.scoreMode[0] == 1) {
 					if (pChip.nChannelNo == 0x15)
 						nAddScore = 300L;
 					else
@@ -1759,7 +1762,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 				}
 
 				this.actScore.Add((long)nAddScore, nPlayer);
-			} else if (OpenTaiko.TJA.nScoreModeTmp == 2) {
+			} else if (this.scoreMode[0] == 2) {
 				if (nCombos < 10) {
 					nAddScore = this.nScore[0];
 				} else if (nCombos >= 10 && nCombos <= 29) {
@@ -1800,7 +1803,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 				}
 
 				this.actScore.Add(nAddScore, nPlayer);
-			} else if (OpenTaiko.TJA.nScoreModeTmp == 1) {
+			} else if (this.scoreMode[0] == 1) {
 				if (nCombos < 10) {
 					nAddScore = this.nScore[0];
 				} else if (nCombos >= 10 && nCombos <= 19) {
@@ -4569,11 +4572,11 @@ internal abstract class CStage演奏画面共通 : CStage {
 		int nAddScore = 0;
 		int[] n倍率 = { 0, 1, 2, 4, 8 };
 
-		if (OpenTaiko.TJA.nScoreModeTmp == 1) {
+		if (this.scoreMode[0] == 1) {
 			for (int i = 0; i < 11; i++) {
 				this.nScore[i] = (int)(nInit + (nDiff * (i)));
 			}
-		} else if (OpenTaiko.TJA.nScoreModeTmp == 2) {
+		} else if (this.scoreMode[0] == 2) {
 			for (int i = 0; i < 5; i++) {
 				this.nScore[i] = (int)(nInit + (nDiff * n倍率[i]));
 

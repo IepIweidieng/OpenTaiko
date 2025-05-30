@@ -1548,6 +1548,7 @@ internal class CTja : CActivity {
 		var argumentMatchGroup = match.Groups[2];
 		var argument = argumentMatchGroup.Success ? argumentMatchGroup.Value : null;
 
+		var argumentFull = argument;
 		while (true) {//命令の最後に,が残ってしまっているときの対応
 			if (argument != null && argument[argument.Length - 1] == ',')
 				argument = argument.Substring(0, argument.Length - 1);
@@ -1556,7 +1557,6 @@ internal class CTja : CActivity {
 		}
 
 		char[] chDelimiter = new char[] { ' ' };
-		string[] strArray = null;
 
 		#endregion
 
@@ -1645,7 +1645,7 @@ internal class CTja : CActivity {
 
 			this.listChip.Add(chip);
 		} else if (command == "#MEASURE") {
-			strArray = argument.Split(new char[] { '/' });
+			var strArray = argument.Split(new char[] { '/' }, 2);
 			WarnSplitLength("#MEASURE subsplit", strArray, 2);
 
 			double[] dbLength = new double[2];
@@ -2136,7 +2136,7 @@ internal class CTja : CActivity {
 
 			this.listChip.Add(chip);
 		} else if (command == "#SUDDEN") {
-			strArray = argument.Split(chDelimiter);
+			var strArray = argument.Split(chDelimiter);
 			WarnSplitLength("#SUDDEN", strArray, 2);
 			double db出現時刻 = Convert.ToDouble(strArray[0]);
 			double db移動待機時刻 = Convert.ToDouble(strArray[1]);
@@ -2154,7 +2154,7 @@ internal class CTja : CActivity {
 
 			this.listChip.Add(chip);
 		} else if (command == "#JPOSSCROLL") {
-			strArray = argument.Split(chDelimiter);
+			var strArray = argument.Split(chDelimiter);
 			WarnSplitLength("#JPOSSCROLL", strArray, 2);
 			double msMoveDt = double.Max(0, 1000 * Convert.ToDouble(strArray[0]));
 			double pxMoveDx = 0;
@@ -2215,7 +2215,7 @@ internal class CTja : CActivity {
 				}
 			}
 
-			strArray = SplitComma(argument); // \,をエスケープ処理するメソッドだぞっ
+			var strArray = SplitComma(argumentFull); // \,をエスケープ処理するメソッドだぞっ
 			WarnSplitLength("#NEXTSONG", strArray, 4);
 			var dansongs = new DanSongs();
 
@@ -2858,7 +2858,7 @@ internal class CTja : CActivity {
 			}
 		}
 
-		string[] strArray = InputText.Split(new char[] { ':' });
+		string[] strArray = InputText.Split(new char[] { ':' }, 2);
 		string strCommandName = "";
 		string strCommandParam = "";
 
@@ -2926,7 +2926,7 @@ internal class CTja : CActivity {
 	}
 
 	private void tDanExamLoad(string input) {
-		string[] strArray = input.Split(new char[] { ':' });
+		string[] strArray = input.Split(new char[] { ':' }, 2);
 		string strCommandName = "";
 		string strCommandParam = "";
 

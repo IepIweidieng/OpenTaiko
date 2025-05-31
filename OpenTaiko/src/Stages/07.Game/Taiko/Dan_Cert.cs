@@ -32,6 +32,7 @@ internal class Dan_Cert : CActivity {
 		NowShowingNumber = number;
 		if (number == 0) {
 			Counter_Wait = new CCounter(0, 2299, 1, OpenTaiko.Timer);
+			OpenTaiko.stageGameScreen.ftDanReSetBranches(OpenTaiko.TJA.bHasBranchDan[this.NowShowingNumber]);
 		} else {
 			Counter_In = new CCounter(0, 999, 1, OpenTaiko.Timer);
 		}
@@ -64,7 +65,6 @@ internal class Dan_Cert : CActivity {
 		OpenTaiko.stageGameScreen.ReSetScore(OpenTaiko.TJA.List_DanSongs[NowShowingNumber].ScoreInit, OpenTaiko.TJA.List_DanSongs[NowShowingNumber].ScoreDiff, 0);
 
 		OpenTaiko.stageGameScreen.ftDanReSetScoreNiji(OpenTaiko.TJA.nDan_NotesCount[NowShowingNumber], OpenTaiko.TJA.nDan_BalloonCount[NowShowingNumber]);
-		OpenTaiko.stageGameScreen.ftDanReSetBranches(OpenTaiko.TJA.bHasBranchDan[NowShowingNumber]);
 
 		IsAnimating = true;
 
@@ -394,6 +394,7 @@ internal class Dan_Cert : CActivity {
 			if (Counter_In.IsEnded) {
 				Counter_In = null;
 				Counter_Wait = new CCounter(0, 2299, 1, OpenTaiko.Timer);
+				OpenTaiko.stageGameScreen.ftDanReSetBranches(OpenTaiko.TJA.bHasBranchDan[this.NowShowingNumber]);
 			}
 		}
 

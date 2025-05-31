@@ -311,7 +311,7 @@ internal class CTja : CActivity {
 
 	public bool[] bHasBranch = new bool[(int)Difficulty.Total] { false, false, false, false, false, false, false };
 
-	public bool[] bHasBranchDan = new bool[1] { false };
+	public bool[] bHasBranchDan = [];
 
 	//分岐関連
 	private ECourse n現在のコース = ECourse.eNormal;
@@ -2223,6 +2223,11 @@ internal class CTja : CActivity {
 
 			IsEndedBranching = false;
 			#endregion
+
+			// Handle Dan branching metadata here, as this whole difficulty is parsed for song info
+			if (this.n参照中の難易度 == (int)Difficulty.Dan) {
+				this.bHasBranchDan[DanSongs.Number - 1] = true;
+			}
 		} else if (command == "#N" || command == "#E" || command == "#M")//これCourseを全部集めてあとから分岐させればいい件
 		{
 			//開始時の情報にセット
@@ -3183,10 +3188,6 @@ internal class CTja : CActivity {
 			//本来はヘッダ命令ではありませんが、難易度ごとに違う項目なのでここで読み込ませます。
 			//Lengthのチェックをされる前ににif文を入れています。
 			this.bHasBranch[this.n参照中の難易度] = true;
-
-			if (this.n参照中の難易度 == (int)Difficulty.Dan) {
-				this.bHasBranchDan[this.bHasBranchDan.Length - 1] = true;
-			}
 		}
 
 		//まずは「:」でSplitして割り当てる。

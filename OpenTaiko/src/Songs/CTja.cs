@@ -61,6 +61,7 @@ internal class CTja : CActivity {
 	}
 
 	public enum EBranchConditionType {
+		None,
 		Accuracy,
 		Drumroll,
 		Score,
@@ -2009,6 +2010,7 @@ internal class CTja : CActivity {
 			this.b分岐を一回でも開始した = true;
 
 			//条件数値。
+			string strCond = "";
 			double[] nNum = new double[2];
 
 			//名前と条件Aの間に,が無いと正常に動作しなくなる.2020.04.23.akasoko26
@@ -2023,14 +2025,18 @@ internal class CTja : CActivity {
 			#endregion
 
 			var branchStartArgumentMatch = BranchStartArgumentRegex.Match(argument);
-			nNum[0] = Convert.ToDouble(branchStartArgumentMatch.Groups[2].Value);
-			nNum[1] = Convert.ToDouble(branchStartArgumentMatch.Groups[3].Value);
+			if (branchStartArgumentMatch.Success) {
+				strCond = branchStartArgumentMatch.Groups[1].Value;
+				nNum[0] = Convert.ToDouble(branchStartArgumentMatch.Groups[2].Value);
+				nNum[1] = Convert.ToDouble(branchStartArgumentMatch.Groups[3].Value);
+			}
 
-			var e条件 = branchStartArgumentMatch.Groups[1].Value switch {
+			var e条件 = strCond switch {
+				"p" => EBranchConditionType.Accuracy,
 				"r" => EBranchConditionType.Drumroll,
 				"s" => EBranchConditionType.Score,
 				"d" => EBranchConditionType.Accuracy_BigNotesOnly,
-				"p" or _ => EBranchConditionType.Accuracy,
+				_ => EBranchConditionType.None,
 			};
 
 			#region [ 分岐開始時のチップ情報を記録 ]

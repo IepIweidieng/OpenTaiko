@@ -2191,8 +2191,15 @@ internal class CTja : CActivity {
 			CChip c小節前の連打開始位置 = null;
 
 			var chip = new CChip();
+			chip.nChannelNo = 0xDE;
 
-			if (e条件 == EBranchConditionType.Drumroll) {
+			if (c小節前の小節線情報 == null) { // Before chart start
+				chip.n発声時刻ms = (int)(this.dbNowTime - (4 * 60000.0 / this.dbNowBPM));
+				chip.fNow_Measure_m = 4;
+				chip.fNow_Measure_s = 4;
+				chip.dbSCROLL = this.dbNowScroll;
+				chip.dbBPM = this.BASEBPM;
+			} else {
 				/*
 				c小節前の連打開始位置 = c一小節前の小節線情報を返す(listChip, e条件, true);
 				//連打分岐の位置を再現
@@ -2202,19 +2209,21 @@ internal class CTja : CActivity {
 				*/
 
 				chip.n発声時刻ms = c小節前の小節線情報.n発声時刻ms;
-			} else chip.n発声時刻ms = c小節前の小節線情報.n発声時刻ms;
+				if (c小節前の小節線情報.nChannelNo == 0x9B) {
+					chip.n発声時刻ms += (int)msDanNextSongDelay; // judge after `#NEXTSONG` delay
+				}
+				chip.fNow_Measure_m = c小節前の小節線情報.fNow_Measure_m;
+				chip.fNow_Measure_s = c小節前の小節線情報.fNow_Measure_s;
+				chip.dbSCROLL = c小節前の小節線情報.dbSCROLL;
+				chip.dbBPM = c小節前の小節線情報.dbBPM;
+			}
 
-			chip.nChannelNo = 0xDE;
-			chip.fNow_Measure_m = c小節前の小節線情報.fNow_Measure_m;
-			chip.fNow_Measure_s = c小節前の小節線情報.fNow_Measure_s;
 
 			//ノーツ * 0.5分後ろにして、ノーツが残らないようにする
 			chip.n分岐時刻ms = this.dbNowTime - ((15000.0 / this.dbNowBPM * (this.fNow_Measure_s / this.fNow_Measure_m)) * 0.5);
 			chip.eBranchCondition = e条件;
 			chip.nBranchCondition1_Professional = nNum[0];// listに追加していたが仕様を変更。
 			chip.nBranchCondition2_Master = nNum[1];// ""
-			chip.dbSCROLL = c小節前の小節線情報.dbSCROLL;
-			chip.dbBPM = c小節前の小節線情報.dbBPM;
 			this.listChip.Add(chip);
 			#endregion
 
@@ -2676,7 +2685,7 @@ internal class CTja : CActivity {
 	/// </summary>
 	/// <param name="listChips"></param>
 	/// <returns></returns>
-	private CChip c一小節前の小節線情報を返す(List<CChip> listChips, EBranchConditionType e分岐種類, bool b分岐前の連打開始 = false) {
+	private CChip? c一小節前の小節線情報を返す(List<CChip> listChips, EBranchConditionType e分岐種類, bool b分岐前の連打開始 = false) {
 		//2020.04.20 c一小節前の小節線情報を返すMethodを追加
 		//連打分岐時は現在の小節以降の連打の終わり部分の時刻を取得する
 
@@ -2685,6 +2694,9 @@ internal class CTja : CActivity {
 		//--して取得しないとだめよ～ダメダメ💛
 		//:damedane:
 		for (int i = listChips.Count - 1; i >= 0; i--) {
+			if (listChips[i].nChannelNo == 0x9B) // `#NEXTSONG`, cannot judge earlier
+				return listChips[i];
+
 			if (b分岐前の連打開始) {
 				//if (listChips[i].nチャンネル番号 == 0x15 || listChips[i].nチャンネル番号 == 0x16)
 				if (NotesManager.IsRoll(listChips[i]) || NotesManager.IsFuzeRoll(listChips[i])) {
@@ -2705,7 +2717,7 @@ internal class CTja : CActivity {
 		}
 
 		//もし、nReturnChipがnullだったらlistChipのCount - 1にセットする。
-		return listChips[nReturnChip == null ? listChips.Count - 1 : (int)nReturnChip];
+		return (nReturnChip == null) ? null : listChips[(int)nReturnChip];
 	}
 
 	private void WarnSplitLength(string name, string[] strArray, int minimumLength) {

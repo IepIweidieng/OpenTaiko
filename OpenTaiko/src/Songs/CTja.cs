@@ -2035,35 +2035,21 @@ internal class CTja : CActivity {
 			#endregion
 
 			#region [ 一小節前の分岐開始Chip ]
-			//16分前に戻す計算なんか当てにしちゃだめよ。。(by Akasoko)
-			var c小節前の小節線情報 = c一小節前の小節線情報を返す(listChip, e条件);
-			CChip c小節前の連打開始位置 = null;
+			var JudgeChipTime = this.GetBranchJudgeChipTime(e条件 == EBranchConditionType.Drumroll);
 
 			var chip = new CChip();
-
-			if (e条件 == EBranchConditionType.Drumroll) {
-				/*
-				c小節前の連打開始位置 = c一小節前の小節線情報を返す(listChip, e条件, true);
-				//連打分岐の位置を再現
-				//この計算式はあてにならないと思うが、まあどうしようもないんでこれで
-				//なるべく連打のケツの部分に
-				var f連打の長さの半分 = (c小節前の小節線情報.n発声時刻ms - c小節前の連打開始位置.n発声時刻ms) / 2.0f;
-				*/
-
-				chip.n発声時刻ms = c小節前の小節線情報.n発声時刻ms;
-			} else chip.n発声時刻ms = c小節前の小節線情報.n発声時刻ms;
-
 			chip.nChannelNo = 0xDE;
-			chip.fNow_Measure_m = c小節前の小節線情報.fNow_Measure_m;
-			chip.fNow_Measure_s = c小節前の小節線情報.fNow_Measure_s;
+			chip.n発声時刻ms = (int)JudgeChipTime.msTime;
+			chip.fNow_Measure_m = JudgeChipTime.chip?.fNow_Measure_m ?? 4;
+			chip.fNow_Measure_s = JudgeChipTime.chip?.fNow_Measure_s ?? 4;
+			chip.dbSCROLL = JudgeChipTime.chip?.dbSCROLL ?? 1;
+			chip.dbBPM = JudgeChipTime.chip?.dbBPM ?? this.BASEBPM;
 
 			//ノーツ * 0.5分後ろにして、ノーツが残らないようにする
 			chip.n分岐時刻ms = this.dbNowTime - ((15000.0 / this.dbNowBPM * (this.fNow_Measure_s / this.fNow_Measure_m)) * 0.5);
 			chip.eBranchCondition = e条件;
 			chip.nBranchCondition1_Professional = nNum[0];// listに追加していたが仕様を変更。
 			chip.nBranchCondition2_Master = nNum[1];// ""
-			chip.dbSCROLL = c小節前の小節線情報.dbSCROLL;
-			chip.dbBPM = c小節前の小節線情報.dbBPM;
 			this.listChip.Add(chip);
 			#endregion
 
@@ -2514,38 +2500,76 @@ internal class CTja : CActivity {
 	/// <summary>
 	/// 一小節前の小節線情報を返すMethod 2020.04.21.akasoko26
 	/// </summary>
-	/// <param name="listChips"></param>
+	/// <param name="delayForRoll"></param>
 	/// <returns></returns>
-	private CChip c一小節前の小節線情報を返す(List<CChip> listChips, EBranchConditionType e分岐種類, bool b分岐前の連打開始 = false) {
+	private (CChip? chip, double msTime) GetBranchJudgeChipTime(bool delayForRoll) {
 		//2020.04.20 c一小節前の小節線情報を返すMethodを追加
 		//連打分岐時は現在の小節以降の連打の終わり部分の時刻を取得する
-
-		int? nReturnChip = null;
-
 		//--して取得しないとだめよ～ダメダメ💛
 		//:damedane:
-		for (int i = listChips.Count - 1; i >= 0; i--) {
-			if (b分岐前の連打開始) {
-				//if (listChips[i].nチャンネル番号 == 0x15 || listChips[i].nチャンネル番号 == 0x16)
-				if (NotesManager.IsRoll(listChips[i]) || NotesManager.IsFuzeRoll(listChips[i])) {
-					if (nReturnChip == null)
-						nReturnChip = i;
 
-					//ReturnChipがnullであったら適応
-				}
-			} else {
-				var Flag = e分岐種類 == EBranchConditionType.Drumroll ? 0x18 : 0x50;
+		// For charts starts with a branch, judge before the start of each song AND after the previous song
+		// TaikoJiro behavior: All roll bodies in the last measure count into judgement
 
-				if (listChips[i].nChannelNo == Flag) {
-					if (nReturnChip == null)
-						nReturnChip = i;
-					//ReturnChipがnullであったら適応
+		(CChip chip, double msTime)?[] judgeChipTimes = [null, null, null];
+		CChip?[] lastRollEnds = [null, null, null];
+
+		if (delayForRoll) {
+			// Check not-yet-ended rolls
+			for (int ib = 0; ib < 3; ++ib) {
+				if (this.nNowRollCountBranch[ib] >= 0) {
+					CChip head = this.listChip_Branch[ib][this.nNowRollCountBranch[ib]];
+					return (head, this.dbNowTime);
 				}
 			}
 		}
 
-		//もし、nReturnChipがnullだったらlistChipのCount - 1にセットする。
-		return listChips[nReturnChip == null ? listChips.Count - 1 : (int)nReturnChip];
+		// find the default branch judge time for each branch
+		for (int i = this.listChip.Count; i-- > 0;) {
+			CChip chip = this.listChip[i];
+			switch (chip.nChannelNo) {
+				// chips used as default judgement time
+				case 0x9B: // `#NEXTSONG`, cannot judge earlier
+					for (int ib = 0; ib < 3; ++ib)
+						judgeChipTimes[ib] ??= (chip, chip.n発声時刻ms + msDanNextSongDelay);
+					i = 0; // end searching
+					continue;
+				case 0x50: // real bar line
+					judgeChipTimes[(int)chip.nBranch] ??= (chip, chip.n発声時刻ms);
+					if (judgeChipTimes.All(x => x != null))
+						i = 0; // end searching
+					continue;
+
+				// delayed judgement time for rolls
+				case 0x18: // roll end
+					if (!delayForRoll)
+						continue;
+					if (!chip.IsEndedBranching) {
+						if (judgeChipTimes[(int)chip.nBranch] == null)
+							lastRollEnds[(int)chip.nBranch] ??= chip;
+					} else {
+						for (int ib = 0; ib < 3; ++ib) {
+							if (judgeChipTimes[ib] == null)
+								lastRollEnds[ib] ??= chip;
+						}
+					}
+					continue;
+			}
+		}
+
+		// use the most late judge time
+		var judgeChipTime = judgeChipTimes.Where(x => x != null).MaxBy(x => x!.Value.msTime);
+		// fallback: judge 4 beats before chart start
+		judgeChipTime ??= (null, 0 - Math.Abs(4 * 60000.0 / this.BASEBPM));
+
+		if (delayForRoll) {
+			var lastRollEnd = lastRollEnds.Where(x => x != null).MaxBy(x => x!.n発声時刻ms);
+			if (lastRollEnd != null && lastRollEnd.n発声時刻ms > judgeChipTime.Value.msTime)
+				judgeChipTime = (lastRollEnd, lastRollEnd.n発声時刻ms); // judge at end of last roll
+		}
+
+		// prevent judging after branch point
+		return (judgeChipTime.Value.chip, Math.Min(judgeChipTime.Value.msTime, this.dbNowTime));
 	}
 
 	private void WarnSplitLength(string name, string[] strArray, int minimumLength) {

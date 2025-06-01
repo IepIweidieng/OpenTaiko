@@ -1995,7 +1995,7 @@ internal class CTja : CActivity {
 		} else if (command == "#MERGELANE") {
 			this.listChip.Add(this.NewEventChipAtDefCursor(0xE3, 1));
 		} else if (command == "#BARLINE") {
-			var chip = this.NewEventChipAtDefCursor(0xE4, 1);
+			var chip = this.NewScrolledChipAtDefCursor(0xE4, 0, 1, this.n現在のコース);
 			chip.dbSCROLL_Y = this.dbNowScrollY;
 			chip.bHideBarLine = false;
 			this.listChip.Add(chip);

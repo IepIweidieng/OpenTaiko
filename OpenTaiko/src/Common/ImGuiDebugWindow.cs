@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using FDK;
 using ImGuiNET;
+using static OpenTaiko.CTja;
 
 namespace OpenTaiko;
 
@@ -566,7 +567,7 @@ public static class ImGuiDebugWindow {
 						if (ImGui.TreeNodeEx($"Player {i + 1}###GAME_CHART_{i}", ImGuiTreeNodeFlags.Framed)) {
 
 							Difficulty game_difficulty = OpenTaiko.DifficultyNumberToEnum(OpenTaiko.stageSongSelect.nChoosenSongDifficulty[i]);
-							var dtx = OpenTaiko.GetTJA(i);
+							var dtx = OpenTaiko.GetTJA(i)!;
 
 							switch (game_difficulty) {
 								case Difficulty.Dan:
@@ -585,6 +586,21 @@ public static class ImGuiDebugWindow {
 							}
 							ImGui.TextColored(ColorToVector4(OpenTaiko.Skin.SongSelect_Difficulty_Colors[(int)game_difficulty]), $"Difficulty: {game_difficulty}");
 							ImGui.Text($"Auto Play: " + OpenTaiko.ConfigIni.bAutoPlay[i]);
+
+							var db現在時刻ms = dtx.GameTimeToTjaTime(SoundManager.PlayTimer.NowTimeMs);
+							double play_time = dtx.TjaTimeToRawTjaTimeNote(db現在時刻ms);
+							var play_bpm_points = new[] {
+								CStage演奏画面共通.GetNowPBPMPoint(dtx, play_time, ECourse.eNormal),
+								CStage演奏画面共通.GetNowPBPMPoint(dtx, play_time, ECourse.eExpert),
+								CStage演奏画面共通.GetNowPBPMPoint(dtx, play_time, ECourse.eMaster),
+							};
+							float[] play_th16Beats = play_bpm_points.Select(bo => (float)CStage演奏画面共通.GetNowPBMTime(bo.nowBpmPoint, play_time, bo.nextBpmPoint)).ToArray();
+							for (int ib = 0; ib < 3; ++ib) {
+								ImGui.Text($"{(ECourse)ib}: {play_time:0} ms, {play_th16Beats[i] / 4:0.00} 16ths\n"
+									+ $" {play_bpm_points[i].nowBpmPoint}\n"
+									+ $"nextBpmChange: CBPM#{play_bpm_points[i].nextBpmChange?.n内部番号 ?? -1} "
+									+ $"{play_bpm_points[i].nextBpmChange?.bpm_change_time ?? double.PositiveInfinity:0.00} ms");
+							}
 
 							ImGui.NewLine();
 

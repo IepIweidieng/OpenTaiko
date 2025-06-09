@@ -1878,10 +1878,10 @@ internal class CStage演奏ドラム画面 : CStage演奏画面共通 {
 
 		// displacement per sec
 		double th16DBeat = -4 * pChip.dbBPM / 60;
-		int dxHead = NotesManager.GetNoteX(-1000, th16DBeat, pChip.dbBPM, pChip.dbSCROLL, pChip.eScrollMode);
-		int dyHead = NotesManager.GetNoteY(-1000, th16DBeat, pChip.dbBPM, pChip.dbSCROLL_Y, pChip.eScrollMode);
-		int dxEnd = NotesManager.GetNoteX(-1000, th16DBeat, pChip.end.dbBPM, pChip.end.dbSCROLL, pChip.end.eScrollMode);
-		int dyEnd = NotesManager.GetNoteY(-1000, th16DBeat, pChip.end.dbBPM, pChip.end.dbSCROLL_Y, pChip.end.eScrollMode);
+		int dxHead = (int)NotesManager.GetNoteX(-1000, th16DBeat, pChip.dbBPM, pChip.dbSCROLL, pChip.eScrollMode);
+		int dyHead = (int)NotesManager.GetNoteY(-1000, th16DBeat, pChip.dbBPM, pChip.dbSCROLL_Y, pChip.eScrollMode);
+		int dxEnd = (int)NotesManager.GetNoteX(-1000, th16DBeat, pChip.end.dbBPM, pChip.end.dbSCROLL, pChip.end.eScrollMode);
+		int dyEnd = (int)NotesManager.GetNoteY(-1000, th16DBeat, pChip.end.dbBPM, pChip.end.dbSCROLL_Y, pChip.end.eScrollMode);
 
 		// get move speed near the judgement mark
 
@@ -1925,7 +1925,7 @@ internal class CStage演奏ドラム画面 : CStage演奏画面共通 {
 		int x = NoteOriginX[nPlayer] + pChip.nHorizontalChipDistance;
 		int y = NoteOriginY[nPlayer] + pChip.nVerticalChipDistance;
 
-		if ((pChip.bVisible && !pChip.bHideBarLine) && (OpenTaiko.Tx.Bar != null)) {
+		if ((pChip.bVisible && !pChip.bHideBarLine && pChip.bShowRoll) && (OpenTaiko.Tx.Bar != null)) {
 			if (x >= 0 && x <= GameWindowSize.Width) {
 				if (pChip.bBranch) {
 					//this.tx小節線_branch.t2D描画( CDTXMania.app.Device, x - 3, y, new Rectangle( 0, 0, 3, 130 ) );

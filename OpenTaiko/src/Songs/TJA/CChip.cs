@@ -35,6 +35,8 @@ internal class CChip : IComparable<CChip>, ICloneable {
 	public int n整数値;
 	public int n文字数 = 16;
 
+	public int nDefOrder;
+	public CBPM? bpmPoint;
 	public int n整数値_内部番号;
 	public int nOpacity = 255;
 	public int n発声位置;
@@ -46,7 +48,6 @@ internal class CChip : IComparable<CChip>, ICloneable {
 	public double fBMSCROLLTime;
 	public int n発声時刻ms { get => (int)db発声時刻ms; set => db発声時刻ms = value; }
 	public double n分岐時刻ms;
-
 
 	public double db発声時刻ms;
 	public int nノーツ出現時刻ms;

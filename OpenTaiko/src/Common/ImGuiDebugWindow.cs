@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using FDK;
 using ImGuiNET;
+using static OpenTaiko.CTja;
 
 namespace OpenTaiko;
 
@@ -566,7 +567,7 @@ public static class ImGuiDebugWindow {
 						if (ImGui.TreeNodeEx($"Player {i + 1}###GAME_CHART_{i}", ImGuiTreeNodeFlags.Framed)) {
 
 							Difficulty game_difficulty = OpenTaiko.DifficultyNumberToEnum(OpenTaiko.stageSongSelect.nChoosenSongDifficulty[i]);
-							var dtx = OpenTaiko.GetTJA(i);
+							var dtx = OpenTaiko.GetTJA(i)!;
 
 							switch (game_difficulty) {
 								case Difficulty.Dan:
@@ -586,6 +587,21 @@ public static class ImGuiDebugWindow {
 							ImGui.TextColored(ColorToVector4(OpenTaiko.Skin.SongSelect_Difficulty_Colors[(int)game_difficulty]), $"Difficulty: {game_difficulty}");
 							ImGui.Text($"Auto Play: " + OpenTaiko.ConfigIni.bAutoPlay[i]);
 
+							var db現在時刻ms = dtx.GameTimeToTjaTime(SoundManager.PlayTimer.NowTimeMs);
+							double play_time = dtx.TjaTimeToRawTjaTimeNote(db現在時刻ms);
+							var play_bpm_points = new[] {
+								CStage演奏画面共通.GetNowPBPMPoint(dtx, play_time, ECourse.eNormal),
+								CStage演奏画面共通.GetNowPBPMPoint(dtx, play_time, ECourse.eExpert),
+								CStage演奏画面共通.GetNowPBPMPoint(dtx, play_time, ECourse.eMaster),
+							};
+							float[] play_th16Beats = play_bpm_points.Select(bo => (float)CStage演奏画面共通.GetNowPBMTime(bo.nowBpmPoint, play_time)).ToArray();
+							for (int ib = 0; ib < 3; ++ib) {
+								ImGui.Text($"{(ECourse)ib}: {play_time:0} ms, {play_th16Beats[ib] / 4:0.00} 16ths\n"
+									+ $" {play_bpm_points[ib].nowBpmPoint}\n"
+									+ $"nextBpmChangeAtDiv: CBPM#{play_bpm_points[ib].nextBpmChangeAtDiv?.n内部番号 ?? -1} "
+									+ $"{play_bpm_points[ib].nextBpmChangeAtDiv?.bpm_change_time ?? double.PositiveInfinity:0.00} ms");
+							}
+
 							ImGui.NewLine();
 
 							ImGui.Text("ID: " + dtx.uniqueID.data.id);
@@ -597,7 +613,7 @@ public static class ImGuiDebugWindow {
 							if (dtx.listBPM.Count > 1) {
 								if (ImGui.TreeNodeEx($"BPM List ({dtx.listBPM.Count})###GAME_BPM_LIST_{i}")) {
 									foreach (CTja.CBPM bpm in dtx.listBPM.Values) {
-										ImGui.Text($"(Time: {String.Format("{0:0.#}s", (bpm.bpm_change_time / 1000))}) {bpm.dbBPM値}");
+										ImGui.Text(bpm.ToString());
 									}
 									ImGui.TreePop();
 								}

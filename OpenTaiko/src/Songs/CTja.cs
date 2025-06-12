@@ -230,7 +230,6 @@ internal class CTja : CActivity {
 		get;
 		private set;
 	}
-	public bool b分岐を一回でも開始した = false; //2020.04.22 akasoko26 分岐譜面のみ値を代入するように。
 
 	public int nPlayerSide; //2017.08.14 kairera0467 引数で指定する
 	public bool bSession譜面を読み込む;
@@ -2007,7 +2006,6 @@ internal class CTja : CActivity {
 			#region [ 譜面分岐のパース方法を作り直し ]
 			this.bチップがある.Branch = true;
 			this.b最初の分岐である = false;
-			this.b分岐を一回でも開始した = true;
 
 			//条件数値。
 			string strCond = "";
@@ -2452,6 +2450,18 @@ internal class CTja : CActivity {
 		this.listChip.Add(chipMovie);
 	}
 
+	private void ForEachCurrentBranch(Action<ECourse> action) {
+		// IsEndedBranchingがfalseで1回
+		// trueで3回だよ3回
+		if (!this.IsEndedBranching) {
+			action(this.n現在のコース);
+		} else {
+			for (ECourse branch = ECourse.eNormal; branch <= ECourse.eMaster; ++branch) {
+				action(branch);
+			}
+		}
+	}
+
 	void t現在のチップ情報を記録する(bool bInPut) {
 		//2020.04.21 こうなってしまったのは仕方がないな。。
 		if (bInPut) {
@@ -2578,32 +2588,24 @@ internal class CTja : CActivity {
 			} else {
 				if (this.b小節線を挿入している == false) {
 					// 小節線にもやってあげないと
-					// IsEndedBranchingがfalseで1回
-					// trueで3回だよ3回
-					for (int i = 0; i < (IsEndedBranching == true ? 3 : 1); i++) {
-						CChip chip = this.NewScrolledChipAtDefCursor(0x50, 0, n文字数, IsEndedBranching ? (ECourse)i : n現在のコース);
+					this.ForEachCurrentBranch((branch) => {
+						int iBranch = (int)branch;
+						CChip chip = this.NewScrolledChipAtDefCursor(0x50, 0, n文字数, branch);
 						chip.n整数値 = this.n現在の小節数;
 						chip.n整数値_内部番号 = this.n現在の小節数;
 						chip.bHideBarLine = this.bBARLINECUE[0] == 1;
 						#region [ 作り直し ]
-						if (IsEndedBranching) {
-							if (this.IsBranchBarDraw[i])
-								chip.bBranch = true;
-						} else {
-							if (this.IsBranchBarDraw[(int)n現在のコース])
-								chip.bBranch = true;
-						}
+						if (this.IsBranchBarDraw[iBranch])
+							chip.bBranch = true;
 						#endregion
 
 						this.listChip.Add(chip);
 						this.listBarLineChip.Add(chip);
 
 						#region [ 作り直し ]
-						if (IsEndedBranching)
-							this.IsBranchBarDraw[i] = false;
-						else this.IsBranchBarDraw[(int)n現在のコース] = false;
+						this.IsBranchBarDraw[iBranch] = false;
 						#endregion
-					}
+					});
 
 
 					this.dbLastTime = this.dbNowTime;
@@ -2635,10 +2637,7 @@ internal class CTja : CActivity {
 					int nObjectNum = this.CharConvertNote(InputText.Substring(n, 1));
 
 					if (nObjectNum != 0) {
-						// IsEndedBranchingがfalseで1回
-						// trueで3回だよ3回
-						for (int i = 0; i < (IsEndedBranching == true ? 3 : 1); i++) {
-							ECourse branch = this.IsEndedBranching ? (ECourse)i : this.n現在のコース;
+						this.ForEachCurrentBranch((branch) => {
 							int iBranch = (int)branch;
 
 							// TODO: add judge-by-note-type methods to NotesManager
@@ -2646,7 +2645,7 @@ internal class CTja : CActivity {
 							if (this.nNowRollCountBranch[iBranch] >= 0) {
 								if (isRollHead) {
 									// repeated roll head; treated as blank
-									continue; // process this note symbol in the next branch
+									return; // process this note symbol in the next branch
 								}
 								if (nObjectNum != 8) {
 									// TaikoJiro compatibility: A non-roll ends an unended roll
@@ -2673,7 +2672,7 @@ internal class CTja : CActivity {
 							} else {
 								InsertNoteAtDefCursor(nObjectNum, n, n文字数, branch);
 							}
-						}
+						});
 					}
 
 					if (IsEnabledFixSENote) IsEnabledFixSENote = false;
@@ -2799,9 +2798,8 @@ internal class CTja : CActivity {
 			#region [ 作り直し ]
 			//譜面分岐がない譜面でも値は加算されてしまうがしゃあない
 			//分岐を開始しない間は共通譜面としてみなす。
+			this.nノーツ数_Branch[iBranch]++;
 			if (IsEndedBranching) {
-				this.nノーツ数_Branch[iBranch]++;
-
 				if (branch == ECourse.eNormal) {
 					if (this.n参照中の難易度 == (int)Difficulty.Dan) {
 						this.nDan_NotesCount[DanSongs.Number - 1]++;
@@ -2809,15 +2807,8 @@ internal class CTja : CActivity {
 					this.nノーツ数[3]++;
 				}
 			} else {
-				this.nノーツ数_Branch[(int)chip.nBranch]++;
-				if (this.n参照中の難易度 == (int)Difficulty.Dan && chip.nBranch == ECourse.eMaster) {
+				if (this.n参照中の難易度 == (int)Difficulty.Dan && branch == ECourse.eMaster) {
 					this.nDan_NotesCount[DanSongs.Number - 1]++;
-				}
-
-				if (!this.b分岐を一回でも開始した) {
-					//IsEndedBranching==false = forloopが行われていないときのみ
-					for (int l = 0; l < 3; l++)
-						this.nノーツ数_Branch[l]++;
 				}
 			}
 

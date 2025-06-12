@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using FDK;
 using FDK.ExtensionMethods;
 using SkiaSharp;
+using static OpenTaiko.CTja;
 using Color = System.Drawing.Color;
 
 namespace OpenTaiko;
@@ -208,29 +209,33 @@ internal class CTja : CActivity {
 	// Properties
 
 
-	public class CBranchStartInfo {
+	public class CBranchPointInfo {
 		public int nMeasureCount;
 		public double dbTime;
-		public double dbBPM;
-		public double dbSCROLL;
-		public double dbSCROLLY;
 		public double dbBMScollTime;
-		public double db移動待機時刻;
-		public double db出現時刻;
+		public double dbBPM;
 		public float fMeasure_s;
 		public float fMeasure_m;
+	}
+
+	public class CBranchScrollState {
+		public double dbSCROLL;
+		public double dbSCROLLY;
+		public double db移動待機時刻;
+		public double db出現時刻;
 	}
 
 	/// <summary>
 	/// 分岐開始時の情報を記録するためのあれ 2020.04.21
 	/// </summary>
-	public CBranchStartInfo cBranchStart = new CBranchStartInfo();
+	public CBranchPointInfo cBranchStart = new CBranchPointInfo();
+	public CBranchPointInfo cBranchEnd = new CBranchPointInfo();
+	public CBranchScrollState[] BranchScrollStates = [new(), new(), new()];
 
 	public int nBGMAdjust {
 		get;
 		private set;
 	}
-	public bool b分岐を一回でも開始した = false; //2020.04.22 akasoko26 分岐譜面のみ値を代入するように。
 
 	public int nPlayerSide; //2017.08.14 kairera0467 引数で指定する
 	public bool bSession譜面を読み込む;
@@ -264,7 +269,7 @@ internal class CTja : CActivity {
 	public Color DANTICKCOLOR = Color.White;
 
 	public Dictionary<int, CVideoDecoder> listVD;
-	public Dictionary<int, CBPM> listBPM;
+	public Dictionary<int, CBPM> listBPM; // Initial 3 for each branch
 	public List<CChip> listChip; // increasing time > chip priority > definition order
 	public List<CChip> listBarLineChip; // increasing definition order
 	public List<CChip> listNoteChip; // increasing definition order
@@ -311,7 +316,7 @@ internal class CTja : CActivity {
 	//分岐関連
 	private ECourse n現在のコース = ECourse.eNormal;
 
-	private bool b最初の分岐である;
+	private bool IsAfterFirstBranch;
 	public int[] nノーツ数 = new int[4]; //3:共通
 
 	public int[] nDan_NotesCount = new int[1];
@@ -324,6 +329,7 @@ internal class CTja : CActivity {
 
 	private List<int> divsPerMeasureAllBranches; // [iMeasureAllBranches]
 	private int nLineCountTemp; //分岐開始時の小節数を記録。
+	private int nLineCountMax = 0; // Maximum reached measure line count in any branch
 	private ECourse nLineCountCourseTemp = ECourse.eNormal; //現在カウント中のコースを記録。
 
 	public int n参照中の難易度 = 3;
@@ -493,7 +499,7 @@ internal class CTja : CActivity {
 			this.b配点が指定されている[2, y] = false;
 		}
 
-		this.b最初の分岐である = true;
+		this.IsAfterFirstBranch = false;
 
 		this.SongVol = CSound.DefaultSongVol;
 		this.SongLoudnessMetadata = null;
@@ -861,7 +867,7 @@ internal class CTja : CActivity {
 				) ||
 				(((0x80 <= nChannelNumber) && (nChannelNumber <= 0x89)) || ((0x90 <= nChannelNumber) && (nChannelNumber <= 0x92)))
 			   ) {
-				this.listChip[i].n発声時刻ms += nBGMAdjustの増減値;
+				this.listChip[i].db発声時刻ms += nBGMAdjustの増減値;
 			}
 		}
 		foreach (CWAV cwav in this.listWAV.Values) {
@@ -1615,6 +1621,9 @@ internal class CTja : CActivity {
 		if (command == "#START") {
 			InitializeChartDefinitionBody();
 		} else if (command == "#END") {
+			// prevent ending too early for some branches
+			this.GotoBranchEnd();
+
 			// TaikoJiro compatibility: #END ends unended rolls
 			for (int i = 0; i < 3; i++) {
 				if (this.nNowRollCountBranch[i] >= 0) {
@@ -2005,9 +2014,9 @@ internal class CTja : CActivity {
 		} else if (command == "#BRANCHSTART") {
 			//分岐:分岐スタート
 			#region [ 譜面分岐のパース方法を作り直し ]
-			this.bチップがある.Branch = true;
-			this.b最初の分岐である = false;
-			this.b分岐を一回でも開始した = true;
+			this.IsAfterFirstBranch = this.bチップがある.Branch = true;
+			this.GotoBranchEnd();
+			this.IsEndedBranching = false;
 
 			//条件数値。
 			string strCond = "";
@@ -2039,11 +2048,6 @@ internal class CTja : CActivity {
 				_ => EBranchConditionType.None,
 			};
 
-			#region [ 分岐開始時のチップ情報を記録 ]
-			//現在のチップ情報を記録する必要がある。
-			this.t現在のチップ情報を記録する(true);
-			#endregion
-
 			#region [ 一小節前の分岐開始Chip ]
 			var JudgeChipTime = this.GetBranchJudgeChipTime(e条件 == EBranchConditionType.Drumroll);
 
@@ -2072,32 +2076,23 @@ internal class CTja : CActivity {
 			if (this.n参照中の難易度 == (int)Difficulty.Dan) {
 				this.bHasBranchDan[DanSongs.Number - 1] = true;
 			}
-		} else if (command == "#N" || command == "#E" || command == "#M")//これCourseを全部集めてあとから分岐させればいい件
-		{
-			//開始時の情報にセット
-			t現在のチップ情報を記録する(false);
-
-			if (command == "#N")
-				this.n現在のコース = ECourse.eNormal;//分岐:普通譜面
-			else if (command == "#E")
-				this.n現在のコース = ECourse.eExpert;//分岐:玄人譜面
-			else if (command == "#M")
-				this.n現在のコース = ECourse.eMaster;//分岐:達人譜面
+		} else if (command == "#N") {
+			this.SwitchBranch(ECourse.eNormal);//分岐:普通譜面
+		} else if (command == "#E") {
+			this.SwitchBranch(ECourse.eExpert);//分岐:玄人譜面
+		} else if (command == "#M") {
+			this.SwitchBranch(ECourse.eMaster);//分岐:達人譜面
 		} else if (command == "#LEVELHOLD") {
 			var chip = this.NewEventChipAtDefCursor(0xE1, 1);
 			chip.n発声位置 -= 1;
 			this.listChip.Add(chip);
 		} else if (command == "#BRANCHEND") {
+			this.GotoBranchEnd();
+
 			//End用チャンネルをEmptyから引っ張ってきた。
 			var GoBranch = this.NewEventChipAtDefCursor(0x52, 1);
 			GoBranch.n発声位置 -= 1;
 			this.listChip.Add(GoBranch);
-
-			//End時にも黄色い小節線あったべ？
-			for (int i = 0; i < 3; i++)
-				IsBranchBarDraw[i] = true;//3コース分の黄色小説線表示㋫ラブ
-
-			IsEndedBranching = true;
 		} else if (command == "#BARLINEOFF") {
 			var chip = this.NewEventChipAtDefCursor(0xE0, 1);
 			chip.n発声位置 -= 1;
@@ -2194,6 +2189,9 @@ internal class CTja : CActivity {
 			FixSENote = int.Parse(argument);
 			IsEnabledFixSENote = true;
 		} else if (command == "#NEXTSONG") {
+			// prevent branch section across songs
+			this.GotoBranchEnd();
+
 			var chip = this.NewEventChipAtDefCursor(0x9B, List_DanSongs.Count);
 			chip.n発声位置 -= ((this.n現在の小節数) * 384) - 1;
 			chip.nBranch = this.n現在のコース;
@@ -2428,7 +2426,7 @@ internal class CTja : CActivity {
 		this.listChip.Add(chipInitScroll);
 
 		// apply initial BPM
-		CBPM bpmInit = new() { n内部番号 = this.n内部番号BPM1to - 1, n表記上の番号 = this.n内部番号BPM1to - 1, dbBPM値 = this.BASEBPM, };
+		CBPM bpmInit = new() { n内部番号 = this.n内部番号BPM1to - 1, n表記上の番号 = 0, dbBPM値 = this.BASEBPM, };
 		this.listBPM.Add(this.n内部番号BPM1to - 1, bpmInit);
 		this.n内部番号BPM1to++;
 
@@ -2450,37 +2448,116 @@ internal class CTja : CActivity {
 		var chipMovie = this.NewEventChipAtDefCursor(0x54, 1, 0x01);
 		chipMovie.n発声時刻ms += (this.isMOVIEOFFSET_Negative ? -this.msMOVIEOFFSET_Abs : this.msMOVIEOFFSET_Abs);
 		this.listChip.Add(chipMovie);
+
+		// Prevent undefined position when `#N/#E/#M` appears without `#BRANCHSTART`
+		this.SaveBranchPoint();
 	}
 
-	void t現在のチップ情報を記録する(bool bInPut) {
-		//2020.04.21 こうなってしまったのは仕方がないな。。
-		if (bInPut) {
-			#region [ 記録する ]
-			cBranchStart.dbTime = this.dbNowTime;
-			cBranchStart.dbSCROLL = this.dbNowScroll;
-			cBranchStart.dbSCROLLY = this.dbNowScrollY;
-			cBranchStart.dbBMScollTime = this.dbNowBMScollTime;
-			cBranchStart.dbBPM = this.dbNowBPM;
-			cBranchStart.fMeasure_s = this.fNow_Measure_s;
-			cBranchStart.fMeasure_m = this.fNow_Measure_m;
-			cBranchStart.nMeasureCount = this.n現在の小節数;
-			cBranchStart.db移動待機時刻 = this.db移動待機時刻;
-			cBranchStart.db出現時刻 = this.db出現時刻;
-			#endregion
+	private void DoForCurrentOrAllBranch(Action<ECourse> action) {
+		if (!this.IsEndedBranching) {
+			action(this.n現在のコース);
 		} else {
-			#region [ 記録した情報をNow~に適応 ]
-			this.dbNowTime = cBranchStart.dbTime;
-			this.dbNowScroll = cBranchStart.dbSCROLL;
-			this.dbNowScrollY = cBranchStart.dbSCROLLY;
-			this.dbNowBMScollTime = cBranchStart.dbBMScollTime;
-			this.dbNowBPM = cBranchStart.dbBPM;
-			this.fNow_Measure_s = cBranchStart.fMeasure_s;
-			this.fNow_Measure_m = cBranchStart.fMeasure_m;
-			this.n現在の小節数 = cBranchStart.nMeasureCount;
-			this.db移動待機時刻 = cBranchStart.db移動待機時刻;
-			this.db出現時刻 = cBranchStart.db出現時刻;
-			#endregion
+			for (ECourse branch = ECourse.eNormal; branch <= ECourse.eMaster; ++branch) {
+				action(branch);
+			}
 		}
+	}
+
+	private void SaveBranchPoint() {
+		#region [ 記録する ]
+		// end = start in case of empty branch section
+		this.cBranchEnd.nMeasureCount = this.cBranchStart.nMeasureCount = this.n現在の小節数;
+		this.cBranchEnd.dbTime = this.cBranchStart.dbTime = this.dbNowTime;
+		this.cBranchEnd.dbBMScollTime = this.cBranchStart.dbBMScollTime = this.dbNowBMScollTime;
+		this.cBranchEnd.dbBPM = this.cBranchStart.dbBPM = this.dbNowBPM;
+		this.cBranchEnd.fMeasure_s = this.cBranchStart.fMeasure_s = this.fNow_Measure_s;
+		this.cBranchEnd.fMeasure_m = this.cBranchStart.fMeasure_m = this.fNow_Measure_m;
+		this.SaveBranchScrollState();
+		#endregion
+	}
+
+	private void UpdateBranchEndPoint() {
+		// TaikoJiro 1 behavior: use timing command from the first-defined branch
+		if (this.cBranchEnd.nMeasureCount == this.cBranchStart.nMeasureCount) { // first defined non-empty branch
+			this.cBranchEnd.fMeasure_s = this.fNow_Measure_s;
+			this.cBranchEnd.fMeasure_m = this.fNow_Measure_m;
+			this.cBranchEnd.dbBPM = this.dbNowBPM; // TODO: TaikoJiro 1 behavior: Make BPM work cross-branch
+		}
+		// Use the end of the branch with most defined measures
+		if (this.n現在の小節数 >= this.cBranchEnd.nMeasureCount) {
+			// consider #DELAY when tie
+			if (this.n現在の小節数 > this.cBranchEnd.nMeasureCount || this.dbNowTime > this.cBranchEnd.dbTime) {
+				this.cBranchEnd.nMeasureCount = this.n現在の小節数;
+				this.cBranchEnd.dbTime = this.dbNowTime;
+				this.cBranchEnd.dbBMScollTime = this.dbNowBMScollTime;
+			}
+		}
+	}
+
+	private void SwitchBranch(ECourse branch) {
+		#region [ 記録した情報をNow~に適応 ]
+		this.UpdateBranchEndPoint();
+		this.SaveBranchScrollState();
+		this.n現在のコース = branch;
+		this.n現在の小節数 = this.cBranchStart.nMeasureCount;
+		this.dbNowTime = this.cBranchStart.dbTime;
+		this.dbNowBMScollTime = this.cBranchStart.dbBMScollTime;
+		this.dbNowBPM = this.cBranchStart.dbBPM;
+		this.fNow_Measure_s = this.cBranchStart.fMeasure_s;
+		this.fNow_Measure_m = this.cBranchStart.fMeasure_m;
+		this.RestoreBranchScrollState();
+		#endregion
+	}
+
+	private void GotoBranchEnd() {
+		this.UpdateBranchEndPoint();
+		this.n現在の小節数 = this.cBranchEnd.nMeasureCount;
+		this.dbNowTime = this.cBranchEnd.dbTime;
+		this.dbNowBMScollTime = this.cBranchEnd.dbBMScollTime;
+		this.dbNowBPM = this.cBranchEnd.dbBPM;
+		this.fNow_Measure_s = this.cBranchEnd.fMeasure_s;
+		this.fNow_Measure_m = this.cBranchEnd.fMeasure_m;
+
+		#region [ workaround: fix inconsistent BPM & beat position ]
+		// TODO: TaikoJiro 1 behavior: Make `#BPMCHANGE`s work cross-branch for notes' timing
+		for (int i = 0; i < 3; ++i) {
+			this.listBPM.Add(this.n内部番号BPM1to - 1, new CBPM() {
+				n内部番号 = this.n内部番号BPM1to - 1,
+				n表記上の番号 = 0,
+				dbBPM値 = this.dbNowBPM,
+				bpm_change_time = this.dbNowTime,
+				bpm_change_bmscroll_time = this.dbNowBMScollTime,
+				bpm_change_course = (ECourse)i,
+			});
+
+			this.listChip.Add(this.NewEventChipAtDefCursor(0x08, this.n内部番号BPM1to - 1));
+			this.listChip.Add(this.NewEventChipAtDefCursor(0x9C, this.n内部番号BPM1to - 1));
+		}
+		#endregion
+
+		this.SaveBranchPoint();
+
+		this.IsEndedBranching = true;
+		this.n現在のコース = ECourse.eNormal;
+		// use last-defined scroll state for handling forced-route charts
+	}
+
+	private void SaveBranchScrollState() {
+		for (int i = 0; i < (this.IsEndedBranching ? 3 : 1); ++i) {
+			var branchState = this.BranchScrollStates[this.IsEndedBranching ? i : (int)this.n現在のコース];
+			branchState.dbSCROLL = this.dbNowScroll;
+			branchState.dbSCROLLY = this.dbNowScrollY;
+			branchState.db移動待機時刻 = this.db移動待機時刻;
+			branchState.db出現時刻 = this.db出現時刻;
+		}
+	}
+
+	private void RestoreBranchScrollState() { // only used when branched
+		var branchState = this.BranchScrollStates[(int)this.n現在のコース];
+		this.dbNowScroll = branchState.dbSCROLL;
+		this.dbNowScrollY = branchState.dbSCROLLY;
+		this.db移動待機時刻 = branchState.db移動待機時刻;
+		this.db出現時刻 = branchState.db出現時刻;
 	}
 
 	/// <summary>
@@ -2814,7 +2891,7 @@ internal class CTja : CActivity {
 					this.nDan_NotesCount[DanSongs.Number - 1]++;
 				}
 
-				if (!this.b分岐を一回でも開始した) {
+				if (!this.IsAfterFirstBranch) {
 					//IsEndedBranching==false = forloopが行われていないときのみ
 					for (int l = 0; l < 3; l++)
 						this.nノーツ数_Branch[l]++;
@@ -2834,7 +2911,7 @@ internal class CTja : CActivity {
 				}
 			}
 
-			if (this.b最初の分岐である == false) {
+			if (this.IsAfterFirstBranch) {
 				this.n風船数[(int)this.n現在のコース]++;
 			} else {
 				this.n風船数[3]++;

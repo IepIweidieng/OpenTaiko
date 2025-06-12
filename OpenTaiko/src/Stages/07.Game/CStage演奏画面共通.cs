@@ -2539,11 +2539,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 			this.actChara.b演奏中[nPlayer] = false;
 		}
 
-
-		//double speed = 264.0;	// BPM150の時の1小節の長さ[dot]
-		const double speed = 324.0; // BPM150の時の1小節の長さ[dot]
-
-		double ScrollSpeedTaiko = ((this.actScrollSpeed.dbConfigScrollSpeed[nPlayer] + 1.0) * speed) * 0.5 * 37.5 / 60000.0;
+		double scrollRate = this.GetScrollRate(nPlayer);
 
 		CConfigIni configIni = OpenTaiko.ConfigIni;
 
@@ -2560,38 +2556,45 @@ internal abstract class CStage演奏画面共通 : CStage {
 		//CDTXMania.act文字コンソール.tPrint(0, 0, C文字コンソール.Eフォント種別.灰, this.nLoopCount_Clear.ToString()  );
 
 		double play_time = tja.TjaTimeToRawTjaTimeNote(db現在時刻ms);
-		var play_bpm_points = new [] {
+		var play_bpm_points = new[] {
 			GetNowPBPMPoint(dTX, play_time, ECourse.eNormal),
 			GetNowPBPMPoint(dTX, play_time, ECourse.eExpert),
 			GetNowPBPMPoint(dTX, play_time, ECourse.eMaster),
 		};
-		double[] play_bpm_times = play_bpm_points.Select(bo => GetNowPBMTime(bo.nowBpmPoint, play_time)).ToArray();
-		bool[] isInDelay = play_bpm_points.Select(bo => (bo.nowBpmPoint.point_type == EBPMPointType.Delay)).ToArray();
-		List<CChip> drawnBarLines = [];
+		double[] th16NowBeatXs = play_bpm_points.Select(bp => GetNowPBMTime(bp, play_time)).ToArray();
+		double[] th16NowBeatYs = [..th16NowBeatXs];
+		if (true /* Jiro1 */) {
+			for (int ib = 0; ib < 3; ++ib) {
+				th16NowBeatXs[ib] += play_bpm_points[ib].th16BeatDriftX;
+				th16NowBeatYs[ib] += play_bpm_points[ib].th16BeatDriftY;
+			}
+		}
+
+		List<CChip> shownBarLines = [];
 
 		#region [update phase (bar lines' position)]
 		foreach (var pChip in dTX.listBarLineChip) {
 			if (!pChip.bVisible)
 				continue;
 
-			this.UpdateScrollableChipPosition(nPlayer, tja, pChip, db現在時刻ms, play_bpm_times, play_bpm_points);
+			tja.UpdateScrolledChipPosition(pChip, play_bpm_points[(int)pChip.nBranch], db現在時刻ms, th16NowBeatXs[(int)pChip.nBranch], th16NowBeatYs[(int)pChip.nBranch], scrollRate);
 
 			// TaikoJiro 1 behavior: only 8 bar lines (including hidden ones) are shown, mentioned in: https://note.com/lime_5137/n/n672c0a41495d
 			if (false /* !Jiro1 */) {
-				pChip.bShowRoll = true;
+				pChip.canShowBody = true;
 			} else {
 				// If multiple bar lines are shown, remove the "outdated" ones (2 will remain if all are "outdated")
-				for (int iLine = 0; drawnBarLines.Count >= 2 && iLine < drawnBarLines.Count; ++iLine) {
-					if (drawnBarLines[iLine].db発声時刻ms - db現在時刻ms > -1000)
+				for (int iLine = 0; shownBarLines.Count >= 2 && iLine < shownBarLines.Count; ++iLine) {
+					if (shownBarLines[iLine].db発声時刻ms - db現在時刻ms > -1000)
 						continue;
-					drawnBarLines[iLine].bShowRoll = false;
-					drawnBarLines.RemoveAt(iLine--);
+					shownBarLines[iLine].canShowBody = false;
+					shownBarLines.RemoveAt(iLine--);
 				}
-				if (drawnBarLines.Count < 8) {
-					pChip.bShowRoll = true;
-					drawnBarLines.Add(pChip);
+				if (shownBarLines.Count < 8) {
+					pChip.canShowBody = true;
+					shownBarLines.Add(pChip);
 				} else {
-					pChip.bShowRoll = false;
+					pChip.canShowBody = false;
 				}
 			}
 		}
@@ -2602,7 +2605,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 			if (!pChip.bVisible)
 				continue;
 
-			this.UpdateScrollableChipPosition(nPlayer, tja, pChip, db現在時刻ms, play_bpm_times, play_bpm_points);
+			tja.UpdateScrolledChipPosition(pChip, play_bpm_points[(int)pChip.nBranch], db現在時刻ms, th16NowBeatXs[(int)pChip.nBranch], th16NowBeatYs[(int)pChip.nBranch], scrollRate);
 
 			if (!this.bPAUSE && !this.isRewinding) {
 				if (!pChip.IsMissed && !pChip.bHit) {
@@ -3446,12 +3449,18 @@ internal abstract class CStage演奏画面共通 : CStage {
 		#endregion
 
 		#region [draw phase (bar line), backward for correct stack order]
+		CChip? branchedBarLine = null;
+		if (true /* Jiro1 */) {
+			// TaikoJiro 1 behavior: Only the first shown bar line (including `#BARLINEOFF` ones) not past
+			branchedBarLine = shownBarLines.FirstOrDefault(l => l.db発声時刻ms > db現在時刻ms);
+		}
 		for (int iChip = dTX.listBarLineChip.Count; iChip-- > 0;) {
 			CChip pChip = dTX.listBarLineChip[iChip];
 			switch (pChip.nChannelNo) {
 				case 0x50: // 小節線
 				case 0xe4: // #BARLINE
-					this.t進行描画_チップ_小節線(configIni, ref dTX, ref pChip, nPlayer);
+					bool isBranched = pChip.bBranch && (false /* !Jiro1 */ || pChip == branchedBarLine);
+					this.t進行描画_チップ_小節線(configIni, ref dTX, ref pChip, nPlayer, isBranched);
 					break;
 			}
 		}
@@ -3478,12 +3487,12 @@ internal abstract class CStage演奏画面共通 : CStage {
 				case 0x17:
 				case 0x19:
 				case 0x1D: {
-						this.t進行描画_チップ_Taiko連打(configIni, ref dTX, ref pChip, nPlayer);
+						this.t進行描画_チップ_Taiko連打(configIni, ref dTX, ref pChip, nPlayer, db現在時刻ms, th16NowBeatXs[(int)pChip.nBranch], th16NowBeatYs[(int)pChip.nBranch]);
 					}
 
 					break;
 				case 0x18: {
-						this.t進行描画_チップ_Taiko連打(configIni, ref dTX, ref pChip, nPlayer);
+						this.t進行描画_チップ_Taiko連打(configIni, ref dTX, ref pChip, nPlayer, db現在時刻ms, th16NowBeatXs[(int)pChip.nBranch], th16NowBeatYs[(int)pChip.nBranch]);
 					}
 
 					break;
@@ -3501,7 +3510,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 				#region [ 20-2F: EmptySlot ]
 				case 0x20:
 				case 0x21: {
-						this.t進行描画_チップ_Taiko連打(configIni, ref dTX, ref pChip, nPlayer);
+						this.t進行描画_チップ_Taiko連打(configIni, ref dTX, ref pChip, nPlayer, db現在時刻ms, th16NowBeatXs[(int)pChip.nBranch], th16NowBeatYs[(int)pChip.nBranch]);
 					}
 					break;
 					#endregion
@@ -3638,44 +3647,8 @@ internal abstract class CStage演奏画面共通 : CStage {
 		return false;
 	}
 
-	private void UpdateScrollableChipPosition(int iPlayer, CTja tja, CChip chip, double db現在時刻ms, double[] play_bpm_times, (CBPM nowBpmPoint, CBPM? nextBpmChangeAtDiv)[] play_bpm_points) {
-		CChip velocityRefChip = (NotesManager.IsRollEnd(chip) && false /* TJAP3/OOS */) ? chip.start : chip; // && !StretchRoll
-
-		var msNowTjaTime = db現在時刻ms;
-		if (velocityRefChip.eScrollMode is EScrollMode.BMScroll or EScrollMode.HBScroll
-			&& play_bpm_points[(int)chip.nBranch].nowBpmPoint.point_type == EBPMPointType.Delay
-			) {
-			msNowTjaTime = play_bpm_points[(int)chip.nBranch].nowBpmPoint.bpm_change_time;
-		}
-		var th16NowBeat = play_bpm_times[(int)chip.nBranch];
-
-		double msDTime = chip.n発声時刻ms - msNowTjaTime;
-		double th16DBeat = chip.fBMSCROLLTime - th16NowBeat;
-		double scroll_rate = (this.actScrollSpeed.dbConfigScrollSpeed[iPlayer] + 1.0) / 10.0;
-
-		double scrollSpeed = ((velocityRefChip.eScrollMode == EScrollMode.BMScroll) ? 1.0 : velocityRefChip.dbSCROLL) * scroll_rate;
-		double scrollSpeed_Y = ((velocityRefChip.eScrollMode == EScrollMode.BMScroll) ? 0.0 : velocityRefChip.dbSCROLL_Y) * scroll_rate;
-
-		bool forceNMScroll = GetScrollChipForceNMScroll(tja, chip, play_bpm_points[(int)chip.nBranch], db現在時刻ms);
-		EScrollMode scrollMode = forceNMScroll ? EScrollMode.Normal : velocityRefChip.eScrollMode;
-
-		chip.nHorizontalChipDistance = (int)NotesManager.GetNoteX(msDTime, th16DBeat, chip.dbBPM, scrollSpeed, scrollMode);
-		chip.nVerticalChipDistance = (int)NotesManager.GetNoteY(msDTime, th16DBeat, chip.dbBPM, scrollSpeed_Y, scrollMode);
-	}
-
-	private static bool GetScrollChipForceNMScroll(CTja tja, CChip chip, (CBPM nowBpmPoint, CBPM? nextBpmChangeAtDiv) play_bpm_point, double msTjaTime) {
-		bool forceNMScroll = true /* Jiro1 */ && ((play_bpm_point.nowBpmPoint.point_type == EBPMPointType.Delay) ?
-			// TaikoJiro 1 behavior: HB/BMScroll Scrollable objects during delay do not move, including those forced to NMScroll
-			tja.TjaTimeToRawTjaTimeNote(chip.db発声時刻ms) <= play_bpm_point.nowBpmPoint.bpm_change_time
-			: (chip.db発声時刻ms <= msTjaTime
-				// TaikoJiro 1 behavior: Scrollable objects defined non-before but occur before the next BPM Changes are forced to NMScroll
-				|| (play_bpm_point.nextBpmChangeAtDiv != null
-					&& chip.bpmPoint!.n内部番号 >= play_bpm_point.nextBpmChangeAtDiv!.n内部番号
-					&& tja.TjaTimeToRawTjaTimeNote(chip.db発声時刻ms) < play_bpm_point.nextBpmChangeAtDiv!.bpm_change_time
-				)
-			));
-		return forceNMScroll;
-	}
+	private double GetScrollRate(int iPlayer)
+		=> (this.actScrollSpeed.dbConfigScrollSpeed[iPlayer] + 1.0) / 10.0;
 
 	private void AddNowProcessingRollChip(int iPlayer, CChip chip) {
 		//if( this.n現在のコース == pChip.nコース )
@@ -3967,10 +3940,10 @@ internal abstract class CStage演奏画面共通 : CStage {
 		return nTotalRollCount[player];
 	}
 
-	public static (CBPM nowBpmPoint, CBPM? nextBpmChangeAtDiv) GetNowPBPMPoint(CTja tja, double play_time, ECourse branch, bool useLastDelay = false) {
-		var last_match = 0;
-		var first_match_delay = 0;
-		for (int i = 1, iNext; i < tja.listBPM.Count; i = iNext) {
+	public static CBPM GetNowPBPMPoint(CTja tja, double play_time, ECourse branch, bool useLastDelay = false) {
+		var last_match = (int)branch; // Initial 3 for each branch
+		var first_match_delay = (int)branch;
+		for (int i = 3, iNext; i < tja.listBPM.Count; i = iNext) {
 			//BPMCHANGEの数越えた
 			for (iNext = i + 1; iNext < tja.listBPM.Count; ++iNext) {
 				if (tja.listBPM[iNext].bpm_change_course == branch)
@@ -3992,17 +3965,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 		}
 		if (!useLastDelay && tja.listBPM[last_match].point_type == EBPMPointType.Delay)
 			last_match = first_match_delay;
-		return (tja.listBPM[last_match], GetNextBPMChangeAtDiv(tja, branch, last_match));
-	}
-
-	private static CBPM? GetNextBPMChangeAtDiv(CTja tja, ECourse branch, int idxListBPM) {
-		// TaikoJiro 1 behavior: Scrollable objects defined non-before but occur before the next BPM Changes are forced to NMScroll
-		for (int iBpm = idxListBPM + 1; iBpm < tja.listBPM.Count; ++iBpm) {
-			CBPM bpm = tja.listBPM[iBpm];
-			if (bpm.bpm_change_course == branch && bpm.point_type == EBPMPointType.BpmAtDiv)
-				return bpm;
-		}
-		return null;
+		return tja.listBPM[last_match];
 	}
 
 	public static double GetNowPBMTime(CTja.CBPM cBPM, double play_time) {
@@ -4115,7 +4078,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 				foreach (var chip in tja.listNoteChip) {
 					chip.bHit = false;
 					chip.bShow = true;
-					chip.bShowRoll = true;
+					chip.canShowBody = true;
 					chip.bProcessed = false;
 					chip.bVisible = true;
 					chip.IsHitted = false;
@@ -4377,10 +4340,10 @@ internal abstract class CStage演奏画面共通 : CStage {
 	protected abstract void t進行描画_チップ_ドラムス(CConfigIni configIni, ref CTja dTX, ref CChip pChip);
 	protected abstract void t進行描画_チップ本体_ドラムス(CConfigIni configIni, ref CTja dTX, ref CChip pChip);
 	protected abstract void t進行描画_チップ_Taiko(CConfigIni configIni, ref CTja dTX, ref CChip pChip, int nPlayer);
-	protected abstract void t進行描画_チップ_Taiko連打(CConfigIni configIni, ref CTja dTX, ref CChip pChip, int nPlayer);
+	protected abstract void t進行描画_チップ_Taiko連打(CConfigIni configIni, ref CTja dTX, ref CChip pChip, int nPlayer, double msTjaNowTime, double th16NowBeat, double th16NowBeatY);
 
 	protected abstract void t進行描画_チップ_フィルイン(CConfigIni configIni, ref CTja dTX, ref CChip pChip);
-	protected abstract void t進行描画_チップ_小節線(CConfigIni configIni, ref CTja dTX, ref CChip pChip, int nPlayer);
+	protected abstract void t進行描画_チップ_小節線(CConfigIni configIni, ref CTja dTX, ref CChip pChip, int nPlayer, bool bBranch);
 	protected void t進行描画_チップアニメ() {
 		for (int i = 0; i < 5; i++) {
 			ctChipAnime[i].TickLoopDB();

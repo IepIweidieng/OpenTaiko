@@ -96,6 +96,9 @@ class NotesManager {
 			_ => 0,
 		};
 
+	public static CChip GetVelocityRefChip(CChip chip)
+		=> (IsRollEnd(chip) && false /* TJAP3/OOS */) ? chip.start : chip; // && !StretchRoll
+
 	#endregion
 
 	#region [Gameplay]
@@ -371,7 +374,7 @@ class NotesManager {
 
 		if (_texarr == null) return;
 
-		if (chip.bShowRoll) {
+		if (chip.canShowBody) {
 			var theta = -Math.Atan2(y末端 - y, x末端 - x);
 
 			var dist = Math.Sqrt(Math.Pow(x末端 - x, 2) + Math.Pow(y末端 - y, 2));

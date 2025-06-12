@@ -312,13 +312,15 @@ internal class CTja : CActivity {
 	private ECourse n現在のコース = ECourse.eNormal;
 
 	private bool b最初の分岐である;
-	public int[] nノーツ数 = new int[4]; //3:共通
 
-	public int[] nDan_NotesCount = new int[1];
-	public int[] nDan_BalloonCount = new int[1];
-	// public int[] nDan_BallonCount = new int[1];
+	private List<int[]> nDan_NotesCount_Branch = [[0, 0, 0]]; // [iSong][iBranch]
+	private List<int[]> nDan_BalloonCount_Branch = [[0, 0, 0]];
 
-	public int[] nノーツ数_Branch = new int[4]; //
+	public int[] nDan_NotesCount_Max = [0]; // [iSong]
+	public int[] nDan_BalloonCount_Max = [0];
+
+	public int nNotes_Common;
+	public int[] nNotes_Branched = new int[3];
 	public CChip[] pDan_LastChip;
 	public int[] n風船数 = new int[4]; //0～2:各コース 3:共通
 
@@ -923,7 +925,7 @@ internal class CTja : CActivity {
 			Trace.TraceError("An exception occurred, but processing will continue. (79ff8639-9b3c-477f-bc4a-f2eea9784860)");
 		}
 	}
-	public void tProcessAllText(string str全入力文字列, int nBGMAdjust, int Difficulty) {
+	public void tProcessAllText(string str全入力文字列, int nBGMAdjust, int difficulty) {
 		if (!string.IsNullOrEmpty(str全入力文字列)) {
 			#region [ 初期化 ]
 			for (int j = 0; j < 36 * 36; j++) {
@@ -948,13 +950,22 @@ internal class CTja : CActivity {
 			this.dbNowScroll = 1.0;
 			this.n現在のコース = ECourse.eNormal;
 			#endregion
-			this.t入力_V4(str全入力文字列, Difficulty);
+			this.t入力_V4(str全入力文字列, difficulty);
 
 			#endregion
+
+			#region [ Post-processing ]
+
+			if (this.n参照中の難易度 == (int)Difficulty.Dan) {
+				this.nDan_NotesCount_Max = this.nDan_NotesCount_Branch.Select(ns => ns.Max()).ToArray();
+				this.nDan_BalloonCount_Max = this.nDan_BalloonCount_Branch.Select(ns => ns.Max()).ToArray();
+			}
+
 			this.n無限管理WAV = null;
 			this.n無限管理BPM = null;
 			this.n無限管理PAN = null;
 			this.n無限管理SIZE = null;
+
 			if (!this.bHeaderOnly) {
 				#region [ CWAV初期化 ]
 				foreach (CWAV cwav in this.listWAV.Values) {
@@ -1242,6 +1253,7 @@ internal class CTja : CActivity {
 				}
 
 			}
+			#endregion
 		}
 	}
 
@@ -2255,6 +2267,14 @@ internal class CTja : CActivity {
 			Array.Resize(ref bHasBranchDan, List_DanSongs.Count);
 			bHasBranchDan[bHasBranchDan.Length - 1] = false;
 
+			this.nDan_NotesCount_Branch.EnsureCapacity(List_DanSongs.Count);
+			while (this.nDan_NotesCount_Branch.Count < List_DanSongs.Count)
+				this.nDan_NotesCount_Branch.Add([0, 0, 0]);
+
+			this.nDan_BalloonCount_Branch.EnsureCapacity(List_DanSongs.Count);
+			while (this.nDan_BalloonCount_Branch.Count < List_DanSongs.Count)
+				this.nDan_BalloonCount_Branch.Add([0, 0, 0]);
+
 			// チップを配置。
 			this.listChip.Add(this.NewEventChipAtDefCursor(0x01, 1 + List_DanSongs.Count, 0x01));
 		} else if (command == "#NMSCROLL") {
@@ -2800,24 +2820,25 @@ internal class CTja : CActivity {
 			//譜面分岐がない譜面でも値は加算されてしまうがしゃあない
 			//分岐を開始しない間は共通譜面としてみなす。
 			if (IsEndedBranching) {
-				this.nノーツ数_Branch[iBranch]++;
+				this.nNotes_Branched[iBranch]++;
 
 				if (branch == ECourse.eNormal) {
 					if (this.n参照中の難易度 == (int)Difficulty.Dan) {
-						this.nDan_NotesCount[DanSongs.Number - 1]++;
+						for (int i = 0; i < 3; ++i)
+							this.nDan_NotesCount_Branch[DanSongs.Number - 1][i]++;
 					}
-					this.nノーツ数[3]++;
+					this.nNotes_Common++;
 				}
 			} else {
-				this.nノーツ数_Branch[(int)chip.nBranch]++;
-				if (this.n参照中の難易度 == (int)Difficulty.Dan && chip.nBranch == ECourse.eMaster) {
-					this.nDan_NotesCount[DanSongs.Number - 1]++;
+				this.nNotes_Branched[(int)chip.nBranch]++;
+				if (this.n参照中の難易度 == (int)Difficulty.Dan) {
+					this.nDan_NotesCount_Branch[DanSongs.Number - 1][(int)chip.nBranch]++;
 				}
 
 				if (!this.b分岐を一回でも開始した) {
 					//IsEndedBranching==false = forloopが行われていないときのみ
 					for (int l = 0; l < 3; l++)
-						this.nノーツ数_Branch[l]++;
+						this.nNotes_Branched[l]++;
 				}
 			}
 
@@ -2826,11 +2847,12 @@ internal class CTja : CActivity {
 			//風船はこのままでも機能しているので何もしない.
 			if (IsEndedBranching) {
 				if (this.n参照中の難易度 == (int)Difficulty.Dan) {
-					this.nDan_BalloonCount[DanSongs.Number - 1]++;
+					for (int i = 0; i < 3; ++i)
+						this.nDan_BalloonCount_Branch[DanSongs.Number - 1][i]++;
 				}
 			} else {
 				if (this.n参照中の難易度 == (int)Difficulty.Dan && chip.nBranch == ECourse.eMaster) {
-					this.nDan_BalloonCount[DanSongs.Number - 1]++;
+					this.nDan_BalloonCount_Branch[DanSongs.Number - 1][(int)chip.nBranch]++;
 				}
 			}
 
@@ -2842,8 +2864,6 @@ internal class CTja : CActivity {
 
 		}
 
-		Array.Resize(ref nDan_NotesCount, nDan_NotesCount.Length + 1);
-		Array.Resize(ref nDan_BalloonCount, nDan_BalloonCount.Length + 1);
 		if (chip.IsEndedBranching) {
 			this.listChip_Branch[iBranch].Add(chip);
 			if (branch == ECourse.eNormal) {

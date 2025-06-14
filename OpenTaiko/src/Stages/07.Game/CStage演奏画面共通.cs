@@ -1195,16 +1195,8 @@ internal abstract class CStage演奏画面共通 : CStage {
 				break;
 		}
 
-		if (!pChip.bVisible)
+		if (!pChip.bVisible || pChip.bHit) // prevent judging twice
 			return ENoteJudge.Auto;
-
-		if (!NotesManager.IsGenericRoll(pChip)) {
-			if (!pChip.IsMissed)//通り越したチップでなければ判定！
-			{
-				pChip.bHit = true;
-				pChip.IsHitted = true;
-			}
-		}
 
 		ENoteJudge eJudgeResult = ENoteJudge.Auto;
 		{
@@ -1216,6 +1208,12 @@ internal abstract class CStage演奏画面共通 : CStage {
 
 			if (!bAutoPlay && eJudgeResult != ENoteJudge.Miss) {
 				CLagLogger.Add(nPlayer, pChip);
+			}
+
+			if (!NotesManager.IsGenericRoll(pChip) && !(eJudgeResult == ENoteJudge.Miss && pChip.n発声時刻ms > nHitTime)) { // exclude future miss
+				pChip.bHit = true;
+				if (!pChip.IsMissed)//通り越したチップでなければ判定！
+					pChip.IsHitted = true;
 			}
 
 			var puchichara = OpenTaiko.Tx.Puchichara[PuchiChara.tGetPuchiCharaIndexByName(OpenTaiko.GetActualPlayer(nPlayer))];

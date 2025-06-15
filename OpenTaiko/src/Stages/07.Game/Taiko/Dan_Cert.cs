@@ -81,6 +81,8 @@ internal class Dan_Cert : CActivity {
 		for (int i = 0; i < CExamInfo.cMaxExam; i++) {
 			if (OpenTaiko.TJA.Dan_C[i] != null) Challenge[i] = new Dan_C(OpenTaiko.TJA.Dan_C[i]);
 
+			// use updated song list dan conditions without reloading song list
+			OpenTaiko.stageSongSelect.rChoosenSong.DanSongs = OpenTaiko.TJA.List_DanSongs;
 			for (int j = 0; j < OpenTaiko.stageSongSelect.rChoosenSong.DanSongs.Count; j++) {
 				if (OpenTaiko.stageSongSelect.rChoosenSong.DanSongs[j].Dan_C[i] != null) {
 					OpenTaiko.stageSongSelect.rChoosenSong.DanSongs[j].Dan_C[i] = new Dan_C(OpenTaiko.stageSongSelect.rChoosenSong.DanSongs[j].Dan_C[i]);

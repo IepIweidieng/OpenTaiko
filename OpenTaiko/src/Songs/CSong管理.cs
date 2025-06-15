@@ -191,146 +191,15 @@ internal class CSongs管理 {
 						CSongListNode c曲リストノード = new CSongListNode();
 						c曲リストノード.nodeType = CSongListNode.ENodeType.SCORE;
 
-						bool hasAnyDifficultyProcessed = false;
-						for (int n = 0; n < (int)Difficulty.Total; n++) {
-							if (dtx.b譜面が存在する[n]) {
-								c曲リストノード.difficultiesCount++;
-								c曲リストノード.rParentNode = node親;
-								c曲リストノード.strBreadcrumbs = (c曲リストノード.rParentNode == null) ?
-									str基点フォルダ + fileinfo.Name : c曲リストノード.rParentNode.strBreadcrumbs + " > " + str基点フォルダ + fileinfo.Name;
+						c曲リストノード.rParentNode = node親;
+						c曲リストノード.strBreadcrumbs = (c曲リストノード.rParentNode == null) ?
+							str基点フォルダ + fileinfo.Name : c曲リストノード.rParentNode.strBreadcrumbs + " > " + str基点フォルダ + fileinfo.Name;
 
-								c曲リストノード.ldTitle = dtx.TITLE;
-								c曲リストノード.ldSubtitle = dtx.SUBTITLE;
-								c曲リストノード.strMaker = dtx.MAKER;
-								c曲リストノード.strNotesDesigner = dtx.NOTESDESIGNER.Select(x => x.Equals("") ? c曲リストノード.strMaker : x).ToArray();
-								c曲リストノード.nSide = dtx.SIDE;
-								c曲リストノード.bExplicit = dtx.EXPLICIT;
-								c曲リストノード.bMovie = !string.IsNullOrEmpty(dtx.strBGVIDEO_PATH);
-
-								c曲リストノード.DanSongs = new();
-								if (dtx.List_DanSongs != null) {
-									for (int i = 0; i < dtx.List_DanSongs.Count; i++) {
-										c曲リストノード.DanSongs.Add(dtx.List_DanSongs[i]);
-									}
-								}
-
-								if (dtx.Dan_C != null)
-									c曲リストノード.Dan_C = dtx.Dan_C;
-
-								string? songGenreParent = string.IsNullOrEmpty(c曲リストノード.rParentNode?.songGenre) ? null
-									: c曲リストノード.rParentNode.songGenre;
-								c曲リストノード.songGenre = songGenreParent ?? dtx.GENRE ?? "";
-								c曲リストノード.songGenrePanel = (!string.IsNullOrEmpty(dtx.GENRE) ? dtx.GENRE : songGenreParent) ?? "";
-
-								if (!(dtx.SELECTBG != null && File.Exists(str基点フォルダ + dtx.SELECTBG))) {
-									c曲リストノード.strSelectBGPath = c曲リストノード.rParentNode?.strSelectBGPath;
-								} else {
-									c曲リストノード.strSelectBGPath = str基点フォルダ + dtx.SELECTBG;
-								}
-								if (!File.Exists(c曲リストノード.strSelectBGPath)) c曲リストノード.strSelectBGPath = null;
-
-								if (c曲リストノード.rParentNode != null) {
-									c曲リストノード.strScenePreset = c曲リストノード.rParentNode.strScenePreset;
-									if (c曲リストノード.rParentNode.IsChangedForeColor) {
-										c曲リストノード.ForeColor = c曲リストノード.rParentNode.ForeColor;
-										c曲リストノード.IsChangedForeColor = true;
-									}
-									if (c曲リストノード.rParentNode.IsChangedBackColor) {
-										c曲リストノード.BackColor = c曲リストノード.rParentNode.BackColor;
-										c曲リストノード.IsChangedBackColor = true;
-									}
-									if (c曲リストノード.rParentNode.isChangedBoxColor) {
-										c曲リストノード.BoxColor = c曲リストノード.rParentNode.BoxColor;
-										c曲リストノード.isChangedBoxColor = true;
-									}
-									if (c曲リストノード.rParentNode.isChangedBgColor) {
-										c曲リストノード.BgColor = c曲リストノード.rParentNode.BgColor;
-										c曲リストノード.isChangedBgColor = true;
-									}
-									if (c曲リストノード.rParentNode.isChangedBgType) {
-										c曲リストノード.BgType = c曲リストノード.rParentNode.BgType;
-										c曲リストノード.isChangedBgType = true;
-									}
-									if (c曲リストノード.rParentNode.isChangedBoxType) {
-										c曲リストノード.BoxType = c曲リストノード.rParentNode.BoxType;
-										c曲リストノード.isChangedBoxType = true;
-									}
-									if (c曲リストノード.rParentNode.isChangedBoxChara) {
-										c曲リストノード.BoxChara = c曲リストノード.rParentNode.BoxChara;
-										c曲リストノード.isChangedBoxChara = true;
-									}
-
-
-								}
-
-
-								switch (CStrジャンルtoNum.ForAC15(c曲リストノード.songGenre)) {
-									case 0:
-										c曲リストノード.ForeColor = OpenTaiko.Skin.SongSelect_ForeColor_JPOP;
-										c曲リストノード.BackColor = OpenTaiko.Skin.SongSelect_BackColor_JPOP;
-										break;
-									case 1:
-										c曲リストノード.ForeColor = OpenTaiko.Skin.SongSelect_ForeColor_Anime;
-										c曲リストノード.BackColor = OpenTaiko.Skin.SongSelect_BackColor_Anime;
-										break;
-									case 2:
-										c曲リストノード.ForeColor = OpenTaiko.Skin.SongSelect_ForeColor_VOCALOID;
-										c曲リストノード.BackColor = OpenTaiko.Skin.SongSelect_BackColor_VOCALOID;
-										break;
-									case 3:
-										c曲リストノード.ForeColor = OpenTaiko.Skin.SongSelect_ForeColor_Children;
-										c曲リストノード.BackColor = OpenTaiko.Skin.SongSelect_BackColor_Children;
-										break;
-									case 4:
-										c曲リストノード.ForeColor = OpenTaiko.Skin.SongSelect_ForeColor_Variety;
-										c曲リストノード.BackColor = OpenTaiko.Skin.SongSelect_BackColor_Variety;
-										break;
-									case 5:
-										c曲リストノード.ForeColor = OpenTaiko.Skin.SongSelect_ForeColor_Classic;
-										c曲リストノード.BackColor = OpenTaiko.Skin.SongSelect_BackColor_Classic;
-										break;
-									case 6:
-										c曲リストノード.ForeColor = OpenTaiko.Skin.SongSelect_ForeColor_GameMusic;
-										c曲リストノード.BackColor = OpenTaiko.Skin.SongSelect_BackColor_GameMusic;
-										break;
-									case 7:
-										c曲リストノード.ForeColor = OpenTaiko.Skin.SongSelect_ForeColor_Namco;
-										c曲リストノード.BackColor = OpenTaiko.Skin.SongSelect_BackColor_Namco;
-										break;
-									default:
-										break;
-								}
-
-
-								c曲リストノード.nLevel = dtx.LEVELtaiko;
-								c曲リストノード.nLevelIcon = dtx.LEVELtaikoIcon;
-								c曲リストノード.uniqueId = dtx.uniqueID;
-
-								c曲リストノード.CutSceneIntro = dtx.CutSceneIntro;
-								c曲リストノード.CutSceneOutros = dtx.CutSceneOutros;
-
-								CSongDict.tAddSongNode(c曲リストノード.uniqueId, c曲リストノード);
-
-								c曲リストノード.score[n] = new CScore();
-								c曲リストノード.score[n].ファイル情報.ファイルの絶対パス = str基点フォルダ + fileinfo.Name;
-								c曲リストノード.score[n].ファイル情報.フォルダの絶対パス = str基点フォルダ;
-								c曲リストノード.score[n].ファイル情報.ファイルサイズ = fileinfo.Length;
-								c曲リストノード.score[n].ファイル情報.最終更新日時 = fileinfo.LastWriteTime;
-
-								if (c曲リストノード.rParentNode != null && String.IsNullOrEmpty(c曲リストノード.score[n].譜面情報.Preimage)) {
-									c曲リストノード.score[n].譜面情報.Preimage = c曲リストノード.rParentNode.score[0].譜面情報.Preimage;
-								}
-
-								LoadChartInfo(c曲リストノード, dtx, n);
-
-								if (hasAnyDifficultyProcessed == false) {
-									this.n検索されたスコア数++;
-									listノードリスト.Add(c曲リストノード);
-									if (!listSongsDB.ContainsKey(filePath + hash)) listSongsDB.Add(filePath + hash, c曲リストノード);
-									this.n検索された曲ノード数++;
-									hasAnyDifficultyProcessed = true;
-								}
-							}
+						if (this.UpdateTjaChartSongNode(c曲リストノード, dtx, str基点フォルダ, fileinfo)) {
+							this.n検索されたスコア数++;
+							listノードリスト.Add(c曲リストノード);
+							if (!listSongsDB.ContainsKey(filePath + hash)) listSongsDB.Add(filePath + hash, c曲リストノード);
+							this.n検索された曲ノード数++;
 						}
 					}
 					#endregion
@@ -512,6 +381,148 @@ internal class CSongs管理 {
 			#endregion
 		}
 	}
+
+	public bool UpdateTjaChartSongNode(CSongListNode songListNode, CTja dtx, string? strBaseFolder = null, FileInfo? fileinfo = null) {
+		bool hasAnyDifficultyProcessed = false;
+		songListNode.difficultiesCount = 0;
+		for (int n = 0; n < (int)Difficulty.Total; n++) {
+			if (!dtx.b譜面が存在する[n])
+				continue;
+
+			hasAnyDifficultyProcessed = true;
+			songListNode.difficultiesCount++;
+
+			string strBaseFolderN = strBaseFolder ?? songListNode.score[n].ファイル情報.フォルダの絶対パス;
+
+			songListNode.ldTitle = dtx.TITLE;
+			songListNode.ldSubtitle = dtx.SUBTITLE;
+			songListNode.strMaker = dtx.MAKER;
+			songListNode.strNotesDesigner = dtx.NOTESDESIGNER.Select(x => x.Equals("") ? songListNode.strMaker : x).ToArray();
+			songListNode.nSide = dtx.SIDE;
+			songListNode.bExplicit = dtx.EXPLICIT;
+			songListNode.bMovie = !string.IsNullOrEmpty(dtx.strBGVIDEO_PATH);
+
+			songListNode.DanSongs = new();
+			if (dtx.List_DanSongs != null) {
+				for (int i = 0; i < dtx.List_DanSongs.Count; i++) {
+					songListNode.DanSongs.Add(dtx.List_DanSongs[i]);
+				}
+			}
+
+			if (dtx.Dan_C != null)
+				songListNode.Dan_C = dtx.Dan_C;
+
+			string? songGenreParent = string.IsNullOrEmpty(songListNode.rParentNode?.songGenre) ? null
+				: songListNode.rParentNode.songGenre;
+			songListNode.songGenre = songGenreParent ?? dtx.GENRE ?? "";
+			songListNode.songGenrePanel = (!string.IsNullOrEmpty(dtx.GENRE) ? dtx.GENRE : songGenreParent) ?? "";
+
+			if (!(dtx.SELECTBG != null && File.Exists(strBaseFolderN + dtx.SELECTBG))) {
+				songListNode.strSelectBGPath = songListNode.rParentNode?.strSelectBGPath;
+			} else {
+				songListNode.strSelectBGPath = strBaseFolderN + dtx.SELECTBG;
+			}
+			if (!File.Exists(songListNode.strSelectBGPath)) songListNode.strSelectBGPath = null;
+
+			if (songListNode.rParentNode != null) {
+				songListNode.strScenePreset = songListNode.rParentNode.strScenePreset;
+				if (songListNode.rParentNode.IsChangedForeColor) {
+					songListNode.ForeColor = songListNode.rParentNode.ForeColor;
+					songListNode.IsChangedForeColor = true;
+				}
+				if (songListNode.rParentNode.IsChangedBackColor) {
+					songListNode.BackColor = songListNode.rParentNode.BackColor;
+					songListNode.IsChangedBackColor = true;
+				}
+				if (songListNode.rParentNode.isChangedBoxColor) {
+					songListNode.BoxColor = songListNode.rParentNode.BoxColor;
+					songListNode.isChangedBoxColor = true;
+				}
+				if (songListNode.rParentNode.isChangedBgColor) {
+					songListNode.BgColor = songListNode.rParentNode.BgColor;
+					songListNode.isChangedBgColor = true;
+				}
+				if (songListNode.rParentNode.isChangedBgType) {
+					songListNode.BgType = songListNode.rParentNode.BgType;
+					songListNode.isChangedBgType = true;
+				}
+				if (songListNode.rParentNode.isChangedBoxType) {
+					songListNode.BoxType = songListNode.rParentNode.BoxType;
+					songListNode.isChangedBoxType = true;
+				}
+				if (songListNode.rParentNode.isChangedBoxChara) {
+					songListNode.BoxChara = songListNode.rParentNode.BoxChara;
+					songListNode.isChangedBoxChara = true;
+				}
+
+
+			}
+
+
+			switch (CStrジャンルtoNum.ForAC15(songListNode.songGenre)) {
+				case 0:
+					songListNode.ForeColor = OpenTaiko.Skin.SongSelect_ForeColor_JPOP;
+					songListNode.BackColor = OpenTaiko.Skin.SongSelect_BackColor_JPOP;
+					break;
+				case 1:
+					songListNode.ForeColor = OpenTaiko.Skin.SongSelect_ForeColor_Anime;
+					songListNode.BackColor = OpenTaiko.Skin.SongSelect_BackColor_Anime;
+					break;
+				case 2:
+					songListNode.ForeColor = OpenTaiko.Skin.SongSelect_ForeColor_VOCALOID;
+					songListNode.BackColor = OpenTaiko.Skin.SongSelect_BackColor_VOCALOID;
+					break;
+				case 3:
+					songListNode.ForeColor = OpenTaiko.Skin.SongSelect_ForeColor_Children;
+					songListNode.BackColor = OpenTaiko.Skin.SongSelect_BackColor_Children;
+					break;
+				case 4:
+					songListNode.ForeColor = OpenTaiko.Skin.SongSelect_ForeColor_Variety;
+					songListNode.BackColor = OpenTaiko.Skin.SongSelect_BackColor_Variety;
+					break;
+				case 5:
+					songListNode.ForeColor = OpenTaiko.Skin.SongSelect_ForeColor_Classic;
+					songListNode.BackColor = OpenTaiko.Skin.SongSelect_BackColor_Classic;
+					break;
+				case 6:
+					songListNode.ForeColor = OpenTaiko.Skin.SongSelect_ForeColor_GameMusic;
+					songListNode.BackColor = OpenTaiko.Skin.SongSelect_BackColor_GameMusic;
+					break;
+				case 7:
+					songListNode.ForeColor = OpenTaiko.Skin.SongSelect_ForeColor_Namco;
+					songListNode.BackColor = OpenTaiko.Skin.SongSelect_BackColor_Namco;
+					break;
+				default:
+					break;
+			}
+
+
+			songListNode.nLevel = dtx.LEVELtaiko;
+			songListNode.nLevelIcon = dtx.LEVELtaikoIcon;
+			songListNode.uniqueId = dtx.uniqueID;
+
+			songListNode.CutSceneIntro = dtx.CutSceneIntro;
+			songListNode.CutSceneOutros = dtx.CutSceneOutros;
+
+			CSongDict.tAddSongNode(songListNode.uniqueId, songListNode);
+
+			songListNode.score[n] ??= new CScore();
+			if (fileinfo != null) {
+				songListNode.score[n].ファイル情報.ファイルの絶対パス = strBaseFolderN + fileinfo.Name;
+				songListNode.score[n].ファイル情報.フォルダの絶対パス = strBaseFolderN;
+				songListNode.score[n].ファイル情報.ファイルサイズ = fileinfo.Length;
+				songListNode.score[n].ファイル情報.最終更新日時 = fileinfo.LastWriteTime;
+			}
+
+			if (songListNode.rParentNode != null && String.IsNullOrEmpty(songListNode.score[n].譜面情報.Preimage)) {
+				songListNode.score[n].譜面情報.Preimage = songListNode.rParentNode.score[0].譜面情報.Preimage;
+			}
+
+			LoadChartInfo(songListNode, dtx, n);
+		}
+		return hasAnyDifficultyProcessed;
+	}
+
 	//-----------------
 	#endregion
 

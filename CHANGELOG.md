@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.6.0.1304] - 2025-06-16 (Beta)
+
+
 ## [0.6.0.77] - 2025-06-15 (Beta)
 
 - [Fix] Use SDL for Linux w/ Wayland fixing it not booting/booting with a blank window (GLFW is kept for Windows and Linux w/ X11)

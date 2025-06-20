@@ -325,8 +325,8 @@ internal class CTja : CActivity {
 	public int[] nDan_NotesCount_Max = [0]; // [iSong]
 	public int[] nDan_BalloonCount_Max = [0];
 
-	public int nNotes_Common;
-	public int[] nNotes_Branched = new int[3]; // [iBranch]
+	public int nNotes_Initial_Common; // before the initial branch section
+	public int[] nNotes_Branched = new int[3]; // [iBranch] // since the initial branch section
 	public CChip[] pDan_LastChip;
 
 	private List<int> divsPerMeasureAllBranches; // [iMeasureAllBranches]
@@ -2819,8 +2819,8 @@ internal class CTja : CActivity {
 		if (NotesManager.IsMissableNote(chip)) {
 			//譜面分岐がない譜面でも値は加算されてしまうがしゃあない
 			//分岐を開始しない間は共通譜面としてみなす。
-			if (IsEndedBranching && branch == ECourse.eNormal) {
-				this.nNotes_Common++;
+			if (!this.bチップがある.Branch) {
+				this.nNotes_Initial_Common++;
 			} else {
 				this.nNotes_Branched[iBranch]++;
 			}
@@ -2847,14 +2847,13 @@ internal class CTja : CActivity {
 			}
 		}
 
+		this.listChip_Branch[(int)chip.nBranch].Add(chip);
 		if (chip.IsEndedBranching) {
-			this.listChip_Branch[iBranch].Add(chip);
 			if (branch == ECourse.eNormal) {
 				this.listChip.Add(chip);
 				this.listNoteChip.Add(chip);
 			}
 		} else {
-			this.listChip_Branch[(int)chip.nBranch].Add(chip);
 			this.listChip.Add(chip);
 			this.listNoteChip.Add(chip);
 		}

@@ -144,22 +144,25 @@ internal class CAct演奏ゲージ共通 : CActivity {
 				break;
 		}
 
-		#region [(Unbloated) Gauge max combo values]
-
-		for (int i = 0; i < 3; i++) {
-			dbGaugeMaxComboValue_branch[i] = (this.DTX[nPlayer].nNotes_Common + this.DTX[nPlayer].nNotes_Branched[i]) * (gaugeRate / 100.0f);
-		}
-
-		#endregion
-
 		float multiplicationFactor = 1f;
 		if (nanidou == (int)Difficulty.Tower)
 			multiplicationFactor = 0f;
 
 		double[] nGaugeRankValue_branch = new double[] { 0D, 0D, 0D };
 
-		for (int i = 0; i < 3; i++) {
-			nGaugeRankValue_branch[i] = (10000.0f / (dbGaugeMaxComboValue_branch[i])) * multiplicationFactor;
+		// For branched chart, the section before initial branch always uses the Normal gauge rate
+		// TODO: handle forced branch?
+
+		// Normal: (notes_forced_normal + notes_normal) * gaugeRate_normal + notes_forced_expert * gaugeRate_expert + notes_forced_master * gaugeRate_master = 10000
+		// Expert: notes_forced_normal * gaugeRate_normal + (notes_forced_expert + notes_expert) * gaugeRate_expert + notes_forced_master * gaugeRate_master = 10000
+		// Master: notes_forced_normal * gaugeRate_normal + notes_forced_expert * gaugeRate_expert + (notes_forced_master + notes_master) * gaugeRate_master = 10000
+		dbGaugeMaxComboValue_branch[0] = (this.DTX[nPlayer].nNotes_Initial_Common + this.DTX[nPlayer].nNotes_Branched[0]) * (gaugeRate / 100.0f);
+		nGaugeRankValue_branch[0] = (10000.0f / (dbGaugeMaxComboValue_branch[0])) * multiplicationFactor;
+
+		for (int i = 1; i < 3; i++) {
+			double remainGaugePoint = 10000.0f - (this.DTX[nPlayer].nNotes_Initial_Common * nGaugeRankValue_branch[0]);
+			dbGaugeMaxComboValue_branch[i] = this.DTX[nPlayer].nNotes_Branched[i] * (gaugeRate / 100.0f);
+			nGaugeRankValue_branch[i] = remainGaugePoint / (dbGaugeMaxComboValue_branch[i]) * multiplicationFactor;
 		}
 
 		//ゲージ値計算

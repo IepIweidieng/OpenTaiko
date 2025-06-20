@@ -316,15 +316,17 @@ internal class CTja : CActivity {
 	//分岐関連
 	private ECourse n現在のコース = ECourse.eNormal;
 
-	public int[] nノーツ数 = new int[4]; //3:共通
-
 	public int[] nDan_NotesCount = new int[1];
 	public int[] nDan_AdLibCount = new int[1];
 	public int[] nDan_MineCount = new int[1];
 	public int[] nDan_BalloonHitCount = new int[1];
 	public int[] nDan_BarRollCount = new int[1];
 
-	public int[] nノーツ数_Branch = new int[4]; //
+	public int[] nDan_NotesCount_Max = [0]; // [iSong]
+	public int[] nDan_BalloonCount_Max = [0];
+
+	public int nNotes_Common;
+	public int[] nNotes_Branched = new int[3]; // [iBranch]
 	public CChip[] pDan_LastChip;
 
 	private List<int> divsPerMeasureAllBranches; // [iMeasureAllBranches]
@@ -2817,14 +2819,13 @@ internal class CTja : CActivity {
 		if (NotesManager.IsMissableNote(chip)) {
 			//譜面分岐がない譜面でも値は加算されてしまうがしゃあない
 			//分岐を開始しない間は共通譜面としてみなす。
-			this.nノーツ数_Branch[iBranch]++;
-			if (branch == (IsEndedBranching ? ECourse.eNormal : ECourse.eMaster)) {
-				if (this.n参照中の難易度 == (int)Difficulty.Dan) {
-					this.nDan_NotesCount[List_DanSongs.Count - 1]++;
-				}
-				if (IsEndedBranching) {
-					this.nノーツ数[3]++;
-				}
+			if (IsEndedBranching && branch == ECourse.eNormal) {
+				this.nNotes_Common++;
+			} else {
+				this.nNotes_Branched[iBranch]++;
+			}
+			if (branch == (IsEndedBranching ? ECourse.eNormal : ECourse.eMaster) && this.n参照中の難易度 == (int)Difficulty.Dan) {
+				this.nDan_NotesCount[List_DanSongs.Count - 1]++;
 			}
 		} else if (NotesManager.IsADLIB(chip)) {
 			if (branch == (IsEndedBranching ? ECourse.eNormal : ECourse.eMaster) && this.n参照中の難易度 == (int)Difficulty.Dan) {

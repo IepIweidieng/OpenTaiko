@@ -609,9 +609,9 @@ public static class ImGuiDebugWindow {
 
 							ImGui.Text("Note Count: ");
 							ImGui.Indent();
-							ImGui.Text("Normal: " + dtx.nノーツ数_Branch[0] +
-									   " / Expert: " + dtx.nノーツ数_Branch[1] +
-									   " / Master: " + dtx.nノーツ数_Branch[2]);
+							ImGui.Text("Normal: " + (dtx.nNotes_Common + dtx.nNotes_Branched[0]) +
+									   " / Expert: " + (dtx.nNotes_Common + dtx.nNotes_Branched[1]) +
+									   " / Master: " + (dtx.nNotes_Common + dtx.nNotes_Branched[2]));
 							ImGui.Unindent();
 
 							ImGui.TreePop();

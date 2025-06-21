@@ -1991,6 +1991,45 @@ internal class CStage演奏ドラム画面 : CStage演奏画面共通 {
 					this.actDan.Update();
 			}
 		}
+
+		#region [ Branch guide for P1 ]
+		//現在実験状態です。
+		//画像などが完成したらメソッドorクラスとして分離します。
+
+		if (OpenTaiko.ConfigIni.bBranchGuide && !OpenTaiko.ConfigIni.bAutoPlay[0]) {
+			string strNext = "BRANCH END";
+			CTja tjaP1 = OpenTaiko.TJA!;
+			int dy = OpenTaiko.actTextConsole.fontHeight;
+			int y = (int)(176 * OpenTaiko.Skin.ScaleY - 3 * dy);
+
+			if (!(this.n分岐した回数[0] < tjaP1.listBRANCH.Count)) {
+				y += dy;
+				OpenTaiko.actTextConsole.Print(0, y, CTextConsole.EFontType.White, strNext);
+			} else {
+				CChip branchJudgePoint = tjaP1.listBRANCH[this.n分岐した回数[0]];
+
+				var branchCondType = branchJudgePoint.eBranchCondition;
+				double nowBranchCondScore = this.GetBranchConditionScore(0, branchCondType);
+				OpenTaiko.actTextConsole.Print(0, y, CTextConsole.EFontType.White, nowBranchCondScore.ToString("##0.##"));
+
+				var nowTargetBranch = this.tBranchJudge(0, branchJudgePoint);
+				strNext = nowTargetBranch switch {
+					CTja.ECourse.eMaster => "MASTER",
+					CTja.ECourse.eExpert => "EXPERT",
+					CTja.ECourse.eNormal or _ => "NORMAL",
+				};
+				OpenTaiko.actTextConsole.Print(0, y += dy, CTextConsole.EFontType.White, strNext);
+
+				int nMeasuresToNextBranch = branchJudgePoint.n発声位置 / 384 - this.actPlayInfo.NowMeasure[0];
+				OpenTaiko.actTextConsole.Print(0, y += dy, CTextConsole.EFontType.White, $"NEXT BRANCH:{nMeasuresToNextBranch:##0} BARS");
+
+				y = (int)(362 * OpenTaiko.Skin.ScaleY);
+				OpenTaiko.actTextConsole.Print(0, y, CTextConsole.EFontType.White,
+					$"NEXT BRANCH INFO:{CTja.GetBranchConditionTypeString(branchCondType)},{branchJudgePoint.nBranchCondition1_Professional:##0.##},{branchJudgePoint.nBranchCondition2_Master:##0.##}");
+			}
+		}
+		#endregion
+
 		#region [ Treat big notes hit with a single hand ]
 		//常時イベントが発生しているメソッドのほうがいいんじゃないかという予想。
 		//CDTX.CChip chipNoHit = this.r指定時刻に一番近い未ヒットChip((int)CSound管理.rc演奏用タイマ.n現在時刻ms, 0);

@@ -1668,7 +1668,6 @@ internal class CTja : CActivity {
 			chip.n発声位置 -= 1;
 			chip.dbSCROLL = dbComplexNum[0];
 			chip.dbSCROLL_Y = dbComplexNum[1];
-			chip.nBranch = this.n現在のコース;
 
 			// チップを配置。
 
@@ -1692,7 +1691,6 @@ internal class CTja : CActivity {
 
 			//チップ追加して割り込んでみる。
 			var chip = this.NewEventChipAtDefCursor(0xDC);
-			chip.nBranch = this.n現在のコース;
 			// チップを配置。
 
 			this.dbNowTime += nDELAY;
@@ -2039,6 +2037,7 @@ internal class CTja : CActivity {
 
 			var chip = new CChip();
 			chip.nChannelNo = 0xDE;
+			chip.IsEndedBranching = true;
 			chip.n発声時刻ms = (int)JudgeChipTime.msTime;
 			chip.fNow_Measure_m = JudgeChipTime.chip?.fNow_Measure_m ?? 4;
 			chip.fNow_Measure_s = JudgeChipTime.chip?.fNow_Measure_s ?? 4;
@@ -2092,7 +2091,6 @@ internal class CTja : CActivity {
 			var chip = this.NewEventChipAtDefCursor(0xE0, 1);
 			chip.n発声位置 -= 1;
 			chip.n発声時刻ms += 1;
-			chip.nBranch = this.n現在のコース;
 			this.bBARLINECUE[0] = 1;
 
 			this.listChip.Add(chip);
@@ -2100,7 +2098,6 @@ internal class CTja : CActivity {
 			var chip = this.NewEventChipAtDefCursor(0xE0, 2);
 			chip.n発声位置 -= 1;
 			chip.n発声時刻ms += 1;
-			chip.nBranch = this.n現在のコース;
 			this.bBARLINECUE[0] = 0;
 
 			this.listChip.Add(chip);
@@ -2110,7 +2107,6 @@ internal class CTja : CActivity {
 				this.listLyric.Add(this.pf歌詞フォント.DrawText(argumentFull, OpenTaiko.Skin.Game_Lyric_ForeColor, OpenTaiko.Skin.Game_Lyric_BackColor, null, 30));
 
 			var chip = this.NewEventChipAtDefCursor(0xF1, this.listLyric.Count - 1);
-			chip.nBranch = this.n現在のコース;
 			this.listChip.Add(chip);
 			this.bLyrics = true;
 		} else if (command == "#DIRECTION") {
@@ -2121,7 +2117,6 @@ internal class CTja : CActivity {
 			var chip = this.NewEventChipAtDefCursor(0xF2, 0);
 			chip.n発声位置 -= 1;
 			chip.nScrollDirection = (int)dbSCROLL;
-			chip.nBranch = this.n現在のコース;
 
 			// チップを配置。
 
@@ -2139,7 +2134,6 @@ internal class CTja : CActivity {
 			chip.n発声位置 -= 1;
 			chip.nノーツ出現時刻ms = (int)this.db出現時刻;
 			chip.nノーツ移動開始時刻ms = (int)this.db移動待機時刻;
-			chip.nBranch = this.n現在のコース;
 
 			// チップを配置。
 
@@ -2168,7 +2162,6 @@ internal class CTja : CActivity {
 			//チップ追加して割り込んでみる。
 			var chip = this.NewEventChipAtDefCursor(0xE2, this.listJPOSSCROLL.Count);
 			chip.n発声位置 -= 1;
-			chip.nBranch = this.n現在のコース;
 
 			// チップを配置。
 			this.listJPOSSCROLL.Add(new CJPOSSCROLL() {
@@ -2186,7 +2179,6 @@ internal class CTja : CActivity {
 		} else if (command == "#NEXTSONG") {
 			var chip = this.NewEventChipAtDefCursor(0x9B, List_DanSongs.Count);
 			chip.n発声位置 -= ((this.n現在の小節数) * 384) - 1;
-			chip.nBranch = this.n現在のコース;
 			this.listChip.Add(chip);
 
 			for (int ib = 0; ib < 3; ++ib) {
@@ -2256,21 +2248,18 @@ internal class CTja : CActivity {
 
 			var chip = this.NewEventChipAtDefCursor(0x09);
 			chip.n発声位置 -= 1;
-			chip.nBranch = this.n現在のコース;
 			this.listChip.Add(chip);
 		} else if (command == "#BMSCROLL") {
 			eScrollMode = EScrollMode.BMScroll;
 
 			var chip = this.NewEventChipAtDefCursor(0x0A);
 			chip.n発声位置 -= 1;
-			chip.nBranch = this.n現在のコース;
 			this.listChip.Add(chip);
 		} else if (command == "#HBSCROLL") {
 			eScrollMode = EScrollMode.HBScroll;
 
 			var chip = this.NewEventChipAtDefCursor(0x0B);
 			chip.n発声位置 -= 1;
-			chip.nBranch = this.n現在のコース;
 			this.listChip.Add(chip);
 		}
 	}
@@ -2700,9 +2689,11 @@ internal class CTja : CActivity {
 		}
 	}
 
-	private CChip NewEventChipAtDefCursor(int channelNo, int argIndex = default, int argInt = default, double argDb = default)
+	private CChip NewEventChipAtDefCursor(int channelNo, int argIndex = default, int argInt = default, double argDb = default, ECourse? branch = null)
 		=> new() {
 			nChannelNo = channelNo,
+			IsEndedBranching = this.IsEndedBranching,
+			nBranch = branch ?? this.n現在のコース,
 			n発声位置 = (this.n現在の小節数 * 384),
 			dbBPM = this.dbNowBPM,
 			dbSCROLL = this.dbNowScroll,
@@ -2717,14 +2708,10 @@ internal class CTja : CActivity {
 		};
 
 	private CChip NewScrolledChipAtDefCursor(int channelNo, int iDiv, int divsPerMeasure, ECourse branch) {
-		CChip chip = this.NewEventChipAtDefCursor(channelNo);
+		CChip chip = this.NewEventChipAtDefCursor(channelNo, branch: branch);
 		chip.n発声位置 = (int)((this.n現在の小節数 * 384.0) + ((384.0 * iDiv) / divsPerMeasure));
 		chip.n文字数 = divsPerMeasure;
 		chip.eScrollMode = this.eScrollMode;
-
-		chip.IsEndedBranching = this.IsEndedBranching;
-		chip.nBranch = branch;
-
 		chip.bVisible = (branch == ECourse.eNormal);
 		return chip;
 	}
@@ -3795,6 +3782,7 @@ internal class CTja : CActivity {
 
 					CChip c_AddMixer = new CChip() {
 						nChannelNo = 0xDA,
+						IsEndedBranching = true,
 						n整数値 = pChip.n整数値,
 						n整数値_内部番号 = pChip.n整数値_内部番号,
 						n発声時刻ms = nAddMixer時刻ms,
@@ -3845,6 +3833,7 @@ internal class CTja : CActivity {
 						CChip c = new CChip()                                           // mixer削除時刻を更新(遅延)する
 						{
 							nChannelNo = 0xDB,
+							IsEndedBranching = true,
 							n整数値 = listRemoveTiming[index].n整数値,
 							n整数値_内部番号 = listRemoveTiming[index].n整数値_内部番号,
 							n発声時刻ms = n新RemoveMixer時刻ms,
@@ -3856,6 +3845,7 @@ internal class CTja : CActivity {
 						CChip c = new CChip()                                           // 新しくmixer削除候補として追加する
 						{
 							nChannelNo = 0xDB,
+							IsEndedBranching = true,
 							n整数値 = pChip.n整数値,
 							n整数値_内部番号 = pChip.n整数値_内部番号,
 							n発声時刻ms = n新RemoveMixer時刻ms,

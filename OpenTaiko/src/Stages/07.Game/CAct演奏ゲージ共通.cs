@@ -1,4 +1,6 @@
-﻿using FDK;
+﻿using System.Diagnostics;
+using System.Numerics;
+using FDK;
 
 namespace OpenTaiko;
 
@@ -102,10 +104,6 @@ internal class CAct演奏ゲージ共通 : CActivity {
 				break;
 		}
 
-		//ゲージのMAXまでの最低コンボ数を計算
-		float[] dbGaugeMaxComboValue_branch = new float[3];
-
-
 		if (nRiskyTimes_InitialVal > 0) {
 			this.bRisky = true;
 			this.nRiskyTimes = OpenTaiko.ConfigIni.nRisky;
@@ -144,26 +142,8 @@ internal class CAct演奏ゲージ共通 : CActivity {
 				break;
 		}
 
-		float multiplicationFactor = 1f;
-		if (nanidou == (int)Difficulty.Tower)
-			multiplicationFactor = 0f;
-
-		double[] nGaugeRankValue_branch = new double[] { 0D, 0D, 0D };
-
-		// For branched chart, the section before initial branch always uses the Normal gauge rate
-		// TODO: handle forced branch?
-
-		// Normal: (notes_forced_normal + notes_normal) * gaugeRate_normal + notes_forced_expert * gaugeRate_expert + notes_forced_master * gaugeRate_master = 10000
-		// Expert: notes_forced_normal * gaugeRate_normal + (notes_forced_expert + notes_expert) * gaugeRate_expert + notes_forced_master * gaugeRate_master = 10000
-		// Master: notes_forced_normal * gaugeRate_normal + notes_forced_expert * gaugeRate_expert + (notes_forced_master + notes_master) * gaugeRate_master = 10000
-		dbGaugeMaxComboValue_branch[0] = (this.DTX[nPlayer].nNotes_Initial_Common + this.DTX[nPlayer].nNotes_Branched[0]) * (gaugeRate / 100.0f);
-		nGaugeRankValue_branch[0] = (10000.0f / (dbGaugeMaxComboValue_branch[0])) * multiplicationFactor;
-
-		for (int i = 1; i < 3; i++) {
-			double remainGaugePoint = 10000.0f - (this.DTX[nPlayer].nNotes_Initial_Common * nGaugeRankValue_branch[0]);
-			dbGaugeMaxComboValue_branch[i] = this.DTX[nPlayer].nNotes_Branched[i] * (gaugeRate / 100.0f);
-			nGaugeRankValue_branch[i] = remainGaugePoint / (dbGaugeMaxComboValue_branch[i]) * multiplicationFactor;
-		}
+		double[] nGaugeRankValue_branch = (nanidou == (int)Difficulty.Tower) ? [0, 0, 0]
+			: this.GetGaugeRankBranched(nPlayer, gaugeRate);
 
 		//ゲージ値計算
 		//実機に近い計算
@@ -171,22 +151,14 @@ internal class CAct演奏ゲージ共通 : CActivity {
 		//2015.03.26 kairera0467 計算を初期化時にするよう修正。
 
 		#region [ Handling infinity cases ]
-		float fIsDontInfinty = 0.4f;//適当に0.4で
+		float gaugeRankLastFinite = 0.4f; // arbitrary fallback value
 		float[] fAddVolume = new float[] { 1.0f, 0.5f, dbDamageRate };
 
 		for (int ib = 0; ib < 3; ++ib) {
-			if (!double.IsInfinity(nGaugeRankValue_branch[ib] / 100.0f)) { //値がInfintyかチェック
-				fIsDontInfinty = (float)(nGaugeRankValue_branch[ib] / 100.0f);
-				for (int ij = 0; ij < 3; ++ij) {
-					this.dbゲージ増加量_Branch[ib, ij][nPlayer] = fIsDontInfinty * fAddVolume[ij];
-				}
-			} else {
-				for (int ij = 0; ij < 3; ++ij) {
-					// Handling infinity cases
-					//Infintyだった場合はInfintyではない値 * 3.0をしてその値を利用する。
-					this.dbゲージ増加量_Branch[ib, ij][nPlayer] = (fIsDontInfinty * fAddVolume[ij]) * 3f;
-				}
-			}
+			if (double.IsFinite(nGaugeRankValue_branch[ib])) //値がInfintyかチェック
+				gaugeRankLastFinite = (float)(nGaugeRankValue_branch[ib] / 100.0f);
+			for (int ij = 0; ij < 3; ++ij)
+				this.dbゲージ増加量_Branch[ib, ij][nPlayer] = gaugeRankLastFinite * fAddVolume[ij];
 		}
 		#endregion
 
@@ -216,6 +188,201 @@ internal class CAct演奏ゲージ共通 : CActivity {
 			}
 		}
 		#endregion
+	}
+
+	private double[] GetGaugeRankBranched(int iPlayer, float percentGreatsToMaxGauge) {
+		// For branched chart, each main route can have notes in different branch and therefore different gauge rate
+		// ideal gauge rate: sum[bn](nNotes_bt_bn[bt][bn] * gaugeRate[bn]) ≒ gaugeTarget
+		CTja tja = this.DTX[iPlayer];
+		var nNotesC_bn = tja.nNotes_Initial_Common;
+		var nNotes_bt_bn = tja.nNotes_Branch;
+		double gaugeTarget = (double)10000.0f / (percentGreatsToMaxGauge / 100.0f);
+
+		// No missable notes in all main routes after initial common section
+		if (nNotes_bt_bn.All(nbt => nbt.All(nbn => (nbn == 0)))) {
+			double rankC = gaugeTarget / nNotesC_bn.Sum();
+			return [rankC, rankC, rankC];
+		}
+
+		// Less notes per every branch than any other routes (e.g., "roll-only" branch at end of chart)
+		// => only consider the "superset" route
+		// => negative gauge rate avoided <- impossible to derive sum[bn](x[bn] * gaugeRate[bn]) = 0 with some x[bn] > 0 and the other x[bn] = 0
+		// => impossible solution avoided <- impossible to decompose nNotes_bt_bn[route] into sum[bt](x[bt] * nNotes_bt_bn[bt]) with x[route] = 0
+		var routeSuper = FindSuperSetRoute(nNotes_bt_bn);
+
+		// Significant less or no notes after initial common section, and not a "subset" route (e.g., "hidden Expert route")
+		// => excluded from gauge rate calculating
+		const double rateMax = 2;
+		var nNotesA_bt_bn = nNotes_bt_bn.Select(nbt => nbt.Zip(nNotesC_bn).Select(nbn => nbn.First + nbn.Second).ToArray()).ToArray();
+		var nNotesA_bt = nNotesA_bt_bn.Select(nbt => nbt.Sum()).ToArray();
+		var nNotesA_max = nNotesA_bt.Max();
+
+		var routes = routeSuper.Distinct().ToArray();
+		List<CTja.ECourse> routesSolve = new(routes.Length);
+		List<CTja.ECourse> routesUnsolve = new(routes.Length);
+		foreach (var r in routes)
+			((nNotesA_bt[(int)r] >= nNotesA_max / rateMax) ? routesSolve : routesUnsolve).Add(r);
+
+		// find gaugeRate[bn] such that sum[bn](nNotes_bt_bn[bt][bn] * gaugeRate[bn]) = gaugeTarget
+		double[][] mat = routesSolve
+			.Select(r => (double[])[.. nNotesA_bt_bn[(int)routeSuper[(int)r]], gaugeTarget])
+			.ToArray();
+		(int nEquats, int nFalses) = ToReducedEchelonForm(mat, 3);
+
+		void addGaugeWarn(string reason, string? solution = null) {
+			LogNotification.PopWarning($"[{tja.strFileName}]: Unable to calculate a set of suitable gauge increments for player {iPlayer + 1}: {reason}{(string.IsNullOrEmpty(solution) ? "" : $"; {solution}")}");
+			Trace.TraceWarning($"nNotes_Initial_Common: [{string.Join(", ", nNotesC_bn)}], nNotes_Branch: {string.Join(", ", nNotes_bt_bn.Select(nbt => $"[{string.Join(", ", nbt)}]"))}");
+			Trace.TraceWarning($"Considered routes: {string.Join(", ", routesSolve)}, resulting matrix: {string.Join(", ", mat.Select(row => $"[{string.Join(", ", row)}]"))}");
+			Trace.TraceWarning($"TJA file: '{tja.strFullPath}', at {(Difficulty)tja.n参照中の難易度}");
+		}
+
+		if (nFalses > 0) { // unexpected algorithm failure, should not happen
+			addGaugeWarn("contradiction of solution set", "fall back to simple division");
+			return nNotesA_bt.Select(nbt => gaugeTarget / nbt).ToArray();
+		}
+
+		// Minimize difference between gaugeRate: find the point on the solution space which is closest to the line (rankN = rankE = rankM)
+		double[] ranks = [double.NaN, double.NaN, double.NaN];
+		// solve independent variables first
+		for (int row = 0; row < mat.Length; ++row) {
+			for (int col = 0; col < 3; ++col) {
+				if (mat[row][col] == 0)
+					continue;
+				if (!mat[row][(col + 1)..3].All(c => (c == 0)))
+					break;
+				var x = mat[row][3] / mat[row][col];
+				if (!(double.IsFinite(x) && x > 0))
+					addGaugeWarn($"non-positive solution for route {(CTja.ECourse)row}: {x}");
+				ranks[row] = x;
+				// remove row from equation rows
+				--nEquats;
+				// shift rows
+				var rowR = mat[row];
+				for (int ir = row; ir < mat.Length - 1; ++ir)
+					mat[ir] = mat[ir + 1];
+				mat[mat.Length - 1] = rowR;
+				Array.Fill(rowR, 0);
+				--row;
+			}
+		}
+		// check dependent variables (where some a_i > 0 and the other a_i == 0)
+		if (nEquats == 1) { // a plane: [1 a_E a_M | g_N] or [0 1 a_M | g_N]
+			var x = mat[0][3] / mat[0][0..3].Sum();
+			if (!(double.IsFinite(x) && x > 0)) {
+				addGaugeWarn($"non-positive plane solution: {x}");
+			} else { // insect with (rankN = rankE = rankM)
+				for (int ix = 0; ix < 3; ++ix) {
+					if (!(double.IsFinite(ranks[ix]) && ranks[ix] > 0) && mat[0][ix] != 0) // only solve relevant rates
+						ranks[ix] = x;
+				}
+			}
+		} else if (nEquats == 2) { // a line: [1 0 a_MN | g_N] [0 1 a_ME | g_E] [0 0 0 | 0]
+			// => line: (rankN - g_N) / a_MN = (rankE - g_E) / a_ME = rankM / -1
+			// => line = (g_N, g_E, 0) + t0 * (a_MN, a_ME, -1), t0 ∈ ℝ
+			double[] v = [a_MN, a_ME, -1];
+			// target line: rankN = rankE = rankM
+			// => target line = t1 * (1, 1, 1), t1 ∈ ℝ
+			double[] vt = [1, 1, 1];
+			// perpendicular line: (g_N, g_E, 0) + t0 * (a_MN, a_ME, -1) + t2 * (1, 1, 1) × (a_MN, a_ME, -1)
+			double[] vp = [vt[1] * v[2] - vt[2] * v[1], -(vt[0] * v[2] - vt[2] * v[0]), vt[0] * v[1] - vt[1] * v[0]];
+			if (vp.All(x => (x == 0))) {
+				addGaugeWarn($"non-positive line solution: line vector: [{string.Join(", ", v)}]^T");
+			} else {
+				// solve: (g_N, g_E, 0) + t0 * (a_MN, a_ME, -1) + t2 * (1, 1, 1) × (a_MN, a_ME, -1) = t1 * (1, 1, 1)
+				double[][] matT = Enumerable.Range(0, 3).Select(i => (double[])[v[i], -vt[i], vp[i], mat[i][3]]).ToArray();
+				ToReducedEchelonForm(matT, 3);
+			}
+		}
+
+		return ranks;
+	}
+
+	private static CTja.ECourse[] FindSuperSetRoute(int[][] nNotes_bt_bn) {
+		// make set
+		CTja.ECourse[] iRouteSuper = [CTja.ECourse.eNormal, CTja.ECourse.eExpert, CTja.ECourse.eMaster];
+		// find most or (for 0) nearest-proper "superset" note distribution
+		for (int ib = 0; ib < 3; ++ib) {
+			bool noNotesI = (nNotes_bt_bn[ib].Sum() == 0);
+			int tb = ib;
+			int diff = 0;
+			for (int jb = 0; jb < 3; ++jb) {
+				if (ib == jb)
+					continue;
+				int[] diffsJ = nNotes_bt_bn[jb]
+					.Zip(nNotes_bt_bn[ib])
+					.Select(nbn => nbn.First - nbn.Second)
+					.ToArray();
+				if (noNotesI ? diffsJ.All(d => (d > 0)) : diffsJ.All(d => (d >= 0))) {
+					int diffJ = diffsJ.Sum();
+					if ((tb == ib) || (noNotesI ? diffJ < diff : diffJ > diff)) {
+						tb = jb;
+						diff = diffJ;
+					}
+				}
+			}
+			if (tb != ib)
+				DisjointSetUnion(iRouteSuper, (CTja.ECourse)ib, (CTja.ECourse)tb);
+		}
+		// finalize
+		for (int ib = 0; ib < 3; ++ib)
+			DisjointSetFind(iRouteSuper, (CTja.ECourse)ib);
+		return iRouteSuper;
+	}
+
+	private static void DisjointSetUnion(CTja.ECourse[] sets, CTja.ECourse src, CTja.ECourse dst) {
+		var rootSrc = DisjointSetFind(sets, src);
+		var rootDst = DisjointSetFind(sets, dst);
+		if (rootDst != rootSrc)
+			sets[(int)rootSrc] = rootDst;
+	}
+
+	private static CTja.ECourse DisjointSetFind(CTja.ECourse[] sets, CTja.ECourse x) {
+		if (sets[(int)x] == x)
+			return x;
+		return sets[(int)x] = DisjointSetFind(sets, sets[(int)x]);
+	}
+
+	private static (int nEquats, int nFalses) ToReducedEchelonForm(double[][] mat, int nCoefs) {
+		// Gauss-Jordan elimination without normalizing
+		for (int row = 0, col = 0; row < mat.Length && col < nCoefs; ++col) {
+			// find pivot row
+			int rowPivot = row;
+			for (int ir = row + 1; ir < mat.Length; ++ir) {
+				if (Math.Abs(mat[ir][col]) > Math.Abs(mat[rowPivot][col]))
+					rowPivot = ir;
+			}
+			if (mat[rowPivot][col] == 0) // no pivot found, skip col
+				continue;
+			if (rowPivot != row)
+				(mat[rowPivot], mat[row]) = (mat[row], mat[rowPivot]); // swap rows
+			// eliminate other rows
+			for (int ir = 0; ir < mat.Length; ++ir) {
+				if (ir == row)
+					continue; // skip pivot row
+				double factor = mat[ir][col] / mat[row][col];
+				for (int ic = 0; ic < mat[ir].Length; ++ic)
+					mat[ir][ic] -= factor * mat[row][ic];
+				mat[ir][col] = 0; // eliminated completely
+			}
+			++row;
+		}
+		// final normalization + solution statistics
+		int nEquats = 0, nFalses = 0;
+		for (int row = 0; row < mat.Length; ++row) {
+			for (int col = 0; col < mat[row].Length; ++col) {
+				if (col == 0)
+					continue;
+				for (int ic = col + 1; ic < mat[row].Length; ++ic)
+					mat[row][ic] /= mat[row][col];
+				mat[row][col] = 1; // normalized
+				if (col < nCoefs)
+					++nEquats;
+				else
+					++nFalses;
+				break;
+			}
+		}
+		return (nEquats, nFalses);
 	}
 
 	#region [ DAMAGE ]

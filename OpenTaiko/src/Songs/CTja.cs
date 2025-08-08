@@ -316,6 +316,13 @@ internal class CTja : CActivity {
 	//分岐関連
 	private ECourse n現在のコース = ECourse.eNormal;
 
+	// for score & gauge calculation for main branch routes (taking the highest possible branch non-above the targeting branch)
+	private ECourse[] nowBranchMainRoute = [ECourse.eNormal, ECourse.eNormal, ECourse.eNormal]; // [iBranch]
+	private bool[] isLevelHeldMainRoute = [false, false, false]; // [iBranch]
+	private bool isAfterInitialCommonBranch = false;
+	public int[] nNotes_Initial_Common = [0, 0, 0]; // [iNoteBranchInRoute]
+	public int[][] nNotes_Branch = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]; // [iBranchTarget][iNoteBranchInRoute]
+
 	public int[] nDan_NotesCount = new int[1];
 	public int[] nDan_AdLibCount = new int[1];
 	public int[] nDan_MineCount = new int[1];
@@ -325,8 +332,6 @@ internal class CTja : CActivity {
 	public int[] nDan_NotesCount_Max = [0]; // [iSong]
 	public int[] nDan_BalloonCount_Max = [0];
 
-	public int nNotes_Initial_Common; // before the initial branch section
-	public int[] nNotes_Branched = new int[3]; // [iBranch] // since the initial branch section
 	public CChip[] pDan_LastChip;
 
 	private List<int> divsPerMeasureAllBranches; // [iMeasureAllBranches]
@@ -2076,6 +2081,21 @@ internal class CTja : CActivity {
 			IsEndedBranching = false;
 			#endregion
 
+			// calculate main branch route
+			double[] branchCondPoints = [0, nNum[0], nNum[1]];
+			for (int ib = 0; ib < 3; ++ib) {
+				if (e条件 == EBranchConditionType.None || this.isLevelHeldMainRoute[ib])
+					continue;
+				double point = Math.Max(0, branchCondPoints[ib]);
+				if (e条件 == EBranchConditionType.Accuracy) {
+					point = Math.Min(100, point);
+				}
+				this.nowBranchMainRoute[ib] = CStage演奏画面共通.tBranchJudge(chip, point);
+			}
+			if (!this.isAfterInitialCommonBranch && !this.nowBranchMainRoute.All(b => (b == this.nowBranchMainRoute[0]))) {
+				this.isAfterInitialCommonBranch = true;
+			}
+
 			// handle here for the correct dan-i song index
 			if (this.n参照中の難易度 == (int)Difficulty.Dan) {
 				this.bHasBranchDan[List_DanSongs.Count - 1] = true;
@@ -2095,8 +2115,11 @@ internal class CTja : CActivity {
 			var chip = this.NewEventChipAtDefCursor(0xE1, 1);
 			chip.n発声位置 -= 1;
 			this.listChip.Add(chip);
-			if (!this.IsEndedBranching) {
+			if (this.IsEndedBranching) {
+				Array.Fill(this.isLevelHeldMainRoute, true);
+			} else {
 				this.cBranchStart.chipBranchStart!.hasLevelHold[(int)this.n現在のコース] = true;
+				this.isLevelHeldMainRoute[(int)this.n現在のコース] = true;
 			}
 		} else if (command == "#BRANCHEND") {
 			//End用チャンネルをEmptyから引っ張ってきた。
@@ -2819,10 +2842,16 @@ internal class CTja : CActivity {
 		if (NotesManager.IsMissableNote(chip)) {
 			//譜面分岐がない譜面でも値は加算されてしまうがしゃあない
 			//分岐を開始しない間は共通譜面としてみなす。
-			if (!this.bチップがある.Branch) {
-				this.nNotes_Initial_Common++;
-			} else {
-				this.nNotes_Branched[iBranch]++;
+			if (!this.isAfterInitialCommonBranch) {
+				if (branch == ECourse.eNormal) // add once for main Normal route
+					this.nNotes_Initial_Common[(int)this.nowBranchMainRoute[iBranch]]++;
+			} else if (this.IsEndedBranching) { // add 3 times targeting each main route
+				this.nNotes_Branch[iBranch][(int)this.nowBranchMainRoute[iBranch]]++;
+			} else { // add once for defined branch
+				for (int ib = 0; ib < 3; ++ib) {
+					if (this.nowBranchMainRoute[ib] == (ECourse)iBranch)
+						this.nNotes_Branch[ib][(int)this.nowBranchMainRoute[ib]]++;
+				}
 			}
 			if (branch == (IsEndedBranching ? ECourse.eNormal : ECourse.eMaster) && this.n参照中の難易度 == (int)Difficulty.Dan) {
 				this.nDan_NotesCount[List_DanSongs.Count - 1]++;

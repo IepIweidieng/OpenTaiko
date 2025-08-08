@@ -3824,6 +3824,10 @@ internal abstract class CStage演奏画面共通 : CStage {
 
 		double dbRate = GetBranchConditionScore(branchScore, pChip.eBranchCondition);
 
+		return tBranchJudge(pChip, dbRate);
+	}
+
+	public static CTja.ECourse tBranchJudge(CChip pChip, double dbRate) {
 		if (dbRate >= pChip.nBranchCondition2_Master) {
 			return CTja.ECourse.eMaster;
 		} else if (dbRate >= pChip.nBranchCondition1_Professional) {

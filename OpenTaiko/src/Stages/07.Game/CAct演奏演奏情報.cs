@@ -29,10 +29,10 @@ internal class CAct演奏演奏情報 : CActivity {
 		_chipCounts[0] = OpenTaiko.TJA.listChip.Where(num => NotesManager.IsMissableNote(num)).Count();
 		_chipCounts[1] = OpenTaiko.TJA.listChip_Branch[2].Where(num => NotesManager.IsMissableNote(num)).Count();
 
-		NotesTextN = string.Format("NoteN:         {0:####0}", OpenTaiko.TJA.nNotes_Branched[0]);
-		NotesTextE = string.Format("NoteE:         {0:####0}", OpenTaiko.TJA.nNotes_Branched[1]);
-		NotesTextM = string.Format("NoteM:         {0:####0}", OpenTaiko.TJA.nNotes_Branched[2]);
-		NotesTextC = string.Format("NoteC:         {0:####0}", OpenTaiko.TJA.nNotes_Initial_Common);
+		NotesTextN = string.Format("NoteN:         {0:####0}", OpenTaiko.TJA.nNotes_Branch[0].Sum());
+		NotesTextE = string.Format("NoteE:         {0:####0}", OpenTaiko.TJA.nNotes_Branch[1].Sum());
+		NotesTextM = string.Format("NoteM:         {0:####0}", OpenTaiko.TJA.nNotes_Branch[2].Sum());
+		NotesTextM = string.Format("NoteC:         {0:####0}", OpenTaiko.TJA.nNotes_Initial_Common.Sum());
 		ScoreModeText = string.Format("SCOREMODE:     {0:####0}", OpenTaiko.stageGameScreen.scoreMode[0]);
 		ListChipText = string.Format("ListChip:      {0:####0}", _chipCounts[0]);
 		ListChipMText = string.Format("ListChipM:     {0:####0}", _chipCounts[1]);

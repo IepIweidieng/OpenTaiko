@@ -123,23 +123,23 @@ class NotesManager {
 		if (chip == null) return false;
 
 		if (IsBigKaTaiko(chip, gt)) {
-			return (inPad == EPad.LBlue && onPad == EPad.RBlue)
-				   || (inPad == EPad.RBlue && onPad == EPad.LBlue);
+			return (hit == EPad.LBlue && stored == EPad.RBlue)
+				|| (hit == EPad.RBlue && stored == EPad.LBlue);
 		}
 
 		if (IsBigDonTaiko(chip, gt)) {
-			return (inPad == EPad.LRed && onPad == EPad.RRed)
-				   || (inPad == EPad.RRed && onPad == EPad.LRed);
+			return (hit == EPad.LRed && stored == EPad.RRed)
+				|| (hit == EPad.RRed && stored == EPad.LRed);
 		}
 
 		if (IsSwapNote(chip, gt)) {
-			bool hitBlue = inPad == EPad.LBlue || inPad == EPad.RBlue;
-			bool hitRed = inPad == EPad.LRed || inPad == EPad.RRed;
-			bool storedBlue = onPad == EPad.LBlue || onPad == EPad.RBlue;
-			bool storedRed = onPad == EPad.LRed || onPad == EPad.RRed;
+			bool hitBlue = hit == EPad.LBlue || stored == EPad.RBlue;
+			bool hitRed = hit == EPad.LRed || stored == EPad.RRed;
+			bool storedBlue = hit == EPad.LBlue || stored == EPad.RBlue;
+			bool storedRed = hit == EPad.LRed || stored == EPad.RRed;
 
 			return (storedRed && hitBlue)
-				   || (storedBlue && hitRed);
+				|| (storedBlue && hitRed);
 		}
 
 		return false;

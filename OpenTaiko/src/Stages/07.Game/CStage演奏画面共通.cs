@@ -953,8 +953,9 @@ internal abstract class CStage演奏画面共通 : CStage {
 			return;
 		}
 		double msPerRollTja = CTja.GameDurationToTjaDuration(1000.0 / rollSpeed);
-		if (msTjaTime > (pChip.n発声時刻ms + msPerRollTja * pChip.nRollCount)) {
+		if (msTjaTime >= pChip.msStoredHit + msPerRollTja) {
 			this.AutoplayDoHit(pChip, msTjaTime, iPlayer, gt);
+			pChip.msStoredHit = msTjaTime;
 		}
 	}
 
@@ -983,12 +984,14 @@ internal abstract class CStage演奏画面共通 : CStage {
 		if (balloon == 0 || this.bPAUSE != false) {
 			return;
 		}
-		int rollSpeed = bAutoPlay ? balloon : puchichara.effect.Autoroll;
+		int rollSpeed = bAutoPlay ? (balloon - rollCount) : puchichara.effect.Autoroll;
 
-		int balloonDuration = bAutoPlay ? (pChip.end.n発声時刻ms - pChip.n発声時刻ms) : 1000;
+		int balloonDuration = bAutoPlay ? (int)(pChip.end.n発声時刻ms - msTjaTime) : 1000;
 
-		if (msTjaTime > (pChip.n発声時刻ms + (balloonDuration / (double)rollSpeed) * rollCount)) {
+		double msPerRollTja = balloonDuration / (double)rollSpeed;
+		if (msTjaTime >= pChip.msStoredHit + msPerRollTja) {
 			this.AutoplayDoHit(pChip, msTjaTime, iPlayer, gt);
+			pChip.msStoredHit = msTjaTime;
 		}
 	}
 

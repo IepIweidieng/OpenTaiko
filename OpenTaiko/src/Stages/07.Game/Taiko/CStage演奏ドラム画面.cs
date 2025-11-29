@@ -327,9 +327,6 @@ internal class CStage演奏ドラム画面 : CStage演奏画面共通 {
 	public override int Draw() {
 		base.sw.Start();
 		if (!base.IsDeActivated) {
-			bool bIsFinishedPlaying = false;
-			bool bIsFinishedEndAnime = false;
-			bool bIsFinishedFadeout = false;
 			#region [ 初めての進行描画 ]
 			if (base.IsFirstDraw) {
 				SoundManager.PlayTimer.Reset();
@@ -437,11 +434,11 @@ internal class CStage演奏ドラム画面 : CStage演奏画面共通 {
 				// bIsFinishedPlaying = this.t進行描画_チップ(E楽器パート.DRUMS, i);
 				bool btmp = this.t進行描画_チップ(EInstrumentPad.Drums, i);
 				if (btmp == true)
-					ifp[i] = true;
+					isFinishedPlaying[i] = true;
 
 #if DEBUG
 				if (OpenTaiko.InputManager.Keyboard.KeyPressed((int)SlimDXKeys.Key.D0)) {
-					ifp[i] = true;
+					isFinishedPlaying[i] = true;
 				}
 #endif
 			}
@@ -526,16 +523,40 @@ internal class CStage演奏ドラム画面 : CStage演奏画面共通 {
 
 			// Layer: Gameplay complete animation and fading out
 
-			bIsFinishedEndAnime = this.actEnd.Draw() == 1 ? true : false;
-			bIsFinishedFadeout = this.t進行描画_フェードイン_アウト();
+			bool bIsFinishedEndAnime = this.actEnd.Draw() == 1 ? true : false;
+			bool bIsFinishedFadeout = this.t進行描画_フェードイン_アウト();
 
-			bIsFinishedPlaying = true;
+			bool bIsFinishedPlaying = true;
+			bool bIsChartEnded = true;
 			for (int i = 0; i < OpenTaiko.ConfigIni.nPlayerCount; i++) {
-				if (!ifp[i]) bIsFinishedPlaying = false;
+				if (!isFinishedPlaying[i]) bIsFinishedPlaying = false;
+				if (!isChartEnded[i]) bIsChartEnded = false;
 			}
 
 			//演奏終了→演出表示→フェードアウト
-			if (bIsFinishedPlaying && base.ePhaseID == CStage.EPhase.Common_NORMAL) {
+			if ((bIsChartEnded || bIsFinishedPlaying) && base.ePhaseID == CStage.EPhase.Common_NORMAL) {
+				for (int i = 0; i < OpenTaiko.ConfigIni.nPlayerCount; i++) {
+					int Character = this.actChara.iCurrentCharacter[i];
+
+					if (HGaugeMethods.UNSAFE_IsRainbow(i)) {
+						if (OpenTaiko.Skin.Characters_10Combo_Maxed_Ptn[Character] != 0) {
+							if (HGaugeMethods.UNSAFE_IsRainbow(i)) {
+								this.actChara.ChangeAnime(i, CActImplCharacter.Anime.Combo10_Max, true);
+							}
+						}
+					} else if (HGaugeMethods.UNSAFE_FastNormaCheck(i)) {
+						if (OpenTaiko.Skin.Characters_Become_Cleared_Ptn[Character] != 0) {
+							this.actChara.ChangeAnime(i, CActImplCharacter.Anime.Cleared, true); ;
+						}
+					} else {
+						if (OpenTaiko.Skin.Characters_ClearOut_Ptn[Character] != 0) {
+							this.actChara.ChangeAnime(i, CActImplCharacter.Anime.ClearOut, true);
+						}
+					}
+				}
+				this.actEnd.Start();
+				base.ePhaseID = CStage.EPhase.Game_EndChart;
+			} else if (bIsFinishedPlaying && base.ePhaseID == CStage.EPhase.Game_EndChart) {
 				if (OpenTaiko.ConfigIni.bTokkunMode) {
 					bIsFinishedPlaying = false;
 					OpenTaiko.Skin.sound特訓停止音.tPlay();
@@ -543,29 +564,7 @@ internal class CStage演奏ドラム画面 : CStage演奏画面共通 {
 
 					actTokkun.tMatchWithTheChartDisplayPosition(true);
 				} else {
-					for (int i = 0; i < OpenTaiko.ConfigIni.nPlayerCount; i++) {
-						base.ePhaseID = CStage.EPhase.Game_EndStage;
-
-						this.actEnd.Start();
-
-						int Character = this.actChara.iCurrentCharacter[i];
-
-						if (HGaugeMethods.UNSAFE_IsRainbow(i)) {
-							if (OpenTaiko.Skin.Characters_10Combo_Maxed_Ptn[Character] != 0) {
-								if (HGaugeMethods.UNSAFE_IsRainbow(i)) {
-									this.actChara.ChangeAnime(i, CActImplCharacter.Anime.Combo10_Max, true);
-								}
-							}
-						} else if (HGaugeMethods.UNSAFE_FastNormaCheck(i)) {
-							if (OpenTaiko.Skin.Characters_Become_Cleared_Ptn[Character] != 0) {
-								this.actChara.ChangeAnime(i, CActImplCharacter.Anime.Cleared, true); ;
-							}
-						} else {
-							if (OpenTaiko.Skin.Characters_ClearOut_Ptn[Character] != 0) {
-								this.actChara.ChangeAnime(i, CActImplCharacter.Anime.ClearOut, true);
-							}
-						}
-					}
+					base.ePhaseID = CStage.EPhase.Game_EndStage;
 				}
 			} else if (bIsFinishedEndAnime && base.ePhaseID == EPhase.Game_EndStage) {
 				this.eフェードアウト完了時の戻り値 = EGameplayScreenReturnValue.StageCleared;

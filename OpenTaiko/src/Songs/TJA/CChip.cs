@@ -10,7 +10,7 @@ internal class CChip : IComparable<CChip>, ICloneable {
 	public bool bHideBarLine = true;
 	public bool bProcessed = false; // roll-type-only: roll is hit once (roll-head-only) or chip time is reached
 	public bool bShow;
-	public bool bShowRoll;
+	public bool canShowBody; // not hidden by cutoff rules
 	public bool bBranch = false;
 	public double dbChipSizeRatio = 1.0;
 	public double db実数値;
@@ -37,6 +37,7 @@ internal class CChip : IComparable<CChip>, ICloneable {
 	public int n整数値;
 	public int n文字数 = 16;
 
+	public CBPM? bpmPoint;
 	public int n整数値_内部番号;
 	public int nOpacity = 255;
 	public int n発声位置;

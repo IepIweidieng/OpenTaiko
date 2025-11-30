@@ -187,7 +187,7 @@ internal class CSongs管理 {
 
 						this.n検索された曲ノード数++;
 					} else {
-						CTja dtx = new CTja(filePath);
+						CTja dtx = new CTja(filePath, node親?.Compat);
 						CSongListNode c曲リストノード = new CSongListNode();
 						c曲リストノード.nodeType = CSongListNode.ENodeType.SCORE;
 
@@ -259,8 +259,10 @@ internal class CSongs管理 {
 										c曲リストノード.BoxChara = c曲リストノード.rParentNode.BoxChara;
 										c曲リストノード.isChangedBoxChara = true;
 									}
-
-
+									if (c曲リストノード.rParentNode.isChangedCompat) {
+										c曲リストノード.Compat = c曲リストノード.rParentNode.Compat;
+										c曲リストノード.isChangedCompat = true;
+									}
 								}
 
 
@@ -387,8 +389,10 @@ internal class CSongs管理 {
 					c曲リストノード.BoxChara = boxdef.BoxChara;
 					c曲リストノード.isChangedBoxChara = true;
 				}
-
-
+				if (boxdef.IsChangedCompat) {
+					c曲リストノード.Compat = boxdef.Compat;
+					c曲リストノード.isChangedCompat = true;
+				}
 
 				for (int i = 0; i < 3; i++) {
 					if ((boxdef.strBoxText[i] != null)) {

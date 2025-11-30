@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 using OpenTaiko.CSongListNodeComparers;
 
 namespace OpenTaiko;
@@ -354,6 +355,10 @@ internal class CSongManager {
 								value.BoxChara = value.rParentNode.BoxChara;
 								value.isChangedBoxChara = true;
 							}
+							if (value.rParentNode.isChangedCompat) {
+								value.Compat = value.rParentNode.Compat;
+								value.isChangedCompat = true;
+							}
 						}
 
 						this.nSearchSongNodeCount++;
@@ -457,6 +462,10 @@ internal class CSongManager {
 					cSongListNode.BoxChara = boxdef.BoxChara;
 					cSongListNode.isChangedBoxChara = true;
 				}
+				if (boxdef.IsChangedCompat) {
+					cSongListNode.Compat = boxdef.Compat;
+					cSongListNode.isChangedCompat = true;
+				}
 
 
 
@@ -524,6 +533,9 @@ internal class CSongManager {
 						}
 						if (cSongListNode.isChangedBoxChara) {
 							sb.Append(", BoxChara=" + cSongListNode.BoxChara.ToString());
+						}
+						if (cSongListNode.isChangedCompat) {
+							sb.Append(", Compat=" + cSongListNode.Compat.ToString());
 						}
 						Trace.TraceInformation(sb.ToString());
 					} finally {

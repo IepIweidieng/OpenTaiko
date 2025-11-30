@@ -2133,15 +2133,9 @@ internal abstract class CStage演奏画面共通 : CStage {
 	}
 
 	protected bool t進行描画_チップ(EInstrumentPad ePlayMode, int nPlayer) {
-		if ((base.ePhaseID == CStage.EPhase.Game_STAGE_FAILED) || (base.ePhaseID == CStage.EPhase.Game_STAGE_FAILED_FadeOut)) {
-			return true;
-		}
-		if ((this.nCurrentTopChip[nPlayer] == -1) || (this.nCurrentTopChip[nPlayer] >= listChip[nPlayer].Count)) {
-			return true;
-		}
-		if (IsDanFailed) {
-			return true;
-		}
+		bool drawOnly = (base.ePhaseID is CStage.EPhase.Game_STAGE_FAILED or CStage.EPhase.Game_STAGE_FAILED_FadeOut)
+			|| (this.nCurrentTopChip[nPlayer] == -1)
+			|| IsDanFailed;
 
 		CTja tja = OpenTaiko.GetTJA(nPlayer)!;
 
@@ -2175,6 +2169,9 @@ internal abstract class CStage演奏画面共通 : CStage {
 
 		#region [update phase, process forward for correct order of non-note events]
 		for (; this.nCurrentTopChip[nPlayer] < dTX.listChip.Count; ++this.nCurrentTopChip[nPlayer]) {
+			if (drawOnly)
+				break;
+
 			CChip pChip = dTX.listChip[this.nCurrentTopChip[nPlayer]];
 			//Debug.WriteLine( "nCurrentTopChip=" + nCurrentTopChip + ", ch=" + pChip.nチャンネル番号.ToString("x2") + ", 発音位置=" + pChip.n発声位置 + ", 発声時刻ms=" + pChip.n発声時刻ms );
 			if (!hasChipBeenPlayedAt(pChip, n現在時刻ms)) // not processed yet
@@ -3005,6 +3002,8 @@ internal abstract class CStage演奏画面共通 : CStage {
 
 		#region [update phase (bar lines' position)]
 		foreach (var pChip in dTX.listBarLineChip) {
+			if (drawOnly)
+				break;
 			if (!pChip.bVisible)
 				continue;
 
@@ -3014,6 +3013,8 @@ internal abstract class CStage演奏画面共通 : CStage {
 
 		#region [update phase (notes' position & auto judgement)]
 		foreach (var pChip in dTX.listNoteChip) {
+			if (drawOnly)
+				break;
 			if (NotesManager.IsGenericRoll(pChip) && pChip.n発声時刻ms <= n現在時刻ms) {
 				if (!pChip.bProcessed) {
 					if (NotesManager.IsRollEnd(pChip))

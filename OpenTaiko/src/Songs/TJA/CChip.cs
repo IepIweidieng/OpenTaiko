@@ -8,9 +8,9 @@ internal class CChip : IComparable<CChip>, ICloneable {
 	public bool bHit; // note is hit/broken or roll end is reached
 	public bool bVisible = true;
 	public bool bHideBarLine = true;
-	public bool bProcessed = false; // roll-type-only: roll is hit once (roll-head-only) or chip time is reached
+	public bool bProcessed = false; // roll-type: roll is hit once (roll-head-only) or chip time is reached; barline shown (Jiro1)
 	public bool bShow;
-	public bool bShowRoll;
+	public bool canShowBody; // not hidden by cutoff rules
 	public bool bBranch = false;
 	public double dbChipSizeRatio = 1.0;
 	public double dbDoubleValue;
@@ -60,6 +60,7 @@ internal class CChip : IComparable<CChip>, ICloneable {
 	public int nIntValue;
 	public int nTextCount = 16;
 
+	public CBPM? bpmPoint;
 	public int nIntValue_InternalNumber;
 	public int nOpacity = 255;
 	public int nSoundPos;

@@ -1011,6 +1011,7 @@ Debug.WriteLine( dBPM + ":" + c曲リストノード.strタイトル );
 		if (parent.isChangedBgType) { node.BgType = parent.BgType; node.isChangedBgType = true; }
 		if (parent.isChangedBoxType) { node.BoxType = parent.BoxType; node.isChangedBoxType = true; }
 		if (parent.isChangedBoxChara) { node.BoxChara = parent.BoxChara; node.isChangedBoxChara = true; }
+		if (parent.isChangedCompat) { node.Compat = parent.Compat; node.isChangedCompat = true; }
 		if (node.score[0] != null && parent.score[0] != null && string.IsNullOrEmpty(node.score[0].ChartInfo.Preimage))
 			node.score[0].ChartInfo.Preimage = parent.score[0].ChartInfo.Preimage;
 	}

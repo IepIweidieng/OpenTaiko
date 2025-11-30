@@ -346,7 +346,7 @@ internal class CStage曲読み込み : CStage {
 					//if( CDTXMania.DTX == null )
 					{
 						for (int i = 0; i < OpenTaiko.ConfigIni.nPlayerCount; ++i)
-							OpenTaiko.SetTJA(i, new CTja(str, OpenTaiko.stageSongSelect.nChoosenSongDifficulty[i], i, loadChart: true));
+							OpenTaiko.SetTJA(i, new CTja(str, OpenTaiko.stageSongSelect.rChoosenSong.Compat, OpenTaiko.stageSongSelect.nChoosenSongDifficulty[i], i, loadChart: true));
 
 						Trace.TraceInformation("---- Song information -----------------");
 						Trace.TraceInformation("TITLE: {0}", OpenTaiko.TJA.TITLE.GetString(""));

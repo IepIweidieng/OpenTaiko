@@ -569,7 +569,7 @@ public static class ImGuiDebugWindow {
 						if (ImGui.TreeNodeEx($"Player {i + 1}###GAME_CHART_{i}", ImGuiTreeNodeFlags.Framed)) {
 
 							Difficulty game_difficulty = OpenTaiko.DifficultyNumberToEnum(OpenTaiko.stageSongSelect.nChoosenSongDifficulty[i]);
-							var dtx = OpenTaiko.GetTJA(i);
+							var dtx = OpenTaiko.GetTJA(i)!;
 
 							switch (game_difficulty) {
 								case Difficulty.Dan:
@@ -596,10 +596,12 @@ public static class ImGuiDebugWindow {
 								CStage演奏画面共通.GetNowPBPMPoint(dtx, play_time, CTja.ECourse.eExpert),
 								CStage演奏画面共通.GetNowPBPMPoint(dtx, play_time, CTja.ECourse.eMaster),
 							};
-							float[] play_th16Beats = play_bpm_points.Select(bp => (float)CStage演奏画面共通.GetNowPBMTime(bp, play_time)).ToArray();
+							float[] play_th16Beats = play_bpm_points.Select(bp => (float)CStage演奏画面共通.GetNowPBMTime(bp, play_time, dtx.COMPAT)).ToArray();
 							for (int ib = 0; ib < 3; ++ib) {
 								ImGui.Text($"{(CTja.ECourse)ib}: {play_time:0} ms, {play_th16Beats[ib] / 4:0.00} 16ths\n"
-									+ $" {play_bpm_points[ib]}\n");
+									+ $" {play_bpm_points[ib]}\n"
+									+ $"nextBpmChangeAtDiv: CBPM#{play_bpm_points[ib].next_bpm_change?.n内部番号 ?? -1} "
+									+ $"{play_bpm_points[ib].next_bpm_change?.bpm_change_time ?? double.PositiveInfinity:0.00} ms");
 							}
 
 							ImGui.NewLine();
@@ -609,14 +611,12 @@ public static class ImGuiDebugWindow {
 							ImGui.Text("Subtitle: " + dtx.SUBTITLE.GetString(""));
 							ImGui.Text("Charter: " + dtx.MAKER);
 
-							ImGui.Text("BPM: " + dtx.BASEBPM + (dtx.listBPM.Count > 1 ? (" (Min: " + dtx.MinBPM + " / Max: " + dtx.MaxBPM + ")") : ""));
-							if (dtx.listBPM.Count > 1) {
-								if (ImGui.TreeNodeEx($"BPM List ({dtx.listBPM.Count})###GAME_BPM_LIST_{i}")) {
-									foreach (CTja.CBPM bpm in dtx.listBPM) {
-										ImGui.Text($"(Time: {String.Format("{0:0.#}s", (bpm.bpm_change_time / 1000))}) {bpm.dbBPM値}");
-									}
-									ImGui.TreePop();
+							ImGui.Text("BPM: " + dtx.BASEBPM + ((dtx.MinBPM != dtx.MaxBPM) ? (" (Min: " + dtx.MinBPM + " / Max: " + dtx.MaxBPM + ")") : ""));
+							if (ImGui.TreeNodeEx($"BPM List ({dtx.listBPM.Count})###GAME_BPM_LIST_{i}")) {
+								foreach (CTja.CBPM bpm in dtx.listBPM) {
+									ImGui.Text(bpm.ToString());
 								}
+								ImGui.TreePop();
 							}
 
 							ImGui.Text("Lyrics: " + (dtx.usingLyricsFile ? dtx.listLyric2.Count : dtx.listLyric.Count));

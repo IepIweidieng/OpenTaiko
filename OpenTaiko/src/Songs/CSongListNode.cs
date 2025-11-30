@@ -39,6 +39,9 @@ internal class CSongListNode {
 	public List<CSongListNode> randomList;
 	public List<CSongListNode> childrenList;
 
+	public CTja.ETjaCompat Compat;
+	public bool isChangedCompat;
+
 	public int difficultiesCount; // 4~5 if AD
 
 	public CSongListNode rParentNode;

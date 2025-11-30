@@ -537,9 +537,11 @@ internal class CTja : CActivity {
 
 		this.CutSceneOutros = new();
 	}
-	public CTja(string strファイル名, int difficulty = 0, int nPlayerSide = 0, bool loadChart = false, int nBGMAdjust = 0)
+	public CTja(string strファイル名, ETjaCompat? compatMode, int difficulty = 0, int nPlayerSide = 0, bool loadChart = false, int nBGMAdjust = 0)
 		: this() {
 		this.Activate();
+		if (compatMode != null)
+			this.COMPAT = compatMode.Value; // default compat mode set by song folder
 		this.t入力(strファイル名, difficulty, nPlayerSide, loadChart, nBGMAdjust);
 	}
 
@@ -3560,16 +3562,19 @@ internal class CTja : CActivity {
 				}
 			}
 		} else if (strCommandName.Equals("COMPAT")) {
-			this.COMPAT = strCommandParam.ToLower() switch {
-				"jiro1" => ETjaCompat.Jiro1,
-				"jiro2" => ETjaCompat.Jiro2,
-				"tmg" => ETjaCompat.TMG,
-				"tjap3" => ETjaCompat.TJAP3,
-				"oos" => ETjaCompat.OOS,
-				_ => throw new ArgumentOutOfRangeException(),
-			};
+			this.COMPAT = strConvertTjaCompat(strCommandParam);
 		}
 	}
+
+	public static ETjaCompat strConvertTjaCompat(string strCommandParam) => strCommandParam.ToLower() switch {
+		"jiro1" => ETjaCompat.Jiro1,
+		"jiro2" => ETjaCompat.Jiro2,
+		"tmg" => ETjaCompat.TMG,
+		"tjap3" => ETjaCompat.TJAP3,
+		"oos" => ETjaCompat.OOS,
+		_ => throw new ArgumentOutOfRangeException(),
+	};
+
 	/// <summary>
 	/// 指定した文字が数値かを返すメソッド
 	/// </summary>

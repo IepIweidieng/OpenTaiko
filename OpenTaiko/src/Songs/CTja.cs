@@ -34,6 +34,7 @@ internal class CTja : CActivity {
 		public required double dbBPM値;
 		public required int time_signness;
 		public required EBPMPointType point_type;
+		public double ms_delay_duration;
 		public double bpm_change_time;
 		public double bpm_change_bmscroll_time;
 		public double bpm_change_scroll;
@@ -49,9 +50,11 @@ internal class CTja : CActivity {
 
 		public override string ToString() {
 			StringBuilder builder = new StringBuilder(0x80);
-			builder.Append($"CBPM#{this.n内部番号}(chipOrder#{this.n表記上の番号})");
-			builder.Append($"({this.point_type}), {this.scroll_mode}, BPM:{this.dbBPM値}, Scroll:{this.bpm_change_scroll}+{this.bpm_change_scroll_y}i, ");
-			builder.Append($"Drift:{this.th16BeatDriftX}+{this.th16BeatDriftY}i, ");
+			builder.Append($"CBPM#{this.n内部番号}(chipOrder#{this.n表記上の番号})({this.point_type}");
+			if (this.ms_delay_duration != 0)
+				builder.Append($" {this.ms_delay_duration} ms");
+			builder.Append($"), {this.scroll_mode}, BPM:{this.dbBPM値}, Scroll:{this.bpm_change_scroll:0.00}+{this.bpm_change_scroll_y:0.00}i, ");
+			builder.Append($"Drift:{this.th16BeatDriftX:0.00}+{this.th16BeatDriftY:0.00}i, ");
 			builder.Append((time_signness >= 0) ? $"{this.bpm_change_time:0.00} ms~" : $"~ {this.bpm_change_time:0.00} ms");
 			builder.Append($", Beat: {this.bpm_change_bmscroll_time:0.00} 16ths, Branch: {this.bpm_change_course}");
 			return builder.ToString();
@@ -1793,11 +1796,11 @@ internal class CTja : CActivity {
 			// チップを配置。
 
 			if (this.COMPAT is ETjaCompat.TJAP3 or ETjaCompat.OOS || nDELAY < 0) {
-				this.SetBPMPointAtDefCursor(this.n現在のコース, EBPMPointType.DelayEnd);
+				this.SetBPMPointAtDefCursor(this.n現在のコース, EBPMPointType.DelayEnd, nDELAY);
 				this.dbNowTime += nDELAY;
 				this.dbNowBMScollTime += nDELAY * this.dbNowBPM / 15000;
 			} else if (nDELAY > 0) {
-				this.SetBPMPointAtDefCursor(this.n現在のコース, EBPMPointType.Delay);
+				this.SetBPMPointAtDefCursor(this.n現在のコース, EBPMPointType.Delay, nDELAY);
 				this.dbNowTime += nDELAY;
 				this.SetBPMPointAtDefCursor(this.n現在のコース, EBPMPointType.DelayEnd);
 			}
@@ -2394,7 +2397,7 @@ internal class CTja : CActivity {
 		CChip lastChip = lastChips.MaxBy(chip => chip.n発声時刻ms)!;
 		return (lastChip.n発声時刻ms > chip.n発声時刻ms) ? chip : lastChip;
 	}
-	private CBPM SetBPMPointAtDefCursor(ECourse branch, EBPMPointType pointType) {
+	private CBPM SetBPMPointAtDefCursor(ECourse branch, EBPMPointType pointType, double msDelayDuration = 0) {
 		// deduplicate BPM points
 		if (this.listBPM.Count > 0) {
 			var lastBPMPoint = this.listBPM.Last();
@@ -2419,6 +2422,7 @@ internal class CTja : CActivity {
 				: (this.fNow_Measure_m != 0) ? Math.Sign(this.fNow_Measure_s / this.fNow_Measure_m)
 				: (this.dbNowBPM != 0) ? Math.Sign(this.fNow_Measure_s / this.dbNowBPM)
 				: Math.Sign(this.fNow_Measure_s),
+			ms_delay_duration = msDelayDuration,
 			bpm_change_time = this.dbNowTime,
 			bpm_change_bmscroll_time = this.dbNowBMScollTime,
 			bpm_change_scroll = this.dbNowScroll,
@@ -4462,8 +4466,8 @@ internal class CTja : CActivity {
 		chip.nHorizontalChipDistance = (int)(double)NotesManager.GetNoteX(msDTime, th16DBeatX, velocityRefChip.dbBPM, scrollSpeed, scrollModeForced);
 		chip.nVerticalChipDistance = (int)((double)NotesManager.GetNoteY(msDTime, th16DBeatY, velocityRefChip.dbBPM, scrollSpeed_Y, scrollModeForced));
 	}
-	
-public bool GetScrolledChipForceNMScroll(CChip chip, CBPM bpmPointNow, double msTjaNowTime) {
+
+	public bool GetScrolledChipForceNMScroll(CChip chip, CBPM bpmPointNow, double msTjaNowTime) {
 		if (this.COMPAT is not (ETjaCompat.Jiro1 or ETjaCompat.TMG))
 			return false;
 

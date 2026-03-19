@@ -204,6 +204,7 @@ class NotesManager {
 
 	#region [General]
 
+	public static bool IsAcceptLane(ENoteType nt, EGameType gt, EPad pad = EPad.Max) => IsAcceptLane(nt, gt, PadToLane(pad, gt));
 	public static bool IsAcceptLane(ENoteType nt, EGameType gt, PlayerLane.FlashType lane = PlayerLane.FlashType.Total) => lane switch {
 		PlayerLane.FlashType.Red => IsAcceptRed(nt, gt),
 		PlayerLane.FlashType.Blue => IsAcceptBlue(nt, gt),

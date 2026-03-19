@@ -2,9 +2,11 @@
 using System.Globalization;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Security.AccessControl;
 using System.Text;
 using DiscordRPC;
 using FDK;
+using Silk.NET.Maths;
 using Point = System.Drawing.Point;
 using Rectangle = System.Drawing.Rectangle;
 namespace OpenTaiko;
@@ -657,8 +659,10 @@ internal class CStage演奏ドラム画面 : CStage演奏画面共通 {
 		var e判定 = this.tチップのヒット処理(nHitTime, pChip, EInstrumentPad.Taiko, true, nInput, nPlayer);
 		if (NotesManager.IsGenericRoll(pChip))
 			return e判定;
-		if (e判定 == ENoteJudge.Miss)
+		if (e判定 == ENoteJudge.Miss) {
+			this.freeRangeByLane!.ScanPastHitNote(pChip, nPlayer);
 			return ENoteJudge.Miss;
+		}
 
 		this.actGame.t叩ききりまショー_判定から各数値を増加させる(e判定, (int)(nHitTime - pChip.n発声時刻ms));
 		return e判定;
@@ -724,7 +728,8 @@ internal class CStage演奏ドラム画面 : CStage演奏画面共通 {
 		// test judgement
 		var (chipNoHit, e判定) = GetChipToJudge(msHitTjaTime, nUsePlayer, nPad);
 		var gameType = this.eGameType[OpenTaiko.GetActualPlayer(nUsePlayer)];
-		if (e判定 != ENoteJudge.Miss) {
+		if (e判定 == ENoteJudge.Miss) {
+		} else {
 			e判定 = this.JudgePadInput(nUsePlayer, chipNoHit, nPad, msHitTjaTime, e判定);
 			if (e判定 is not (ENoteJudge.Miss or ENoteJudge.Auto or ENoteJudge.ADLIB)) // ADLIB here for "empty hit but not a miss"
 				gameType = NotesManager.GetChipGameType(chipNoHit, nUsePlayer);

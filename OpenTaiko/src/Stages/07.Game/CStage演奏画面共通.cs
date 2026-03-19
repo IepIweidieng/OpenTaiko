@@ -400,6 +400,8 @@ internal abstract class CStage演奏画面共通 : CStage {
 		for (int i = 0; i < this.chipNowProcessingMultiHitNotes.Length; ++i)
 			this.chipNowProcessingMultiHitNotes[i].Clear();
 
+		this.freeRangeByLane = null;
+
 		listWAV.Clear();
 		listWAV = null;
 		listChip = null;
@@ -805,6 +807,86 @@ internal abstract class CStage演奏画面共通 : CStage {
 		}
 	}
 
+	// Same-input blocking note judgement optimization; [iPad]
+	// note to be judged: (LastPastHitNotes (-inf if invalid), FirstFutureMissNotes (inf if invalid)]
+	// for long notes, use end point for past and start point for future
+	// Notice: Even when restricted into same-input, judgement can be out-of-order when .
+	protected class FreeRangeByPad {
+		public const int PadIndexMax = 5;
+		public static int PadToIndex(EPad pad) => NotesManager.PadTo1P(pad) switch {
+			EPad.LRed => 0,
+			EPad.RRed => 1,
+			EPad.LBlue => 2,
+			EPad.RBlue => 3,
+			EPad.Clap => 4,
+			_ => -1, // invalid
+		};
+		public static EPad IndexToPad(int index) => index switch {
+			0 => EPad.LRed,
+			1 => EPad.RRed,
+			2 => EPad.LBlue,
+			3 => EPad.RBlue,
+			4 => EPad.Clap,
+			_ => EPad.Unknown,
+		};
+
+		public CChip[][] LastPastHitNotes;
+		public CChip[][] FirstFutureMissNotes;
+		public bool[] NoNotesInRange; // for skipping searching
+
+		public FreeRangeByPad() {
+			this.LastPastHitNotes = new CChip[OpenTaiko.MAX_PLAYERS][];
+			this.FirstFutureMissNotes = new CChip[OpenTaiko.MAX_PLAYERS][];
+			for (int i = 0; i < OpenTaiko.MAX_PLAYERS; ++i) {
+				this.LastPastHitNotes[i] = new CChip[PadIndexMax];
+				this.FirstFutureMissNotes[i] = new CChip[PadIndexMax];
+			}
+			this.NoNotesInRange = new bool[OpenTaiko.MAX_PLAYERS];
+		}
+
+		public static bool IsPastValid(CChip? note) => note != null && note.bVisible && (note.IsMissed || note.bHit);
+		public static bool IsFutureValid(CChip? note) => note != null && note.bVisible && !(note.IsMissed || note.bHit);
+		public bool IsPastValid(EPad pad, int iPlayer)
+			=> (PadToIndex(pad) >= 0) && IsPastValid(this.LastPastHitNotes[iPlayer][PadToIndex(pad)]);
+		public bool IsFutureValid(EPad pad, int iPlayer)
+			=> (PadToIndex(pad) >= 0) && IsFutureValid(this.FirstFutureMissNotes[iPlayer][PadToIndex(pad)]);
+
+		public bool IsBlockedByPast(CChip note, EPad pad, int iPlayer) {
+			int index = PadToIndex(pad);
+			if (!(index >= 0 && NotesManager.IsAcceptLane(note, NotesManager.GetChipGameType(note, iPlayer), pad)))
+				return true;
+			var past = this.LastPastHitNotes[iPlayer][index];
+			return (IsPastValid(past) && note.end.CompareTo(past!.start) < 0);
+		}
+		public bool IsBlockedByFuture(CChip note, EPad pad, int iPlayer) {
+			int index = PadToIndex(pad);
+			if (!(index >= 0 && NotesManager.IsAcceptLane(note, NotesManager.GetChipGameType(note, iPlayer), pad)))
+				return true;
+			var future = this.FirstFutureMissNotes[iPlayer][index];
+			return (IsFutureValid(future) && note.start.CompareTo(future!.end) < 0);
+		}
+
+		public void ScanPastHitNote(CChip note, int iPlayer) {
+			if (!IsPastValid(note))
+				return;
+			for (int i = 0; i < PadIndexMax; ++i) {
+				EPad pad = IndexToPad(i);
+				if (!this.IsBlockedByPast(note, pad, iPlayer))
+					this.LastPastHitNotes[iPlayer][PadToIndex(pad)] = note;
+			}
+		}
+		public void ScanFutureMissNote(CChip note, int iPlayer) {
+			if (!IsFutureValid(note))
+				return;
+			for (int i = 0; i < PadIndexMax; ++i) {
+				EPad pad = IndexToPad(i);
+				if (!this.IsBlockedByFuture(note, pad, iPlayer))
+					this.FirstFutureMissNotes[iPlayer][PadToIndex(pad)] = note;
+			}
+		}
+	}
+
+	protected FreeRangeByPad? freeRangeByLane;
 
 
 	internal ENoteJudge e指定時刻からChipのJUDGEを返す(long nTime, CChip pChip, int player = 0) {
@@ -960,12 +1042,12 @@ internal abstract class CStage演奏画面共通 : CStage {
 	}
 
 	protected void AutoplayHit(CChip chip, long msTjaTime, int iPlayer, EGameType gt) {
-		if (!chip.bVisible || chip.IsMissed || chip.bHit || this.bPAUSE || chip.msStoredHit > msTjaTime) {
-			return;
-		}
 		bool bAutoPlay = OpenTaiko.ConfigIni.bAutoPlay[iPlayer] || (iPlayer == 1 && OpenTaiko.ConfigIni.bAIBattleMode);
 		if (!bAutoPlay)
 			return;
+		if (!chip.bVisible || chip.IsMissed || chip.bHit || this.bPAUSE || chip.msStoredHit > msTjaTime) {
+			return;
+		}
 
 		bool canHitNow = this.CanAutoplayHit(chip, msTjaTime, iPlayer, gt);
 		if (chip.n発声時刻ms > msTjaTime) {
@@ -999,12 +1081,13 @@ internal abstract class CStage演奏画面共通 : CStage {
 	protected void AutorollRoll(CChip pChip, long msTjaTime, int iPlayer, EGameType gt) {
 		if (!pChip.bVisible || pChip.IsMissed || pChip.bHit || this.bPAUSE)
 			return;
-		bool bAutoPlay = OpenTaiko.ConfigIni.bAutoPlay[iPlayer] || (iPlayer == 1 && OpenTaiko.ConfigIni.bAIBattleMode);
+		bool bAIPlay = (iPlayer == 1 && OpenTaiko.ConfigIni.bAIBattleMode);
+		bool bAutoPlay = OpenTaiko.ConfigIni.bAutoPlay[iPlayer] || bAIPlay;
 		var puchichara = OpenTaiko.Tx.Puchichara[PuchiChara.tGetPuchiCharaIndexByName(OpenTaiko.GetActualPlayer(iPlayer))];
 
-		int rollSpeed = bAutoPlay ? OpenTaiko.ConfigIni.nRollsPerSec : puchichara.effect.Autoroll;
-		if (OpenTaiko.ConfigIni.bAIBattleMode && iPlayer == 1)
-			rollSpeed = OpenTaiko.ConfigIni.apAIPerformances[OpenTaiko.ConfigIni.nAILevel - 1].nRollSpeed;
+		int rollSpeed = bAIPlay ? OpenTaiko.ConfigIni.apAIPerformances[OpenTaiko.ConfigIni.nAILevel - 1].nRollSpeed
+			: bAutoPlay ? OpenTaiko.ConfigIni.nRollsPerSec
+			: puchichara.effect.Autoroll;
 
 		if (rollSpeed <= 0) {
 			return;
@@ -3530,6 +3613,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 			=> (ms >= msBranchPoint && (idxBranchSection < 0 || idx >= idxBranchSection));
 
 		// For `#BRANCHSTART`, skip processing earlier defined notes and bar lines
+		bool notesMadeVisible = false;
 		bool rollingNotesMadeHidden = false;
 		for (int i = 0; i < dTX.listChip.Count; i++) {
 			var chip = dTX.listChip[i];
@@ -3555,6 +3639,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 					if (!chip.start.bProcessed)
 						this.AddNowProcessingRollChip(nPlayer, chip.start);
 				}
+				notesMadeVisible = true;
 			} else {
 				// non-branched head + branched end
 				if (isRollEnd && chip.start.IsEndedBranching)
@@ -3569,6 +3654,8 @@ internal abstract class CStage演奏画面共通 : CStage {
 			}
 
 		}
+		if (notesMadeVisible)
+			this.freeRangeByLane!.NoNotesInRange[nPlayer] = false;
 		if (rollingNotesMadeHidden) {
 			this.UpdateRollStateAfterRemove(nPlayer);
 			this.actChara.ReturnDefaultAnime(nPlayer, false);
@@ -3752,6 +3839,8 @@ internal abstract class CStage演奏画面共通 : CStage {
 		int iPrevTopChipMax = this.nCurrentTopChip.Max();
 		for (int i = 0; i < OpenTaiko.ConfigIni.nPlayerCount; ++i)
 			this.nCurrentTopChip[i] = (this.listChip[i].Count > 0) ? 0 : -1;
+
+		this.freeRangeByLane = new();
 
 		if (!b演奏状態 && iPrevTopChipMax <= 0)
 			return; // no needs to reset

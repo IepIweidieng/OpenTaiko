@@ -102,13 +102,11 @@ public class CActivity {
 	/// いつ何時呼び出されても問題無いようにコーディングしておくこと。</para>
 	/// </summary>
 	public virtual void ReleaseUnmanagedResource() {
-		// 活性化してないなら何もしない。
-		if (this.IsDeActivated)
-			return;
-
 		// すべての 子Activity の Unmanaged リソースを解放する。
 		foreach (CActivity activity in this.ChildActivities)
 			activity.ReleaseUnmanagedResource();
+
+		this.IsDeActivated = true;
 	}
 
 	/// <summary>
@@ -119,13 +117,11 @@ public class CActivity {
 	/// いつ何時呼び出されても問題無いようにコーディングしておくこと。</para>
 	/// </summary>
 	public virtual void ReleaseManagedResource() {
-		// 活性化してないなら何もしない。
-		if (this.IsDeActivated)
-			return;
-
 		// すべての 子Activity の Managed リソースを解放する。
 		foreach (CActivity activity in this.ChildActivities)
 			activity.ReleaseManagedResource();
+
+		this.IsDeActivated = true;
 	}
 
 	/// <summary>

@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Text;
 using FDK;
+using static OpenTaiko.CSkin;
 
 namespace OpenTaiko;
 // グローバル定数
@@ -232,48 +233,6 @@ internal class CSkin : IDisposable {
 
 
 	// Properties
-
-	// Hitsounds
-
-	public CHitSounds hsHitSoundsInformations = null;
-
-	// Character specific voice samples
-
-	// Sounds{System.IO.Path.DirectorySeparatorChar}Clear
-
-	public CSystemSound[] voiceClearFailed = new CSystemSound[5];
-	public CSystemSound[] voiceClearClear = new CSystemSound[5];
-	public CSystemSound[] voiceClearFullCombo = new CSystemSound[5];
-	public CSystemSound[] voiceClearAllPerfect = new CSystemSound[5];
-	public CSystemSound[] voiceAIWin = new CSystemSound[5];
-	public CSystemSound[] voiceAILose = new CSystemSound[5];
-
-	// Sounds{System.IO.Path.DirectorySeparatorChar}Menu
-
-	public CSystemSound[] voiceMenuSongSelect = new CSystemSound[5];
-	public CSystemSound[] voiceMenuSongDecide = new CSystemSound[5];
-	public CSystemSound[] voiceMenuSongDecide_AI = new CSystemSound[5];
-	public CSystemSound[] voiceMenuDiffSelect = new CSystemSound[5];
-	public CSystemSound[] voiceMenuDanSelectStart = new CSystemSound[5];
-	public CSystemSound[] voiceMenuDanSelectPrompt = new CSystemSound[5];
-	public CSystemSound[] voiceMenuDanSelectConfirm = new CSystemSound[5];
-
-	// Sounds{System.IO.Path.DirectorySeparatorChar}Title
-
-	public CSystemSound[] voiceTitleSanka = new CSystemSound[5];
-
-	// Sounds{System.IO.Path.DirectorySeparatorChar}Tower
-
-	public CSystemSound[] voiceTowerMiss = new CSystemSound[5];
-
-	// Sounds{System.IO.Path.DirectorySeparatorChar}Result
-
-	public CSystemSound[] voiceResultBestScore = new CSystemSound[5];
-	public CSystemSound[] voiceResultClearFailed = new CSystemSound[5];
-	public CSystemSound[] voiceResultClearSuccess = new CSystemSound[5];
-	public CSystemSound[] voiceResultDanFailed = new CSystemSound[5];
-	public CSystemSound[] voiceResultDanRedPass = new CSystemSound[5];
-	public CSystemSound[] voiceResultDanGoldPass = new CSystemSound[5];
 
 	// General sound effects (Skin specific)
 
@@ -718,9 +677,6 @@ internal class CSkin : IDisposable {
 
 		ReloadSkin();
 		tReadSkinConfig();
-
-		//hsHitSoundsInformations = new CHitSounds(Path(@$"Sounds{System.IO.Path.DirectorySeparatorChar}HitSounds{System.IO.Path.DirectorySeparatorChar}HitSounds.json"));
-		hsHitSoundsInformations = new CHitSounds(@$"Global{System.IO.Path.DirectorySeparatorChar}HitSounds");
 	}
 
 	public void ReloadSkin() {
@@ -7695,149 +7651,6 @@ internal class CSkin : IDisposable {
 
 	#endregion
 
-	#region Puchichara
-
-	public int Puchichara_Ptn;
-	public string[] Puchicharas_Name;
-	public Dictionary<string, int> Puchicharas_NameToIndex = [];
-
-	#endregion
-
-	#region Characters
-
-	public int Characters_Ptn;
-	public string[] Characters_DirName;
-	public int[] Characters_Normal_Ptn,
-		Characters_Normal_Missed_Ptn,
-		Characters_Normal_MissedDown_Ptn,
-		Characters_Normal_Cleared_Ptn,
-		Characters_Normal_Maxed_Ptn,
-		Characters_MissIn_Ptn,
-		Characters_MissDownIn_Ptn,
-		Characters_GoGoTime_Ptn,
-		Characters_GoGoTime_Maxed_Ptn,
-		Characters_10Combo_Ptn,
-		Characters_10Combo_Clear_Ptn,
-		Characters_10Combo_Maxed_Ptn,
-		Characters_GoGoStart_Ptn,
-		Characters_GoGoStart_Clear_Ptn,
-		Characters_GoGoStart_Maxed_Ptn,
-		Characters_Become_Cleared_Ptn,
-		Characters_Become_Maxed_Ptn,
-		Characters_SoulOut_Ptn,
-		Characters_ClearOut_Ptn,
-		Characters_Return_Ptn,
-		Characters_Balloon_Breaking_Ptn,
-		Characters_Balloon_Broke_Ptn,
-		Characters_Balloon_Miss_Ptn,
-		Characters_Kusudama_Idle_Ptn,
-		Characters_Kusudama_Breaking_Ptn,
-		Characters_Kusudama_Broke_Ptn,
-		Characters_Kusudama_Miss_Ptn,
-		Characters_Title_Entry_Ptn,
-		Characters_Title_Normal_Ptn,
-		Characters_Menu_Loop_Ptn,
-		Characters_Menu_Select_Ptn,
-		Characters_Menu_Start_Ptn,
-		Characters_Menu_Wait_Ptn,
-		Characters_Result_Clear_Ptn,
-		Characters_Result_Failed_Ptn,
-		Characters_Result_Failed_In_Ptn,
-		Characters_Result_Normal_Ptn,
-		Characters_Tower_Standing_Ptn,
-		Characters_Tower_Climbing_Ptn,
-		Characters_Tower_Running_Ptn,
-		Characters_Tower_Clear_Ptn,
-		Characters_Tower_Fail_Ptn,
-		Characters_Tower_Standing_Tired_Ptn,
-		Characters_Tower_Climbing_Tired_Ptn,
-		Characters_Tower_Running_Tired_Ptn,
-		Characters_Tower_Clear_Tired_Ptn;
-
-	// Config
-
-	public int[][] Characters_Resolution;
-	public int[][] Characters_Heya_Render_Offset;
-	public bool[] Characters_UseResult1P;
-	public int[][] Characters_Menu_Offset;
-	public int[][] Characters_Result_Offset;
-	public int[][] Characters_X;
-	public int[][] Characters_Y;
-	public int[][] Characters_4P;
-	public int[][] Characters_5P;
-	public int[][] Characters_X_AI;
-	public int[][] Characters_Y_AI;
-	public int[][] Characters_Balloon_X;
-	public int[][] Characters_Balloon_Y;
-	public int[][] Characters_Balloon_4P;
-	public int[][] Characters_Balloon_5P;
-	public int[][] Characters_Kusudama_X;
-	public int[][] Characters_Kusudama_Y;
-	public int[][] Characters_Motion_Normal,
-		Characters_Motion_10Combo,
-		Characters_Motion_10Combo_Clear,
-		Characters_Motion_10ComboMax,
-		Characters_Motion_Miss,
-		Characters_Motion_MissDown,
-		Characters_Motion_ClearIn,
-		Characters_Motion_Clear,
-		Characters_Motion_ClearMax,
-		Characters_Motion_MissIn,
-		Characters_Motion_MissDownIn,
-		Characters_Motion_GoGoStart,
-		Characters_Motion_GoGoStart_Clear,
-		Characters_Motion_GoGoStartMax,
-		Characters_Motion_GoGo,
-		Characters_Motion_GoGoMax,
-		Characters_Motion_SoulIn,
-		Characters_Motion_SoulOut,
-		Characters_Motion_ClearOut,
-		Characters_Motion_Return;
-	public float[] Characters_Beat_Normal,
-		Characters_Beat_10Combo,
-		Characters_Beat_10Combo_Clear,
-		Characters_Beat_10ComboMax,
-		Characters_Beat_Miss,
-		Characters_Beat_MissDown,
-		Characters_Beat_ClearIn,
-		Characters_Beat_Clear,
-		Characters_Beat_ClearMax,
-		Characters_Beat_MissIn,
-		Characters_Beat_MissDownIn,
-		Characters_Beat_GoGoStart,
-		Characters_Beat_GoGoStart_Clear,
-		Characters_Beat_GoGoStartMax,
-		Characters_Beat_GoGo,
-		Characters_Beat_GoGoMax,
-		Characters_Beat_SoulIn,
-		Characters_Beat_SoulOut,
-		Characters_Beat_ClearOut,
-		Characters_Beat_Return,
-		Characters_Beat_Tower_Standing,
-		Characters_Beat_Tower_Standing_Tired,
-		Characters_Beat_Tower_Fail,
-		Characters_Beat_Tower_Clear,
-		Characters_Beat_Tower_Clear_Tired;
-	public bool[] Characters_Tower_Clear_IsLooping,
-		Characters_Tower_Clear_Tired_IsLooping,
-		Characters_Tower_Fail_IsLooping;
-	public int[] Characters_Balloon_Timer;
-	public int[] Characters_Balloon_Delay;
-	public int[] Characters_Balloon_FadeOut;
-
-	public int[] Characters_Title_Entry_AnimationDuration;
-	public int[] Characters_Title_Normal_AnimationDuration;
-	public int[] Characters_Menu_Loop_AnimationDuration;
-	public int[] Characters_Menu_Select_AnimationDuration;
-	public int[] Characters_Menu_Start_AnimationDuration;
-	public int[] Characters_Menu_Wait_AnimationDuration;
-	public int[] Characters_Result_Normal_AnimationDuration;
-	public int[] Characters_Result_Clear_AnimationDuration;
-	public int[] Characters_Result_Failed_In_AnimationDuration;
-	public int[] Characters_Result_Failed_AnimationDuration;
-
-	#endregion
-
 	#region [Adjustments]
 	public int[] Adjustments_MenuPuchichara_X = new int[] { -100, 100 };
 	public int[] Adjustments_MenuPuchichara_Y = new int[] { -100, -100 };
@@ -9318,4 +9131,200 @@ internal class CSkin : IDisposable {
 	#endregion
 
 	#endregion
+}
+
+class CSkinGlobal {
+	// Hitsounds
+
+	public CHitSounds hsHitSoundsInformations = null;
+
+	// Character specific voice samples
+
+	// Sounds{System.IO.Path.DirectorySeparatorChar}Clear
+
+	public CSystemSound[] voiceClearFailed = new CSystemSound[5];
+	public CSystemSound[] voiceClearClear = new CSystemSound[5];
+	public CSystemSound[] voiceClearFullCombo = new CSystemSound[5];
+	public CSystemSound[] voiceClearAllPerfect = new CSystemSound[5];
+	public CSystemSound[] voiceAIWin = new CSystemSound[5];
+	public CSystemSound[] voiceAILose = new CSystemSound[5];
+
+	// Sounds{System.IO.Path.DirectorySeparatorChar}Menu
+
+	public CSystemSound[] voiceMenuSongSelect = new CSystemSound[5];
+	public CSystemSound[] voiceMenuSongDecide = new CSystemSound[5];
+	public CSystemSound[] voiceMenuSongDecide_AI = new CSystemSound[5];
+	public CSystemSound[] voiceMenuDiffSelect = new CSystemSound[5];
+	public CSystemSound[] voiceMenuDanSelectStart = new CSystemSound[5];
+	public CSystemSound[] voiceMenuDanSelectPrompt = new CSystemSound[5];
+	public CSystemSound[] voiceMenuDanSelectConfirm = new CSystemSound[5];
+
+	// Sounds{System.IO.Path.DirectorySeparatorChar}Title
+
+	public CSystemSound[] voiceTitleSanka = new CSystemSound[5];
+
+	// Sounds{System.IO.Path.DirectorySeparatorChar}Tower
+
+	public CSystemSound[] voiceTowerMiss = new CSystemSound[5];
+
+	// Sounds{System.IO.Path.DirectorySeparatorChar}Result
+
+	public CSystemSound[] voiceResultBestScore = new CSystemSound[5];
+	public CSystemSound[] voiceResultClearFailed = new CSystemSound[5];
+	public CSystemSound[] voiceResultClearSuccess = new CSystemSound[5];
+	public CSystemSound[] voiceResultDanFailed = new CSystemSound[5];
+	public CSystemSound[] voiceResultDanRedPass = new CSystemSound[5];
+	public CSystemSound[] voiceResultDanGoldPass = new CSystemSound[5];
+
+	#region Puchichara
+
+	public int Puchichara_Ptn;
+	public string[] Puchicharas_Name;
+	public Dictionary<string, int> Puchicharas_NameToIndex = [];
+
+	#endregion
+
+	#region Characters
+
+	public int Characters_Ptn;
+	public string[] Characters_DirName;
+	public int[] Characters_Normal_Ptn,
+		Characters_Normal_Missed_Ptn,
+		Characters_Normal_MissedDown_Ptn,
+		Characters_Normal_Cleared_Ptn,
+		Characters_Normal_Maxed_Ptn,
+		Characters_MissIn_Ptn,
+		Characters_MissDownIn_Ptn,
+		Characters_GoGoTime_Ptn,
+		Characters_GoGoTime_Maxed_Ptn,
+		Characters_10Combo_Ptn,
+		Characters_10Combo_Clear_Ptn,
+		Characters_10Combo_Maxed_Ptn,
+		Characters_GoGoStart_Ptn,
+		Characters_GoGoStart_Clear_Ptn,
+		Characters_GoGoStart_Maxed_Ptn,
+		Characters_Become_Cleared_Ptn,
+		Characters_Become_Maxed_Ptn,
+		Characters_SoulOut_Ptn,
+		Characters_ClearOut_Ptn,
+		Characters_Return_Ptn,
+		Characters_Balloon_Breaking_Ptn,
+		Characters_Balloon_Broke_Ptn,
+		Characters_Balloon_Miss_Ptn,
+		Characters_Kusudama_Idle_Ptn,
+		Characters_Kusudama_Breaking_Ptn,
+		Characters_Kusudama_Broke_Ptn,
+		Characters_Kusudama_Miss_Ptn,
+		Characters_Title_Entry_Ptn,
+		Characters_Title_Normal_Ptn,
+		Characters_Menu_Loop_Ptn,
+		Characters_Menu_Select_Ptn,
+		Characters_Menu_Start_Ptn,
+		Characters_Menu_Wait_Ptn,
+		Characters_Result_Clear_Ptn,
+		Characters_Result_Failed_Ptn,
+		Characters_Result_Failed_In_Ptn,
+		Characters_Result_Normal_Ptn,
+		Characters_Tower_Standing_Ptn,
+		Characters_Tower_Climbing_Ptn,
+		Characters_Tower_Running_Ptn,
+		Characters_Tower_Clear_Ptn,
+		Characters_Tower_Fail_Ptn,
+		Characters_Tower_Standing_Tired_Ptn,
+		Characters_Tower_Climbing_Tired_Ptn,
+		Characters_Tower_Running_Tired_Ptn,
+		Characters_Tower_Clear_Tired_Ptn;
+
+	// Config
+
+	public int[][] Characters_Resolution;
+	public int[][] Characters_Heya_Render_Offset;
+	public bool[] Characters_UseResult1P;
+	public int[][] Characters_Menu_Offset;
+	public int[][] Characters_Result_Offset;
+	public int[][] Characters_X;
+	public int[][] Characters_Y;
+	public int[][] Characters_4P;
+	public int[][] Characters_5P;
+	public int[][] Characters_X_AI;
+	public int[][] Characters_Y_AI;
+	public int[][] Characters_Balloon_X;
+	public int[][] Characters_Balloon_Y;
+	public int[][] Characters_Balloon_4P;
+	public int[][] Characters_Balloon_5P;
+	public int[][] Characters_Kusudama_X;
+	public int[][] Characters_Kusudama_Y;
+	public int[][] Characters_Motion_Normal,
+		Characters_Motion_10Combo,
+		Characters_Motion_10Combo_Clear,
+		Characters_Motion_10ComboMax,
+		Characters_Motion_Miss,
+		Characters_Motion_MissDown,
+		Characters_Motion_ClearIn,
+		Characters_Motion_Clear,
+		Characters_Motion_ClearMax,
+		Characters_Motion_MissIn,
+		Characters_Motion_MissDownIn,
+		Characters_Motion_GoGoStart,
+		Characters_Motion_GoGoStart_Clear,
+		Characters_Motion_GoGoStartMax,
+		Characters_Motion_GoGo,
+		Characters_Motion_GoGoMax,
+		Characters_Motion_SoulIn,
+		Characters_Motion_SoulOut,
+		Characters_Motion_ClearOut,
+		Characters_Motion_Return;
+	public float[] Characters_Beat_Normal,
+		Characters_Beat_10Combo,
+		Characters_Beat_10Combo_Clear,
+		Characters_Beat_10ComboMax,
+		Characters_Beat_Miss,
+		Characters_Beat_MissDown,
+		Characters_Beat_ClearIn,
+		Characters_Beat_Clear,
+		Characters_Beat_ClearMax,
+		Characters_Beat_MissIn,
+		Characters_Beat_MissDownIn,
+		Characters_Beat_GoGoStart,
+		Characters_Beat_GoGoStart_Clear,
+		Characters_Beat_GoGoStartMax,
+		Characters_Beat_GoGo,
+		Characters_Beat_GoGoMax,
+		Characters_Beat_SoulIn,
+		Characters_Beat_SoulOut,
+		Characters_Beat_ClearOut,
+		Characters_Beat_Return,
+		Characters_Beat_Tower_Standing,
+		Characters_Beat_Tower_Standing_Tired,
+		Characters_Beat_Tower_Fail,
+		Characters_Beat_Tower_Clear,
+		Characters_Beat_Tower_Clear_Tired;
+	public bool[] Characters_Tower_Clear_IsLooping,
+		Characters_Tower_Clear_Tired_IsLooping,
+		Characters_Tower_Fail_IsLooping;
+	public int[] Characters_Balloon_Timer;
+	public int[] Characters_Balloon_Delay;
+	public int[] Characters_Balloon_FadeOut;
+
+	public int[] Characters_Title_Entry_AnimationDuration;
+	public int[] Characters_Title_Normal_AnimationDuration;
+	public int[] Characters_Menu_Loop_AnimationDuration;
+	public int[] Characters_Menu_Select_AnimationDuration;
+	public int[] Characters_Menu_Start_AnimationDuration;
+	public int[] Characters_Menu_Wait_AnimationDuration;
+	public int[] Characters_Result_Normal_AnimationDuration;
+	public int[] Characters_Result_Clear_AnimationDuration;
+	public int[] Characters_Result_Failed_In_AnimationDuration;
+	public int[] Characters_Result_Failed_AnimationDuration;
+
+	#endregion
+
+	public CSkinGlobal() {
+		this.PrepareReloadGlobal();
+	}
+
+	public void PrepareReloadGlobal() {
+		//hsHitSoundsInformations = new CHitSounds(Path(@$"Sounds{System.IO.Path.DirectorySeparatorChar}HitSounds{System.IO.Path.DirectorySeparatorChar}HitSounds.json"));
+		hsHitSoundsInformations = new CHitSounds(@$"Global{System.IO.Path.DirectorySeparatorChar}HitSounds");
+	}
 }

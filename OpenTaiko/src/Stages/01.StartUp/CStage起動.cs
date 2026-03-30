@@ -136,6 +136,7 @@ internal class CStage起動 : CStage {
 
 							try {
 								OpenTaiko.Tx.LoadTexture();
+								OpenTaiko.Tx.PreloadTopActivityAssets();
 
 								this.list進行文字列.Add("LOADING TEXTURES...OK");
 								this.str現在進行中 = "Setup done.";

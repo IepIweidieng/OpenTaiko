@@ -730,19 +730,19 @@ internal class CActResultParameterPanel : CActivity {
 				//int chara_x = TJAPlayer3.Skin.Characters_Result_X[_charaId][pos];
 				//int chara_y = TJAPlayer3.Skin.Characters_Result_Y[_charaId][pos];
 
-				int chara_x = namePlate_x[pos] - (OpenTaiko.Skin.Characters_UseResult1P[_charaId] ? uioffset_x : 0) + OpenTaiko.Tx.NamePlateBase.szTextureSize.Width / 2;
+				int chara_x = namePlate_x[pos] - (OpenTaiko.SkinG.Characters_UseResult1P[_charaId] ? uioffset_x : 0) + OpenTaiko.Tx.NamePlateBase.szTextureSize.Width / 2;
 				int chara_y = namePlate_y[pos];
 
 				int p1chara_x = is2PSide ? OpenTaiko.Skin.Resolution[0] / 2 : 0;
 				int p1chara_y = OpenTaiko.Skin.Resolution[1] - (int)(uioffset_value * OpenTaiko.Skin.Resolution[1]);
-				float renderRatioX = OpenTaiko.Skin.Resolution[0] / (float)OpenTaiko.Skin.Characters_Resolution[_charaId][0];
-				float renderRatioY = OpenTaiko.Skin.Resolution[1] / (float)OpenTaiko.Skin.Characters_Resolution[_charaId][1];
+				float renderRatioX = OpenTaiko.Skin.Resolution[0] / (float)OpenTaiko.SkinG.Characters_Resolution[_charaId][0];
+				float renderRatioY = OpenTaiko.Skin.Resolution[1] / (float)OpenTaiko.SkinG.Characters_Resolution[_charaId][1];
 
 				if (CResultCharacter.tIsCounterProcessing(p, CResultCharacter.ECharacterResult.CLEAR)) {
 					CResultCharacter.tMenuDisplayCharacter(p, chara_x, chara_y, CResultCharacter.ECharacterResult.CLEAR, pos);
 
 					var tex = pos == 0 ? OpenTaiko.Tx.Characters_Result_Clear_1P[_charaId] : OpenTaiko.Tx.Characters_Result_Clear_2P[_charaId];
-					if (OpenTaiko.Skin.Characters_UseResult1P[_charaId] && OpenTaiko.Skin.Result_Use1PUI && tex != null) {
+					if (OpenTaiko.SkinG.Characters_UseResult1P[_charaId] && OpenTaiko.Skin.Result_Use1PUI && tex != null) {
 						tex.vcScaleRatio.X = renderRatioX;
 						tex.vcScaleRatio.Y = renderRatioY;
 						if (is2PSide) {
@@ -753,7 +753,7 @@ internal class CActResultParameterPanel : CActivity {
 					}
 				} else if (CResultCharacter.tIsCounterProcessing(p, CResultCharacter.ECharacterResult.FAILED)) {
 					CResultCharacter.tMenuDisplayCharacter(p, chara_x, chara_y, CResultCharacter.ECharacterResult.FAILED, pos);
-					if (OpenTaiko.Skin.Characters_UseResult1P[_charaId] && OpenTaiko.Skin.Result_Use1PUI && OpenTaiko.Tx.Characters_Result_Failed_1P[_charaId] != null) {
+					if (OpenTaiko.SkinG.Characters_UseResult1P[_charaId] && OpenTaiko.Skin.Result_Use1PUI && OpenTaiko.Tx.Characters_Result_Failed_1P[_charaId] != null) {
 						OpenTaiko.Tx.Characters_Result_Failed_1P[_charaId].vcScaleRatio.X = renderRatioX;
 						OpenTaiko.Tx.Characters_Result_Failed_1P[_charaId].vcScaleRatio.Y = renderRatioY;
 						if (is2PSide) {
@@ -764,7 +764,7 @@ internal class CActResultParameterPanel : CActivity {
 					}
 				} else if (CResultCharacter.tIsCounterProcessing(p, CResultCharacter.ECharacterResult.FAILED_IN) && OpenTaiko.Tx.Characters_Result_Failed_1P[_charaId] != null) {
 					CResultCharacter.tMenuDisplayCharacter(p, chara_x, chara_y, CResultCharacter.ECharacterResult.FAILED_IN, pos);
-					if (OpenTaiko.Skin.Characters_UseResult1P[_charaId] && OpenTaiko.Skin.Result_Use1PUI) {
+					if (OpenTaiko.SkinG.Characters_UseResult1P[_charaId] && OpenTaiko.Skin.Result_Use1PUI) {
 						OpenTaiko.Tx.Characters_Result_Failed_1P[_charaId].vcScaleRatio.X = renderRatioX;
 						OpenTaiko.Tx.Characters_Result_Failed_1P[_charaId].vcScaleRatio.Y = renderRatioY;
 						if (is2PSide) {
@@ -947,10 +947,10 @@ internal class CActResultParameterPanel : CActivity {
 					if (!b音声再生[11]) {
 						if (OpenTaiko.stageResults.nクリア[p] >= 1) {
 							//TJAPlayer3.Skin.soundDonClear.t再生する();
-							OpenTaiko.Skin.voiceResultClearSuccess[OpenTaiko.GetActualPlayer(p)]?.tPlay();
+							OpenTaiko.SkinG.voiceResultClearSuccess[OpenTaiko.GetActualPlayer(p)]?.tPlay();
 						} else {
 							//TJAPlayer3.Skin.soundDonFailed.t再生する();
-							OpenTaiko.Skin.voiceResultClearFailed[OpenTaiko.GetActualPlayer(p)]?.tPlay();
+							OpenTaiko.SkinG.voiceResultClearFailed[OpenTaiko.GetActualPlayer(p)]?.tPlay();
 						}
 
 						if (p == nDrawnPlayers - 1)

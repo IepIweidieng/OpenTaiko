@@ -25,7 +25,7 @@ class CMenuCharacter {
 	private static bool _usesSubstituteTexture(int player, ECharacterAnimation eca) {
 		int _charaId = OpenTaiko.SaveFileInstances[OpenTaiko.GetActualPlayer(player)].data.Character;
 
-		if (_charaId >= 0 && _charaId < OpenTaiko.Skin.Characters_Ptn) {
+		if (_charaId >= 0 && _charaId < OpenTaiko.SkinG.Characters_Ptn) {
 			switch (eca) {
 				case (ECharacterAnimation.NORMAL): {
 						if (OpenTaiko.Tx.Characters_Menu_Loop[_charaId].Length > 0)
@@ -66,7 +66,7 @@ class CMenuCharacter {
 	public static CTexture[] _getReferenceArray(int player, ECharacterAnimation eca) {
 		int _charaId = OpenTaiko.SaveFileInstances[OpenTaiko.GetActualPlayer(player)].data.Character;
 
-		if (_charaId >= 0 && _charaId < OpenTaiko.Skin.Characters_Ptn) {
+		if (_charaId >= 0 && _charaId < OpenTaiko.SkinG.Characters_Ptn) {
 			switch (eca) {
 				case (ECharacterAnimation.NORMAL): {
 						if (OpenTaiko.Tx.Characters_Menu_Loop[_charaId].Length > 0)
@@ -148,22 +148,22 @@ class CMenuCharacter {
 
 		switch (eca) {
 			case (ECharacterAnimation.NORMAL): {
-					return OpenTaiko.Skin.Characters_Menu_Loop_AnimationDuration[_charaId];
+					return OpenTaiko.SkinG.Characters_Menu_Loop_AnimationDuration[_charaId];
 				}
 			case (ECharacterAnimation.START): {
-					return OpenTaiko.Skin.Characters_Menu_Start_AnimationDuration[_charaId];
+					return OpenTaiko.SkinG.Characters_Menu_Start_AnimationDuration[_charaId];
 				}
 			case (ECharacterAnimation.SELECT): {
-					return OpenTaiko.Skin.Characters_Menu_Select_AnimationDuration[_charaId];
+					return OpenTaiko.SkinG.Characters_Menu_Select_AnimationDuration[_charaId];
 				}
 			case (ECharacterAnimation.WAIT): {
-					return OpenTaiko.Skin.Characters_Menu_Wait_AnimationDuration[_charaId];
+					return OpenTaiko.SkinG.Characters_Menu_Wait_AnimationDuration[_charaId];
 				}
 			case (ECharacterAnimation.ENTRY): {
-					return OpenTaiko.Skin.Characters_Title_Entry_AnimationDuration[_charaId];
+					return OpenTaiko.SkinG.Characters_Title_Entry_AnimationDuration[_charaId];
 				}
 			case (ECharacterAnimation.ENTRY_NORMAL): {
-					return OpenTaiko.Skin.Characters_Title_Normal_AnimationDuration[_charaId];
+					return OpenTaiko.SkinG.Characters_Title_Normal_AnimationDuration[_charaId];
 				}
 		}
 		return 1000;
@@ -244,14 +244,14 @@ class CMenuCharacter {
 
 			_tex.Opacity = opacity;
 
-			float resolutionRatioX = OpenTaiko.Skin.Resolution[0] / (float)OpenTaiko.Skin.Characters_Resolution[_charaId][0];
-			float resolutionRatioY = OpenTaiko.Skin.Resolution[1] / (float)OpenTaiko.Skin.Characters_Resolution[_charaId][1];
+			float resolutionRatioX = OpenTaiko.Skin.Resolution[0] / (float)OpenTaiko.SkinG.Characters_Resolution[_charaId][0];
+			float resolutionRatioY = OpenTaiko.Skin.Resolution[1] / (float)OpenTaiko.SkinG.Characters_Resolution[_charaId][1];
 
 			_tex.vcScaleRatio.X *= resolutionRatioX;
 			_tex.vcScaleRatio.Y *= resolutionRatioY;
 
-			float _x = x + (OpenTaiko.Skin.Characters_Menu_Offset[_charaId][0] * _tex.vcScaleRatio.X);
-			float _y = y + (OpenTaiko.Skin.Characters_Menu_Offset[_charaId][1] * _tex.vcScaleRatio.Y);
+			float _x = x + (OpenTaiko.SkinG.Characters_Menu_Offset[_charaId][0] * _tex.vcScaleRatio.X);
+			float _y = y + (OpenTaiko.SkinG.Characters_Menu_Offset[_charaId][1] * _tex.vcScaleRatio.Y);
 
 			if (player % 2 == 0) {
 				_tex.t2D拡大率考慮下中心基準描画(

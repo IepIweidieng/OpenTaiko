@@ -77,7 +77,7 @@ internal class CActPlayOption : CActivity {
 
 		txNone = OptionTypeTx(CLangManager.LangInstance.GetString("MOD_BLANK"), Color.White, Color.Black);
 
-		hsInfo = OpenTaiko.Skin.hsHitSoundsInformations;
+		hsInfo = OpenTaiko.SkinG.hsHitSoundsInformations;
 
 		txOtoiro = new CTexture[hsInfo.names.Length];
 

@@ -191,7 +191,7 @@ internal class CStage演奏ドラム画面 : CStage演奏画面共通 {
 		for (int i = 0; i < OpenTaiko.ConfigIni.nPlayerCount; i++) {
 			int actual = OpenTaiko.GetActualPlayer(i);
 
-			var hs = OpenTaiko.Skin.hsHitSoundsInformations;
+			var hs = OpenTaiko.SkinG.hsHitSoundsInformations;
 
 			this.soundRed[i] = OpenTaiko.SoundManager.tCreateSound(hs.don[actual], ESoundGroup.SoundEffect);
 			this.soundBlue[i] = OpenTaiko.SoundManager.tCreateSound(hs.ka[actual], ESoundGroup.SoundEffect);
@@ -334,7 +334,7 @@ internal class CStage演奏ドラム画面 : CStage演奏画面共通 {
 		base.SetStageFailed(iPlayer, failType);
 		if (becomeStageFailed) {
 			int Character = this.actChara.iCurrentCharacter[iPlayer];
-			if (OpenTaiko.Skin.Characters_ClearOut_Ptn[Character] != 0) {
+			if (OpenTaiko.SkinG.Characters_ClearOut_Ptn[Character] != 0) {
 				this.actChara.ChangeAnime(iPlayer, CActImplCharacter.Anime.ClearOut, true);
 			}
 			this.actGauge.db現在のゲージ値[iPlayer] = 0; // for indicate life failure in AI mode
@@ -611,15 +611,15 @@ internal class CStage演奏ドラム画面 : CStage演奏画面共通 {
 						int Character = this.actChara.iCurrentCharacter[i];
 
 						if (isTower ? (CFloorManagement.CurrentNumberOfLives >= CFloorManagement.MaxNumberOfLives) : HGaugeMethods.UNSAFE_IsRainbow(i)) {
-							if (OpenTaiko.Skin.Characters_10Combo_Maxed_Ptn[Character] != 0) {
+							if (OpenTaiko.SkinG.Characters_10Combo_Maxed_Ptn[Character] != 0) {
 								this.actChara.ChangeAnime(i, CActImplCharacter.Anime.Combo10_Max, true);
 							}
 						} else if (isTower ? (CFloorManagement.CurrentNumberOfLives > 0) : HGaugeMethods.UNSAFE_FastNormaCheck(i)) {
-							if (OpenTaiko.Skin.Characters_Become_Cleared_Ptn[Character] != 0) {
+							if (OpenTaiko.SkinG.Characters_Become_Cleared_Ptn[Character] != 0) {
 								this.actChara.ChangeAnime(i, CActImplCharacter.Anime.Cleared, true); ;
 							}
 						} else {
-							if (OpenTaiko.Skin.Characters_ClearOut_Ptn[Character] != 0) {
+							if (OpenTaiko.SkinG.Characters_ClearOut_Ptn[Character] != 0) {
 								this.actChara.ChangeAnime(i, CActImplCharacter.Anime.ClearOut, true);
 							}
 						}

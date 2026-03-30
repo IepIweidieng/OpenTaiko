@@ -75,25 +75,25 @@ class TextureLoader {
 		var texpath = (localize) ? HLocalizedPath.GetAvailableLocalizedPath(CSkin.Path(BASE + FileName)) : CSkin.Path(BASE + FileName);
 		var tex = OpenTaiko.tテクスチャの生成(texpath, false);
 
-		listTexture.Add(tex);
+		listSkinTexture.Add(tex);
 		return tex;
 	}
 
 	internal CTexture TxCGlobal(string FileName) {
 		var tex = OpenTaiko.tテクスチャの生成(OpenTaiko.strEXEのあるフォルダ + GLOBAL + FileName, false);
-		listTexture.Add(tex);
+		listGlobalTexture.Add(tex);
 		return tex;
 	}
 
 	internal CTexture TxCAbsolute(string FileName) {
 		var tex = OpenTaiko.tテクスチャの生成(FileName, false);
-		listTexture.Add(tex);
+		listGlobalTexture.Add(tex);
 		return tex;
 	}
 
 	internal CTextureAf TxCAf(string FileName) {
 		var tex = OpenTaiko.tテクスチャの生成Af(CSkin.Path(BASE + FileName));
-		listTexture.Add(tex);
+		listSkinTexture.Add(tex);
 		return tex;
 	}
 	internal CTexture TxCGen(string FileName) {
@@ -123,6 +123,11 @@ class TextureLoader {
 	}
 
 	public void LoadTexture() {
+		this.LoadSkinTexture();
+		this.LoadGlobalTexture();
+	}
+
+	public void LoadSkinTexture() {
 		CalibrateFG = TxC(CONFIG + $@"Calibration{Path.DirectorySeparatorChar}FG.png");
 		CalibrateBG = TxC(CONFIG + $@"Calibration{Path.DirectorySeparatorChar}BG.png");
 
@@ -724,26 +729,6 @@ class TextureLoader {
 
 		#endregion
 
-		#region PuchiChara
-
-		var puchicharaDirs = System.IO.Directory.GetDirectories(OpenTaiko.strEXEのあるフォルダ + GLOBAL + PUCHICHARA);
-		OpenTaiko.Skin.Puchichara_Ptn = puchicharaDirs.Length;
-
-		Puchichara = new CPuchichara[OpenTaiko.Skin.Puchichara_Ptn];
-		OpenTaiko.Skin.Puchicharas_Name = new string[OpenTaiko.Skin.Puchichara_Ptn];
-
-		for (int i = 0; i < OpenTaiko.Skin.Puchichara_Ptn; i++) {
-			Puchichara[i] = new CPuchichara(puchicharaDirs[i]);
-
-			OpenTaiko.Skin.Puchicharas_Name[i] = System.IO.Path.GetFileName(puchicharaDirs[i]);
-		}
-		OpenTaiko.Skin.Puchicharas_NameToIndex = OpenTaiko.Skin.Puchicharas_Name.Select((val, idx) => (val, idx)).ToDictionary();
-
-		///TJAPlayer3.Skin.Puchichara_Ptn = 5 * Math.Max(1, (PuchiChara.szテクスチャサイズ.Height / 256));
-
-
-		#endregion
-
 		#region Training
 
 		Tokkun_DownBG = TxC(GAME + TRAINING + @$"Down.png");
@@ -978,258 +963,6 @@ class TextureLoader {
 
 		#endregion
 
-		#region [11_Characters]
-
-		#region [Character count initialisations]
-
-		var charaDirs = System.IO.Directory.GetDirectories(OpenTaiko.strEXEのあるフォルダ + GLOBAL + CHARACTERS);
-		OpenTaiko.Skin.Characters_Ptn = charaDirs.Length;
-
-		Characters_Heya_Preview = new CTexture[OpenTaiko.Skin.Characters_Ptn];
-		Characters_Heya_Render = new CTexture[OpenTaiko.Skin.Characters_Ptn];
-		Characters_Result_Clear_1P = new CTexture[OpenTaiko.Skin.Characters_Ptn];
-		Characters_Result_Failed_1P = new CTexture[OpenTaiko.Skin.Characters_Ptn];
-		Characters_Result_Clear_2P = new CTexture[OpenTaiko.Skin.Characters_Ptn];
-		Characters_Result_Failed_2P = new CTexture[OpenTaiko.Skin.Characters_Ptn];
-		Characters = new CCharacter[OpenTaiko.Skin.Characters_Ptn];
-
-		Characters_Normal = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Normal_Missed = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Normal_MissedDown = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Normal_Cleared = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Normal_Maxed = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_MissIn = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_MissDownIn = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_GoGoTime = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_GoGoTime_Maxed = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_10Combo = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_10Combo_Clear = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_10Combo_Maxed = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_GoGoStart = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_GoGoStart_Clear = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_GoGoStart_Maxed = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Become_Cleared = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Become_Maxed = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_SoulOut = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_ClearOut = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Return = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Balloon_Breaking = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Balloon_Broke = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Balloon_Miss = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Kusudama_Idle = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Kusudama_Breaking = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Kusudama_Broke = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Kusudama_Miss = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Title_Entry = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Title_Normal = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Result_Clear = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Result_Failed = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Result_Failed_In = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Result_Normal = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Menu_Loop = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Menu_Start = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Menu_Select = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Menu_Wait = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Tower_Standing = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Tower_Climbing = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Tower_Running = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Tower_Clear = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Tower_Fail = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Tower_Standing_Tired = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Tower_Climbing_Tired = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Tower_Running_Tired = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-		Characters_Tower_Clear_Tired = new CTexture[OpenTaiko.Skin.Characters_Ptn][];
-
-		OpenTaiko.Skin.Characters_DirName = new string[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Normal_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Normal_Missed_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Normal_MissedDown_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Normal_Cleared_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Normal_Maxed_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_MissIn_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_MissDownIn_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_GoGoTime_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_GoGoTime_Maxed_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_10Combo_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_10Combo_Clear_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_10Combo_Maxed_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_GoGoStart_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_GoGoStart_Clear_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_GoGoStart_Maxed_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Become_Cleared_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Become_Maxed_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_SoulOut_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_ClearOut_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Return_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Balloon_Breaking_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Balloon_Broke_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Balloon_Miss_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Kusudama_Idle_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Kusudama_Breaking_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Kusudama_Broke_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Kusudama_Miss_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Title_Entry_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Title_Normal_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Result_Clear_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Result_Failed_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Result_Failed_In_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Result_Normal_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Menu_Loop_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Menu_Start_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Menu_Select_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Menu_Wait_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Tower_Standing_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Tower_Climbing_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Tower_Running_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Tower_Clear_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Tower_Fail_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Tower_Standing_Tired_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Tower_Climbing_Tired_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Tower_Running_Tired_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Tower_Clear_Tired_Ptn = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Tower_Clear_IsLooping = new bool[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Tower_Clear_Tired_IsLooping = new bool[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Tower_Fail_IsLooping = new bool[OpenTaiko.Skin.Characters_Ptn];
-
-		OpenTaiko.Skin.Characters_Resolution = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Heya_Render_Offset = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_UseResult1P = new bool[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Menu_Offset = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Result_Offset = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_X = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Y = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_4P = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_5P = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_X_AI = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Y_AI = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Balloon_X = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Balloon_Y = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Balloon_4P = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Balloon_5P = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Kusudama_X = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Kusudama_Y = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Motion_Normal = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Motion_10Combo = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Motion_10Combo_Clear = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Motion_10ComboMax = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Motion_Miss = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Motion_MissDown = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Motion_ClearIn = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Motion_Clear = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Motion_ClearMax = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Motion_MissIn = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Motion_MissDownIn = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Motion_GoGoStart = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Motion_GoGoStart_Clear = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Motion_GoGoStartMax = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Motion_GoGo = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Motion_GoGoMax = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Motion_SoulIn = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Motion_SoulOut = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Motion_ClearOut = new int[OpenTaiko.Skin.Characters_Ptn][];
-		OpenTaiko.Skin.Characters_Motion_Return = new int[OpenTaiko.Skin.Characters_Ptn][];
-		/*
-        TJAPlayer3.Skin.Characters_Motion_Tower_Standing = new int[TJAPlayer3.Skin.Characters_Ptn][];
-        TJAPlayer3.Skin.Characters_Motion_Tower_Climbing = new int[TJAPlayer3.Skin.Characters_Ptn][];
-        TJAPlayer3.Skin.Characters_Motion_Tower_Running = new int[TJAPlayer3.Skin.Characters_Ptn][];
-        TJAPlayer3.Skin.Characters_Motion_Tower_Clear = new int[TJAPlayer3.Skin.Characters_Ptn][];
-        TJAPlayer3.Skin.Characters_Motion_Tower_Fail = new int[TJAPlayer3.Skin.Characters_Ptn][];
-        TJAPlayer3.Skin.Characters_Motion_Tower_Standing_Tired = new int[TJAPlayer3.Skin.Characters_Ptn][];
-        TJAPlayer3.Skin.Characters_Motion_Tower_Climbing_Tired = new int[TJAPlayer3.Skin.Characters_Ptn][];
-        TJAPlayer3.Skin.Characters_Motion_Tower_Running_Tired = new int[TJAPlayer3.Skin.Characters_Ptn][];
-        TJAPlayer3.Skin.Characters_Motion_Tower_Clear_Tired = new int[TJAPlayer3.Skin.Characters_Ptn][];
-        */
-		OpenTaiko.Skin.Characters_Beat_Normal = new float[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Beat_Miss = new float[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Beat_MissDown = new float[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Beat_Clear = new float[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Beat_GoGo = new float[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Beat_10Combo = new float[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Beat_10Combo_Clear = new float[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Beat_10ComboMax = new float[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Beat_ClearIn = new float[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Beat_ClearMax = new float[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Beat_MissIn = new float[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Beat_MissDownIn = new float[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Beat_GoGoStart = new float[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Beat_GoGoStart_Clear = new float[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Beat_GoGoStartMax = new float[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Beat_GoGoMax = new float[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Beat_SoulIn = new float[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Beat_SoulOut = new float[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Beat_ClearOut = new float[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Beat_Return = new float[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Beat_Tower_Standing = new float[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Beat_Tower_Clear = new float[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Beat_Tower_Fail = new float[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Beat_Tower_Standing_Tired = new float[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Beat_Tower_Clear_Tired = new float[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Balloon_Timer = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Balloon_Delay = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Balloon_FadeOut = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Title_Entry_AnimationDuration = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Title_Normal_AnimationDuration = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Menu_Loop_AnimationDuration = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Menu_Select_AnimationDuration = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Menu_Start_AnimationDuration = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Menu_Wait_AnimationDuration = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Result_Normal_AnimationDuration = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Result_Clear_AnimationDuration = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Result_Failed_In_AnimationDuration = new int[OpenTaiko.Skin.Characters_Ptn];
-		OpenTaiko.Skin.Characters_Result_Failed_AnimationDuration = new int[OpenTaiko.Skin.Characters_Ptn];
-
-		for (int i = 0; i < charaDirs.Length; i++) {
-			OpenTaiko.Skin.Characters_DirName[i] = System.IO.Path.GetFileName(charaDirs[i]);
-		}
-
-		#endregion
-
-		for (int i = 0; i < 5; i++) {
-			OpenTaiko.SaveFileInstances[i].tReindexCharacter(OpenTaiko.Skin.Characters_DirName);
-			this.ReloadCharacter(-1, OpenTaiko.SaveFileInstances[i].data.Character, i, true);
-		}
-
-
-		for (int i = 0; i < OpenTaiko.Skin.Characters_Ptn; i++) {
-			Characters_Heya_Preview[i] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Normal{Path.DirectorySeparatorChar}0.png");
-			Characters_Heya_Render[i] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Render.png");
-			Characters_Result_Clear_1P[i] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Result_Clear_1P.png");
-			Characters_Result_Failed_1P[i] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Result_Failed_1P.png");
-			Characters_Result_Clear_2P[i] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Result_Clear_2P.png");
-			Characters_Result_Failed_2P[i] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Result_Failed_2P.png");
-
-			OpenTaiko.Skin.Characters_Resolution[i] = new int[] { 1280, 720 };
-			OpenTaiko.Skin.Characters_Heya_Render_Offset[i] = new int[] { 0, 0 };
-			OpenTaiko.Skin.Characters_UseResult1P[i] = false;
-
-
-			var _str = "";
-			OpenTaiko.Skin.LoadSkinConfigFromFile(charaDirs[i] + @$"{Path.DirectorySeparatorChar}CharaConfig.txt", ref _str);
-
-			string[] delimiter = { "\n", "\r" };
-			string[] strSingleLine = _str.Split(delimiter, StringSplitOptions.RemoveEmptyEntries);
-
-			foreach (string line in strSingleLine) {
-				if (line.StartsWith("Chara_Resolution=")) // required for Heya resolution compatibility
-				{
-					string[] values = line.Substring(17).Trim().Split(',');
-					OpenTaiko.Skin.Characters_Resolution[i][0] = int.Parse(values[0]);
-					OpenTaiko.Skin.Characters_Resolution[i][1] = int.Parse(values[1]);
-				} else if (line.StartsWith("Heya_Chara_Render_Offset=")) {
-					string[] values = line.Substring(25).Trim().Split(',');
-					OpenTaiko.Skin.Characters_Heya_Render_Offset[i][0] = int.Parse(values[0]);
-					OpenTaiko.Skin.Characters_Heya_Render_Offset[i][1] = int.Parse(values[1]);
-				} else if (line.StartsWith("Result_UseResult1P=")) {
-					OpenTaiko.Skin.Characters_UseResult1P[i] = FDK.CConversion.bONorOFF(line.Substring(19).Trim()[0]);
-				}
-			}
-
-			Characters[i] = new CCharacter(charaDirs[i], i);
-		}
-
-
-		#endregion
-
 		#region [12_OnlineLounge]
 
 		//OnlineLounge_Background = TxC(ONLINELOUNGE + @"Background.png");
@@ -1248,7 +981,281 @@ class TextureLoader {
 		TowerSelect_Tower = TxC(TOWERSELECT + @"Tower.png");
 
 		#endregion
+	}
 
+	public void LoadGlobalTexture() {
+		#region PuchiChara
+
+		var puchicharaDirs = System.IO.Directory.GetDirectories(OpenTaiko.strEXEのあるフォルダ + GLOBAL + PUCHICHARA);
+		OpenTaiko.SkinG.Puchichara_Ptn = puchicharaDirs.Length;
+
+		Puchichara = new CPuchichara[OpenTaiko.SkinG.Puchichara_Ptn];
+		OpenTaiko.SkinG.Puchicharas_Name = new string[OpenTaiko.SkinG.Puchichara_Ptn];
+
+		for (int i = 0; i < OpenTaiko.SkinG.Puchichara_Ptn; i++) {
+			Puchichara[i] = new CPuchichara(puchicharaDirs[i]);
+
+			OpenTaiko.SkinG.Puchicharas_Name[i] = System.IO.Path.GetFileName(puchicharaDirs[i]);
+		}
+		OpenTaiko.SkinG.Puchicharas_NameToIndex = OpenTaiko.SkinG.Puchicharas_Name.Select((val, idx) => (val, idx)).ToDictionary();
+
+		///TJAPlayer3.SkinG.Puchichara_Ptn = 5 * Math.Max(1, (PuchiChara.szテクスチャサイズ.Height / 256));
+
+
+		#endregion
+
+		#region [11_Characters]
+
+		#region [Character count initialisations]
+
+		var charaDirs = System.IO.Directory.GetDirectories(OpenTaiko.strEXEのあるフォルダ + GLOBAL + CHARACTERS);
+		OpenTaiko.SkinG.Characters_Ptn = charaDirs.Length;
+
+		Characters_Heya_Preview = new CTexture[OpenTaiko.SkinG.Characters_Ptn];
+		Characters_Heya_Render = new CTexture[OpenTaiko.SkinG.Characters_Ptn];
+		Characters_Result_Clear_1P = new CTexture[OpenTaiko.SkinG.Characters_Ptn];
+		Characters_Result_Failed_1P = new CTexture[OpenTaiko.SkinG.Characters_Ptn];
+		Characters_Result_Clear_2P = new CTexture[OpenTaiko.SkinG.Characters_Ptn];
+		Characters_Result_Failed_2P = new CTexture[OpenTaiko.SkinG.Characters_Ptn];
+		Characters = new CCharacter[OpenTaiko.SkinG.Characters_Ptn];
+
+		Characters_Normal = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Normal_Missed = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Normal_MissedDown = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Normal_Cleared = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Normal_Maxed = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_MissIn = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_MissDownIn = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_GoGoTime = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_GoGoTime_Maxed = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_10Combo = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_10Combo_Clear = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_10Combo_Maxed = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_GoGoStart = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_GoGoStart_Clear = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_GoGoStart_Maxed = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Become_Cleared = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Become_Maxed = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_SoulOut = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_ClearOut = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Return = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Balloon_Breaking = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Balloon_Broke = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Balloon_Miss = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Kusudama_Idle = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Kusudama_Breaking = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Kusudama_Broke = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Kusudama_Miss = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Title_Entry = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Title_Normal = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Result_Clear = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Result_Failed = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Result_Failed_In = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Result_Normal = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Menu_Loop = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Menu_Start = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Menu_Select = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Menu_Wait = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Tower_Standing = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Tower_Climbing = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Tower_Running = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Tower_Clear = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Tower_Fail = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Tower_Standing_Tired = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Tower_Climbing_Tired = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Tower_Running_Tired = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+		Characters_Tower_Clear_Tired = new CTexture[OpenTaiko.SkinG.Characters_Ptn][];
+
+		OpenTaiko.SkinG.Characters_DirName = new string[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Normal_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Normal_Missed_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Normal_MissedDown_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Normal_Cleared_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Normal_Maxed_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_MissIn_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_MissDownIn_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_GoGoTime_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_GoGoTime_Maxed_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_10Combo_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_10Combo_Clear_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_10Combo_Maxed_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_GoGoStart_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_GoGoStart_Clear_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_GoGoStart_Maxed_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Become_Cleared_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Become_Maxed_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_SoulOut_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_ClearOut_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Return_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Balloon_Breaking_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Balloon_Broke_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Balloon_Miss_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Kusudama_Idle_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Kusudama_Breaking_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Kusudama_Broke_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Kusudama_Miss_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Title_Entry_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Title_Normal_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Result_Clear_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Result_Failed_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Result_Failed_In_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Result_Normal_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Menu_Loop_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Menu_Start_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Menu_Select_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Menu_Wait_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Tower_Standing_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Tower_Climbing_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Tower_Running_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Tower_Clear_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Tower_Fail_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Tower_Standing_Tired_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Tower_Climbing_Tired_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Tower_Running_Tired_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Tower_Clear_Tired_Ptn = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Tower_Clear_IsLooping = new bool[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Tower_Clear_Tired_IsLooping = new bool[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Tower_Fail_IsLooping = new bool[OpenTaiko.SkinG.Characters_Ptn];
+
+		OpenTaiko.SkinG.Characters_Resolution = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Heya_Render_Offset = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_UseResult1P = new bool[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Menu_Offset = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Result_Offset = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_X = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Y = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_4P = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_5P = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_X_AI = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Y_AI = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Balloon_X = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Balloon_Y = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Balloon_4P = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Balloon_5P = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Kusudama_X = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Kusudama_Y = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Motion_Normal = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Motion_10Combo = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Motion_10Combo_Clear = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Motion_10ComboMax = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Motion_Miss = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Motion_MissDown = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Motion_ClearIn = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Motion_Clear = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Motion_ClearMax = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Motion_MissIn = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Motion_MissDownIn = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Motion_GoGoStart = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Motion_GoGoStart_Clear = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Motion_GoGoStartMax = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Motion_GoGo = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Motion_GoGoMax = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Motion_SoulIn = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Motion_SoulOut = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Motion_ClearOut = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		OpenTaiko.SkinG.Characters_Motion_Return = new int[OpenTaiko.SkinG.Characters_Ptn][];
+		/*
+        TJAPlayer3.SkinG.Characters_Motion_Tower_Standing = new int[TJAPlayer3.SkinG.Characters_Ptn][];
+        TJAPlayer3.SkinG.Characters_Motion_Tower_Climbing = new int[TJAPlayer3.SkinG.Characters_Ptn][];
+        TJAPlayer3.SkinG.Characters_Motion_Tower_Running = new int[TJAPlayer3.SkinG.Characters_Ptn][];
+        TJAPlayer3.SkinG.Characters_Motion_Tower_Clear = new int[TJAPlayer3.SkinG.Characters_Ptn][];
+        TJAPlayer3.SkinG.Characters_Motion_Tower_Fail = new int[TJAPlayer3.SkinG.Characters_Ptn][];
+        TJAPlayer3.SkinG.Characters_Motion_Tower_Standing_Tired = new int[TJAPlayer3.SkinG.Characters_Ptn][];
+        TJAPlayer3.SkinG.Characters_Motion_Tower_Climbing_Tired = new int[TJAPlayer3.SkinG.Characters_Ptn][];
+        TJAPlayer3.SkinG.Characters_Motion_Tower_Running_Tired = new int[TJAPlayer3.SkinG.Characters_Ptn][];
+        TJAPlayer3.SkinG.Characters_Motion_Tower_Clear_Tired = new int[TJAPlayer3.SkinG.Characters_Ptn][];
+        */
+		OpenTaiko.SkinG.Characters_Beat_Normal = new float[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Beat_Miss = new float[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Beat_MissDown = new float[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Beat_Clear = new float[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Beat_GoGo = new float[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Beat_10Combo = new float[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Beat_10Combo_Clear = new float[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Beat_10ComboMax = new float[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Beat_ClearIn = new float[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Beat_ClearMax = new float[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Beat_MissIn = new float[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Beat_MissDownIn = new float[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Beat_GoGoStart = new float[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Beat_GoGoStart_Clear = new float[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Beat_GoGoStartMax = new float[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Beat_GoGoMax = new float[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Beat_SoulIn = new float[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Beat_SoulOut = new float[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Beat_ClearOut = new float[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Beat_Return = new float[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Beat_Tower_Standing = new float[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Beat_Tower_Clear = new float[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Beat_Tower_Fail = new float[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Beat_Tower_Standing_Tired = new float[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Beat_Tower_Clear_Tired = new float[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Balloon_Timer = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Balloon_Delay = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Balloon_FadeOut = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Title_Entry_AnimationDuration = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Title_Normal_AnimationDuration = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Menu_Loop_AnimationDuration = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Menu_Select_AnimationDuration = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Menu_Start_AnimationDuration = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Menu_Wait_AnimationDuration = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Result_Normal_AnimationDuration = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Result_Clear_AnimationDuration = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Result_Failed_In_AnimationDuration = new int[OpenTaiko.SkinG.Characters_Ptn];
+		OpenTaiko.SkinG.Characters_Result_Failed_AnimationDuration = new int[OpenTaiko.SkinG.Characters_Ptn];
+
+		for (int i = 0; i < charaDirs.Length; i++) {
+			OpenTaiko.SkinG.Characters_DirName[i] = System.IO.Path.GetFileName(charaDirs[i]);
+		}
+
+		#endregion
+
+		for (int i = 0; i < 5; i++) {
+			OpenTaiko.SaveFileInstances[i].tReindexCharacter(OpenTaiko.SkinG.Characters_DirName);
+			this.ReloadCharacter(-1, OpenTaiko.SaveFileInstances[i].data.Character, i, true);
+		}
+
+
+		for (int i = 0; i < OpenTaiko.SkinG.Characters_Ptn; i++) {
+			Characters_Heya_Preview[i] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Normal{Path.DirectorySeparatorChar}0.png");
+			Characters_Heya_Render[i] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Render.png");
+			Characters_Result_Clear_1P[i] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Result_Clear_1P.png");
+			Characters_Result_Failed_1P[i] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Result_Failed_1P.png");
+			Characters_Result_Clear_2P[i] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Result_Clear_2P.png");
+			Characters_Result_Failed_2P[i] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Result_Failed_2P.png");
+
+			OpenTaiko.SkinG.Characters_Resolution[i] = new int[] { 1280, 720 };
+			OpenTaiko.SkinG.Characters_Heya_Render_Offset[i] = new int[] { 0, 0 };
+			OpenTaiko.SkinG.Characters_UseResult1P[i] = false;
+
+
+			var _str = "";
+			OpenTaiko.Skin.LoadSkinConfigFromFile(charaDirs[i] + @$"{Path.DirectorySeparatorChar}CharaConfig.txt", ref _str);
+
+			string[] delimiter = { "\n", "\r" };
+			string[] strSingleLine = _str.Split(delimiter, StringSplitOptions.RemoveEmptyEntries);
+
+			foreach (string line in strSingleLine) {
+				if (line.StartsWith("Chara_Resolution=")) // required for Heya resolution compatibility
+				{
+					string[] values = line.Substring(17).Trim().Split(',');
+					OpenTaiko.SkinG.Characters_Resolution[i][0] = int.Parse(values[0]);
+					OpenTaiko.SkinG.Characters_Resolution[i][1] = int.Parse(values[1]);
+				} else if (line.StartsWith("Heya_Chara_Render_Offset=")) {
+					string[] values = line.Substring(25).Trim().Split(',');
+					OpenTaiko.SkinG.Characters_Heya_Render_Offset[i][0] = int.Parse(values[0]);
+					OpenTaiko.SkinG.Characters_Heya_Render_Offset[i][1] = int.Parse(values[1]);
+				} else if (line.StartsWith("Result_UseResult1P=")) {
+					OpenTaiko.SkinG.Characters_UseResult1P[i] = FDK.CConversion.bONorOFF(line.Substring(19).Trim()[0]);
+				}
+			}
+
+			Characters[i] = new CCharacter(charaDirs[i], i);
+		}
+		#endregion
+	}
+
+	public void PreloadTopActivityAssets() {
 		if (OpenTaiko.ConfigIni.PreAssetsLoading) {
 			foreach (var act in OpenTaiko.app.listTopLevelActivities) {
 				act.CreateManagedResource();
@@ -1286,147 +1293,147 @@ class TextureLoader {
 
 			#region [Dispose the previous character]
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Menu_Loop_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Menu_Loop_Ptn[i]; j++)
 				Characters_Menu_Loop[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Menu_Start_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Menu_Start_Ptn[i]; j++)
 				Characters_Menu_Start[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Menu_Select_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Menu_Select_Ptn[i]; j++)
 				Characters_Menu_Select[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Menu_Wait_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Menu_Wait_Ptn[i]; j++)
 				Characters_Menu_Wait[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Result_Normal_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Result_Normal_Ptn[i]; j++)
 				Characters_Result_Normal[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Result_Failed_In_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Result_Failed_In_Ptn[i]; j++)
 				Characters_Result_Failed_In[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Result_Failed_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Result_Failed_Ptn[i]; j++)
 				Characters_Result_Failed[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Result_Clear_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Result_Clear_Ptn[i]; j++)
 				Characters_Result_Clear[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Title_Normal_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Title_Normal_Ptn[i]; j++)
 				Characters_Title_Normal[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Title_Entry_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Title_Entry_Ptn[i]; j++)
 				Characters_Title_Entry[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Normal_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Normal_Ptn[i]; j++)
 				Characters_Normal[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Normal_Missed_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Normal_Missed_Ptn[i]; j++)
 				Characters_Normal_Missed[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Normal_MissedDown_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Normal_MissedDown_Ptn[i]; j++)
 				Characters_Normal_MissedDown[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Normal_Cleared_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Normal_Cleared_Ptn[i]; j++)
 				Characters_Normal_Cleared[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Normal_Maxed_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Normal_Maxed_Ptn[i]; j++)
 				Characters_Normal_Maxed[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_MissIn_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_MissIn_Ptn[i]; j++)
 				Characters_MissIn[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_MissDownIn_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_MissDownIn_Ptn[i]; j++)
 				Characters_MissDownIn[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_GoGoTime_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_GoGoTime_Ptn[i]; j++)
 				Characters_GoGoTime[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_GoGoTime_Maxed_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_GoGoTime_Maxed_Ptn[i]; j++)
 				Characters_GoGoTime_Maxed[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_GoGoStart_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_GoGoStart_Ptn[i]; j++)
 				Characters_GoGoStart[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_GoGoStart_Clear_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_GoGoStart_Clear_Ptn[i]; j++)
 				Characters_GoGoStart_Clear[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_GoGoStart_Maxed_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_GoGoStart_Maxed_Ptn[i]; j++)
 				Characters_GoGoStart_Maxed[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_10Combo_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_10Combo_Ptn[i]; j++)
 				Characters_10Combo[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_10Combo_Clear_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_10Combo_Clear_Ptn[i]; j++)
 				Characters_10Combo_Clear[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_10Combo_Maxed_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_10Combo_Maxed_Ptn[i]; j++)
 				Characters_10Combo_Maxed[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Become_Cleared_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Become_Cleared_Ptn[i]; j++)
 				Characters_Become_Cleared[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Become_Maxed_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Become_Maxed_Ptn[i]; j++)
 				Characters_Become_Maxed[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_SoulOut_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_SoulOut_Ptn[i]; j++)
 				Characters_SoulOut[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_ClearOut_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_ClearOut_Ptn[i]; j++)
 				Characters_ClearOut[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Return_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Return_Ptn[i]; j++)
 				Characters_Return[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Balloon_Breaking_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Balloon_Breaking_Ptn[i]; j++)
 				Characters_Balloon_Breaking[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Balloon_Broke_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Balloon_Broke_Ptn[i]; j++)
 				Characters_Balloon_Broke[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Balloon_Miss_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Balloon_Miss_Ptn[i]; j++)
 				Characters_Balloon_Miss[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Kusudama_Idle_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Kusudama_Idle_Ptn[i]; j++)
 				Characters_Kusudama_Idle[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Kusudama_Breaking_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Kusudama_Breaking_Ptn[i]; j++)
 				Characters_Kusudama_Breaking[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Kusudama_Broke_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Kusudama_Broke_Ptn[i]; j++)
 				Characters_Kusudama_Broke[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Kusudama_Miss_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Kusudama_Miss_Ptn[i]; j++)
 				Characters_Kusudama_Miss[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Tower_Standing_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Tower_Standing_Ptn[i]; j++)
 				Characters_Tower_Standing[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Tower_Climbing_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Tower_Climbing_Ptn[i]; j++)
 				Characters_Tower_Climbing[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Tower_Running_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Tower_Running_Ptn[i]; j++)
 				Characters_Tower_Running[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Tower_Clear_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Tower_Clear_Ptn[i]; j++)
 				Characters_Tower_Clear[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Tower_Fail_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Tower_Fail_Ptn[i]; j++)
 				Characters_Tower_Fail[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Tower_Standing_Tired_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Tower_Standing_Tired_Ptn[i]; j++)
 				Characters_Tower_Standing_Tired[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Tower_Climbing_Tired_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Tower_Climbing_Tired_Ptn[i]; j++)
 				Characters_Tower_Climbing_Tired[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Tower_Running_Tired_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Tower_Running_Tired_Ptn[i]; j++)
 				Characters_Tower_Running_Tired[i][j]?.Dispose();
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Tower_Clear_Tired_Ptn[i]; j++)
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Tower_Clear_Tired_Ptn[i]; j++)
 				Characters_Tower_Clear_Tired[i][j]?.Dispose();
 			#endregion
 		}
 
-		string charaPath = OpenTaiko.strEXEのあるフォルダ + GLOBAL + CHARACTERS + OpenTaiko.Skin.Characters_DirName[newC];
+		string charaPath = OpenTaiko.strEXEのあるフォルダ + GLOBAL + CHARACTERS + OpenTaiko.SkinG.Characters_DirName[newC];
 
 		if ((newC >= 0 &&
 			 OpenTaiko.SaveFileInstances[0].data.Character != newC &&
@@ -1440,241 +1447,241 @@ class TextureLoader {
 
 			#region [Character individual values count initialisation]
 
-			OpenTaiko.Skin.Characters_Normal_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Normal{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Normal_Missed_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Miss{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Normal_MissedDown_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}MissDown{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_MissIn_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}MissIn{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_MissDownIn_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}MissDownIn{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Normal_Cleared_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Clear{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Normal_Maxed_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Clear_Max{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_GoGoTime_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}GoGo{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_GoGoTime_Maxed_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}GoGo_Max{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_10Combo_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}10combo{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_10Combo_Clear_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}10combo_Clear{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_10Combo_Maxed_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}10combo_Max{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_GoGoStart_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}GoGoStart{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_GoGoStart_Clear_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}GoGoStart_Clear{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_GoGoStart_Maxed_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}GoGoStart_Max{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Become_Cleared_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Clearin{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Become_Maxed_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Soulin{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_SoulOut_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}SoulOut{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_ClearOut_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}ClearOut{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Return_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Return{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Balloon_Breaking_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Balloon_Breaking{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Balloon_Broke_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Balloon_Broke{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Balloon_Miss_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Balloon_Miss{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Kusudama_Idle_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Kusudama_Idle{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Kusudama_Breaking_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Kusudama_Breaking{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Kusudama_Broke_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Kusudama_Broke{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Kusudama_Miss_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Kusudama_Miss{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Title_Entry_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Title_Entry{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Title_Normal_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Title_Normal{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Menu_Loop_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Menu_Loop{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Menu_Select_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Menu_Select{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Menu_Start_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Menu_Start{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Menu_Wait_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Menu_Wait{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Result_Clear_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Result_Clear{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Result_Failed_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Result_Failed{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Result_Failed_In_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Result_Failed_In{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Result_Normal_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Result_Normal{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Tower_Standing_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Standing{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Tower_Climbing_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Climbing{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Tower_Running_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Running{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Tower_Clear_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Clear{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Tower_Fail_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Fail{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Tower_Standing_Tired_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Standing_Tired{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Tower_Climbing_Tired_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Climbing_Tired{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Tower_Running_Tired_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Running_Tired{Path.DirectorySeparatorChar}");
-			OpenTaiko.Skin.Characters_Tower_Clear_Tired_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Clear_Tired{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Normal_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Normal{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Normal_Missed_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Miss{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Normal_MissedDown_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}MissDown{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_MissIn_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}MissIn{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_MissDownIn_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}MissDownIn{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Normal_Cleared_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Clear{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Normal_Maxed_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Clear_Max{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_GoGoTime_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}GoGo{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_GoGoTime_Maxed_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}GoGo_Max{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_10Combo_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}10combo{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_10Combo_Clear_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}10combo_Clear{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_10Combo_Maxed_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}10combo_Max{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_GoGoStart_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}GoGoStart{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_GoGoStart_Clear_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}GoGoStart_Clear{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_GoGoStart_Maxed_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}GoGoStart_Max{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Become_Cleared_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Clearin{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Become_Maxed_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Soulin{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_SoulOut_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}SoulOut{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_ClearOut_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}ClearOut{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Return_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Return{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Balloon_Breaking_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Balloon_Breaking{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Balloon_Broke_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Balloon_Broke{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Balloon_Miss_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Balloon_Miss{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Kusudama_Idle_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Kusudama_Idle{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Kusudama_Breaking_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Kusudama_Breaking{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Kusudama_Broke_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Kusudama_Broke{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Kusudama_Miss_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Kusudama_Miss{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Title_Entry_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Title_Entry{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Title_Normal_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Title_Normal{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Menu_Loop_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Menu_Loop{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Menu_Select_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Menu_Select{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Menu_Start_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Menu_Start{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Menu_Wait_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Menu_Wait{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Result_Clear_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Result_Clear{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Result_Failed_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Result_Failed{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Result_Failed_In_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Result_Failed_In{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Result_Normal_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Result_Normal{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Tower_Standing_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Standing{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Tower_Climbing_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Climbing{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Tower_Running_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Running{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Tower_Clear_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Clear{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Tower_Fail_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Fail{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Tower_Standing_Tired_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Standing_Tired{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Tower_Climbing_Tired_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Climbing_Tired{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Tower_Running_Tired_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Running_Tired{Path.DirectorySeparatorChar}");
+			OpenTaiko.SkinG.Characters_Tower_Clear_Tired_Ptn[i] = OpenTaiko.t連番画像の枚数を数える(charaPath + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Clear_Tired{Path.DirectorySeparatorChar}");
 
-			Characters_Normal[i] = new CTexture[OpenTaiko.Skin.Characters_Normal_Ptn[i]];
-			Characters_Normal_Missed[i] = new CTexture[OpenTaiko.Skin.Characters_Normal_Missed_Ptn[i]];
-			Characters_Normal_MissedDown[i] = new CTexture[OpenTaiko.Skin.Characters_Normal_MissedDown_Ptn[i]];
-			Characters_Normal_Cleared[i] = new CTexture[OpenTaiko.Skin.Characters_Normal_Cleared_Ptn[i]];
-			Characters_Normal_Maxed[i] = new CTexture[OpenTaiko.Skin.Characters_Normal_Maxed_Ptn[i]];
-			Characters_MissIn[i] = new CTexture[OpenTaiko.Skin.Characters_MissIn_Ptn[i]];
-			Characters_MissDownIn[i] = new CTexture[OpenTaiko.Skin.Characters_MissDownIn_Ptn[i]];
-			Characters_GoGoTime[i] = new CTexture[OpenTaiko.Skin.Characters_GoGoTime_Ptn[i]];
-			Characters_GoGoTime_Maxed[i] = new CTexture[OpenTaiko.Skin.Characters_GoGoTime_Maxed_Ptn[i]];
-			Characters_10Combo[i] = new CTexture[OpenTaiko.Skin.Characters_10Combo_Ptn[i]];
-			Characters_10Combo_Clear[i] = new CTexture[OpenTaiko.Skin.Characters_10Combo_Clear_Ptn[i]];
-			Characters_10Combo_Maxed[i] = new CTexture[OpenTaiko.Skin.Characters_10Combo_Maxed_Ptn[i]];
-			Characters_GoGoStart[i] = new CTexture[OpenTaiko.Skin.Characters_GoGoStart_Ptn[i]];
-			Characters_GoGoStart_Clear[i] = new CTexture[OpenTaiko.Skin.Characters_GoGoStart_Clear_Ptn[i]];
-			Characters_GoGoStart_Maxed[i] = new CTexture[OpenTaiko.Skin.Characters_GoGoStart_Maxed_Ptn[i]];
-			Characters_Become_Cleared[i] = new CTexture[OpenTaiko.Skin.Characters_Become_Cleared_Ptn[i]];
-			Characters_Become_Maxed[i] = new CTexture[OpenTaiko.Skin.Characters_Become_Maxed_Ptn[i]];
-			Characters_SoulOut[i] = new CTexture[OpenTaiko.Skin.Characters_SoulOut_Ptn[i]];
-			Characters_ClearOut[i] = new CTexture[OpenTaiko.Skin.Characters_ClearOut_Ptn[i]];
-			Characters_Return[i] = new CTexture[OpenTaiko.Skin.Characters_Return_Ptn[i]];
-			Characters_Balloon_Breaking[i] = new CTexture[OpenTaiko.Skin.Characters_Balloon_Breaking_Ptn[i]];
-			Characters_Balloon_Broke[i] = new CTexture[OpenTaiko.Skin.Characters_Balloon_Broke_Ptn[i]];
-			Characters_Balloon_Miss[i] = new CTexture[OpenTaiko.Skin.Characters_Balloon_Miss_Ptn[i]];
-			Characters_Kusudama_Idle[i] = new CTexture[OpenTaiko.Skin.Characters_Kusudama_Idle_Ptn[i]];
-			Characters_Kusudama_Breaking[i] = new CTexture[OpenTaiko.Skin.Characters_Kusudama_Breaking_Ptn[i]];
-			Characters_Kusudama_Broke[i] = new CTexture[OpenTaiko.Skin.Characters_Kusudama_Broke_Ptn[i]];
-			Characters_Kusudama_Miss[i] = new CTexture[OpenTaiko.Skin.Characters_Kusudama_Miss_Ptn[i]];
-			Characters_Title_Entry[i] = new CTexture[OpenTaiko.Skin.Characters_Title_Entry_Ptn[i]];
-			Characters_Title_Normal[i] = new CTexture[OpenTaiko.Skin.Characters_Title_Normal_Ptn[i]];
-			Characters_Result_Clear[i] = new CTexture[OpenTaiko.Skin.Characters_Result_Clear_Ptn[i]];
-			Characters_Result_Failed[i] = new CTexture[OpenTaiko.Skin.Characters_Result_Failed_Ptn[i]];
-			Characters_Result_Failed_In[i] = new CTexture[OpenTaiko.Skin.Characters_Result_Failed_In_Ptn[i]];
-			Characters_Result_Normal[i] = new CTexture[OpenTaiko.Skin.Characters_Result_Normal_Ptn[i]];
-			Characters_Menu_Loop[i] = new CTexture[OpenTaiko.Skin.Characters_Menu_Loop_Ptn[i]];
-			Characters_Menu_Start[i] = new CTexture[OpenTaiko.Skin.Characters_Menu_Start_Ptn[i]];
-			Characters_Menu_Select[i] = new CTexture[OpenTaiko.Skin.Characters_Menu_Select_Ptn[i]];
-			Characters_Menu_Wait[i] = new CTexture[OpenTaiko.Skin.Characters_Menu_Wait_Ptn[i]];
-			Characters_Tower_Standing[i] = new CTexture[OpenTaiko.Skin.Characters_Tower_Standing_Ptn[i]];
-			Characters_Tower_Climbing[i] = new CTexture[OpenTaiko.Skin.Characters_Tower_Climbing_Ptn[i]];
-			Characters_Tower_Running[i] = new CTexture[OpenTaiko.Skin.Characters_Tower_Running_Ptn[i]];
-			Characters_Tower_Clear[i] = new CTexture[OpenTaiko.Skin.Characters_Tower_Clear_Ptn[i]];
-			Characters_Tower_Fail[i] = new CTexture[OpenTaiko.Skin.Characters_Tower_Fail_Ptn[i]];
-			Characters_Tower_Standing_Tired[i] = new CTexture[OpenTaiko.Skin.Characters_Tower_Standing_Tired_Ptn[i]];
-			Characters_Tower_Climbing_Tired[i] = new CTexture[OpenTaiko.Skin.Characters_Tower_Climbing_Tired_Ptn[i]];
-			Characters_Tower_Running_Tired[i] = new CTexture[OpenTaiko.Skin.Characters_Tower_Running_Tired_Ptn[i]];
-			Characters_Tower_Clear_Tired[i] = new CTexture[OpenTaiko.Skin.Characters_Tower_Clear_Tired_Ptn[i]];
+			Characters_Normal[i] = new CTexture[OpenTaiko.SkinG.Characters_Normal_Ptn[i]];
+			Characters_Normal_Missed[i] = new CTexture[OpenTaiko.SkinG.Characters_Normal_Missed_Ptn[i]];
+			Characters_Normal_MissedDown[i] = new CTexture[OpenTaiko.SkinG.Characters_Normal_MissedDown_Ptn[i]];
+			Characters_Normal_Cleared[i] = new CTexture[OpenTaiko.SkinG.Characters_Normal_Cleared_Ptn[i]];
+			Characters_Normal_Maxed[i] = new CTexture[OpenTaiko.SkinG.Characters_Normal_Maxed_Ptn[i]];
+			Characters_MissIn[i] = new CTexture[OpenTaiko.SkinG.Characters_MissIn_Ptn[i]];
+			Characters_MissDownIn[i] = new CTexture[OpenTaiko.SkinG.Characters_MissDownIn_Ptn[i]];
+			Characters_GoGoTime[i] = new CTexture[OpenTaiko.SkinG.Characters_GoGoTime_Ptn[i]];
+			Characters_GoGoTime_Maxed[i] = new CTexture[OpenTaiko.SkinG.Characters_GoGoTime_Maxed_Ptn[i]];
+			Characters_10Combo[i] = new CTexture[OpenTaiko.SkinG.Characters_10Combo_Ptn[i]];
+			Characters_10Combo_Clear[i] = new CTexture[OpenTaiko.SkinG.Characters_10Combo_Clear_Ptn[i]];
+			Characters_10Combo_Maxed[i] = new CTexture[OpenTaiko.SkinG.Characters_10Combo_Maxed_Ptn[i]];
+			Characters_GoGoStart[i] = new CTexture[OpenTaiko.SkinG.Characters_GoGoStart_Ptn[i]];
+			Characters_GoGoStart_Clear[i] = new CTexture[OpenTaiko.SkinG.Characters_GoGoStart_Clear_Ptn[i]];
+			Characters_GoGoStart_Maxed[i] = new CTexture[OpenTaiko.SkinG.Characters_GoGoStart_Maxed_Ptn[i]];
+			Characters_Become_Cleared[i] = new CTexture[OpenTaiko.SkinG.Characters_Become_Cleared_Ptn[i]];
+			Characters_Become_Maxed[i] = new CTexture[OpenTaiko.SkinG.Characters_Become_Maxed_Ptn[i]];
+			Characters_SoulOut[i] = new CTexture[OpenTaiko.SkinG.Characters_SoulOut_Ptn[i]];
+			Characters_ClearOut[i] = new CTexture[OpenTaiko.SkinG.Characters_ClearOut_Ptn[i]];
+			Characters_Return[i] = new CTexture[OpenTaiko.SkinG.Characters_Return_Ptn[i]];
+			Characters_Balloon_Breaking[i] = new CTexture[OpenTaiko.SkinG.Characters_Balloon_Breaking_Ptn[i]];
+			Characters_Balloon_Broke[i] = new CTexture[OpenTaiko.SkinG.Characters_Balloon_Broke_Ptn[i]];
+			Characters_Balloon_Miss[i] = new CTexture[OpenTaiko.SkinG.Characters_Balloon_Miss_Ptn[i]];
+			Characters_Kusudama_Idle[i] = new CTexture[OpenTaiko.SkinG.Characters_Kusudama_Idle_Ptn[i]];
+			Characters_Kusudama_Breaking[i] = new CTexture[OpenTaiko.SkinG.Characters_Kusudama_Breaking_Ptn[i]];
+			Characters_Kusudama_Broke[i] = new CTexture[OpenTaiko.SkinG.Characters_Kusudama_Broke_Ptn[i]];
+			Characters_Kusudama_Miss[i] = new CTexture[OpenTaiko.SkinG.Characters_Kusudama_Miss_Ptn[i]];
+			Characters_Title_Entry[i] = new CTexture[OpenTaiko.SkinG.Characters_Title_Entry_Ptn[i]];
+			Characters_Title_Normal[i] = new CTexture[OpenTaiko.SkinG.Characters_Title_Normal_Ptn[i]];
+			Characters_Result_Clear[i] = new CTexture[OpenTaiko.SkinG.Characters_Result_Clear_Ptn[i]];
+			Characters_Result_Failed[i] = new CTexture[OpenTaiko.SkinG.Characters_Result_Failed_Ptn[i]];
+			Characters_Result_Failed_In[i] = new CTexture[OpenTaiko.SkinG.Characters_Result_Failed_In_Ptn[i]];
+			Characters_Result_Normal[i] = new CTexture[OpenTaiko.SkinG.Characters_Result_Normal_Ptn[i]];
+			Characters_Menu_Loop[i] = new CTexture[OpenTaiko.SkinG.Characters_Menu_Loop_Ptn[i]];
+			Characters_Menu_Start[i] = new CTexture[OpenTaiko.SkinG.Characters_Menu_Start_Ptn[i]];
+			Characters_Menu_Select[i] = new CTexture[OpenTaiko.SkinG.Characters_Menu_Select_Ptn[i]];
+			Characters_Menu_Wait[i] = new CTexture[OpenTaiko.SkinG.Characters_Menu_Wait_Ptn[i]];
+			Characters_Tower_Standing[i] = new CTexture[OpenTaiko.SkinG.Characters_Tower_Standing_Ptn[i]];
+			Characters_Tower_Climbing[i] = new CTexture[OpenTaiko.SkinG.Characters_Tower_Climbing_Ptn[i]];
+			Characters_Tower_Running[i] = new CTexture[OpenTaiko.SkinG.Characters_Tower_Running_Ptn[i]];
+			Characters_Tower_Clear[i] = new CTexture[OpenTaiko.SkinG.Characters_Tower_Clear_Ptn[i]];
+			Characters_Tower_Fail[i] = new CTexture[OpenTaiko.SkinG.Characters_Tower_Fail_Ptn[i]];
+			Characters_Tower_Standing_Tired[i] = new CTexture[OpenTaiko.SkinG.Characters_Tower_Standing_Tired_Ptn[i]];
+			Characters_Tower_Climbing_Tired[i] = new CTexture[OpenTaiko.SkinG.Characters_Tower_Climbing_Tired_Ptn[i]];
+			Characters_Tower_Running_Tired[i] = new CTexture[OpenTaiko.SkinG.Characters_Tower_Running_Tired_Ptn[i]];
+			Characters_Tower_Clear_Tired[i] = new CTexture[OpenTaiko.SkinG.Characters_Tower_Clear_Tired_Ptn[i]];
 
 			#endregion
 
 			#region [Characters asset loading]
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Menu_Loop_Ptn[i]; j++)
-				Characters_Menu_Loop[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Menu_Loop{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Menu_Loop_Ptn[i]; j++)
+				Characters_Menu_Loop[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Menu_Loop{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Menu_Select_Ptn[i]; j++)
-				Characters_Menu_Select[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Menu_Select{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Menu_Select_Ptn[i]; j++)
+				Characters_Menu_Select[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Menu_Select{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Menu_Start_Ptn[i]; j++)
-				Characters_Menu_Start[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Menu_Start{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Menu_Start_Ptn[i]; j++)
+				Characters_Menu_Start[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Menu_Start{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Menu_Wait_Ptn[i]; j++)
-				Characters_Menu_Wait[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Menu_Wait{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Menu_Wait_Ptn[i]; j++)
+				Characters_Menu_Wait[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Menu_Wait{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Result_Normal_Ptn[i]; j++)
-				Characters_Result_Normal[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Result_Normal{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Result_Normal_Ptn[i]; j++)
+				Characters_Result_Normal[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Result_Normal{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Result_Failed_In_Ptn[i]; j++)
-				Characters_Result_Failed_In[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Result_Failed_In{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Result_Failed_In_Ptn[i]; j++)
+				Characters_Result_Failed_In[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Result_Failed_In{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Result_Failed_Ptn[i]; j++)
-				Characters_Result_Failed[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Result_Failed{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Result_Failed_Ptn[i]; j++)
+				Characters_Result_Failed[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Result_Failed{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Result_Clear_Ptn[i]; j++)
-				Characters_Result_Clear[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Result_Clear{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Result_Clear_Ptn[i]; j++)
+				Characters_Result_Clear[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Result_Clear{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Title_Normal_Ptn[i]; j++)
-				Characters_Title_Normal[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Title_Normal{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Title_Normal_Ptn[i]; j++)
+				Characters_Title_Normal[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Title_Normal{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Title_Entry_Ptn[i]; j++)
-				Characters_Title_Entry[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Title_Entry{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Title_Entry_Ptn[i]; j++)
+				Characters_Title_Entry[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Title_Entry{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Normal_Ptn[i]; j++)
-				Characters_Normal[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Normal{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Normal_Ptn[i]; j++)
+				Characters_Normal[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Normal{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Normal_Missed_Ptn[i]; j++)
-				Characters_Normal_Missed[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Miss{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Normal_Missed_Ptn[i]; j++)
+				Characters_Normal_Missed[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Miss{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Normal_MissedDown_Ptn[i]; j++)
-				Characters_Normal_MissedDown[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}MissDown{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Normal_MissedDown_Ptn[i]; j++)
+				Characters_Normal_MissedDown[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}MissDown{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Normal_Cleared_Ptn[i]; j++)
-				Characters_Normal_Cleared[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Clear{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Normal_Cleared_Ptn[i]; j++)
+				Characters_Normal_Cleared[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Clear{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Normal_Maxed_Ptn[i]; j++)
-				Characters_Normal_Maxed[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Clear_Max{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Normal_Maxed_Ptn[i]; j++)
+				Characters_Normal_Maxed[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Clear_Max{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_MissIn_Ptn[i]; j++)
-				Characters_MissIn[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}MissIn{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_MissIn_Ptn[i]; j++)
+				Characters_MissIn[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}MissIn{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_MissDownIn_Ptn[i]; j++)
-				Characters_MissDownIn[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}MissDownIn{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_MissDownIn_Ptn[i]; j++)
+				Characters_MissDownIn[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}MissDownIn{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_GoGoTime_Ptn[i]; j++)
-				Characters_GoGoTime[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}GoGo{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_GoGoTime_Ptn[i]; j++)
+				Characters_GoGoTime[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}GoGo{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_GoGoTime_Maxed_Ptn[i]; j++)
-				Characters_GoGoTime_Maxed[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}GoGo_Max{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_GoGoTime_Maxed_Ptn[i]; j++)
+				Characters_GoGoTime_Maxed[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}GoGo_Max{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_GoGoStart_Ptn[i]; j++)
-				Characters_GoGoStart[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}GoGoStart{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_GoGoStart_Ptn[i]; j++)
+				Characters_GoGoStart[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}GoGoStart{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_GoGoStart_Clear_Ptn[i]; j++)
-				Characters_GoGoStart_Clear[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}GoGoStart_Clear{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_GoGoStart_Clear_Ptn[i]; j++)
+				Characters_GoGoStart_Clear[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}GoGoStart_Clear{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_GoGoStart_Maxed_Ptn[i]; j++)
-				Characters_GoGoStart_Maxed[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}GoGoStart_Max{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_GoGoStart_Maxed_Ptn[i]; j++)
+				Characters_GoGoStart_Maxed[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}GoGoStart_Max{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_10Combo_Ptn[i]; j++)
-				Characters_10Combo[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}10combo{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_10Combo_Ptn[i]; j++)
+				Characters_10Combo[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}10combo{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_10Combo_Clear_Ptn[i]; j++)
-				Characters_10Combo_Clear[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}10combo_Clear{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_10Combo_Clear_Ptn[i]; j++)
+				Characters_10Combo_Clear[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}10combo_Clear{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_10Combo_Maxed_Ptn[i]; j++)
-				Characters_10Combo_Maxed[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}10combo_Max{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_10Combo_Maxed_Ptn[i]; j++)
+				Characters_10Combo_Maxed[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}10combo_Max{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Become_Cleared_Ptn[i]; j++)
-				Characters_Become_Cleared[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Clearin{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Become_Cleared_Ptn[i]; j++)
+				Characters_Become_Cleared[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Clearin{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Become_Maxed_Ptn[i]; j++)
-				Characters_Become_Maxed[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Soulin{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Become_Maxed_Ptn[i]; j++)
+				Characters_Become_Maxed[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Soulin{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_SoulOut_Ptn[i]; j++)
-				Characters_SoulOut[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Soulout{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_SoulOut_Ptn[i]; j++)
+				Characters_SoulOut[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Soulout{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_ClearOut_Ptn[i]; j++)
-				Characters_ClearOut[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Clearout{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_ClearOut_Ptn[i]; j++)
+				Characters_ClearOut[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Clearout{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Return_Ptn[i]; j++)
-				Characters_Return[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Return{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Return_Ptn[i]; j++)
+				Characters_Return[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Return{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Balloon_Breaking_Ptn[i]; j++)
-				Characters_Balloon_Breaking[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Balloon_Breaking{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Balloon_Breaking_Ptn[i]; j++)
+				Characters_Balloon_Breaking[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Balloon_Breaking{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Balloon_Broke_Ptn[i]; j++)
-				Characters_Balloon_Broke[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Balloon_Broke{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Balloon_Broke_Ptn[i]; j++)
+				Characters_Balloon_Broke[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Balloon_Broke{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Balloon_Miss_Ptn[i]; j++)
-				Characters_Balloon_Miss[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Balloon_Miss{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Balloon_Miss_Ptn[i]; j++)
+				Characters_Balloon_Miss[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Balloon_Miss{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Kusudama_Idle_Ptn[i]; j++)
-				Characters_Kusudama_Idle[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Kusudama_Idle{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Kusudama_Idle_Ptn[i]; j++)
+				Characters_Kusudama_Idle[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Kusudama_Idle{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Kusudama_Breaking_Ptn[i]; j++)
-				Characters_Kusudama_Breaking[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Kusudama_Breaking{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Kusudama_Breaking_Ptn[i]; j++)
+				Characters_Kusudama_Breaking[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Kusudama_Breaking{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Kusudama_Broke_Ptn[i]; j++)
-				Characters_Kusudama_Broke[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Kusudama_Broke{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Kusudama_Broke_Ptn[i]; j++)
+				Characters_Kusudama_Broke[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Kusudama_Broke{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Kusudama_Miss_Ptn[i]; j++)
-				Characters_Kusudama_Miss[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Kusudama_Miss{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Kusudama_Miss_Ptn[i]; j++)
+				Characters_Kusudama_Miss[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Kusudama_Miss{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Tower_Standing_Ptn[i]; j++)
-				Characters_Tower_Standing[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Standing{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Tower_Standing_Ptn[i]; j++)
+				Characters_Tower_Standing[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Standing{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Tower_Climbing_Ptn[i]; j++)
-				Characters_Tower_Climbing[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Climbing{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Tower_Climbing_Ptn[i]; j++)
+				Characters_Tower_Climbing[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Climbing{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Tower_Running_Ptn[i]; j++)
-				Characters_Tower_Running[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Running{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Tower_Running_Ptn[i]; j++)
+				Characters_Tower_Running[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Running{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Tower_Clear_Ptn[i]; j++)
-				Characters_Tower_Clear[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Clear{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Tower_Clear_Ptn[i]; j++)
+				Characters_Tower_Clear[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Clear{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Tower_Fail_Ptn[i]; j++)
-				Characters_Tower_Fail[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Fail{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Tower_Fail_Ptn[i]; j++)
+				Characters_Tower_Fail[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Fail{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Tower_Standing_Tired_Ptn[i]; j++)
-				Characters_Tower_Standing_Tired[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Standing_Tired{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Tower_Standing_Tired_Ptn[i]; j++)
+				Characters_Tower_Standing_Tired[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Standing_Tired{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Tower_Climbing_Tired_Ptn[i]; j++)
-				Characters_Tower_Climbing_Tired[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Climbing_Tired{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Tower_Climbing_Tired_Ptn[i]; j++)
+				Characters_Tower_Climbing_Tired[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Climbing_Tired{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Tower_Running_Tired_Ptn[i]; j++)
-				Characters_Tower_Running_Tired[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Running_Tired{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Tower_Running_Tired_Ptn[i]; j++)
+				Characters_Tower_Running_Tired[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Running_Tired{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
-			for (int j = 0; j < OpenTaiko.Skin.Characters_Tower_Clear_Tired_Ptn[i]; j++)
-				Characters_Tower_Clear_Tired[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.Skin.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Clear_Tired{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
+			for (int j = 0; j < OpenTaiko.SkinG.Characters_Tower_Clear_Tired_Ptn[i]; j++)
+				Characters_Tower_Clear_Tired[i][j] = TxCGlobal(CHARACTERS + OpenTaiko.SkinG.Characters_DirName[i] + @$"{Path.DirectorySeparatorChar}Tower_Char{Path.DirectorySeparatorChar}Clear_Tired{Path.DirectorySeparatorChar}" + j.ToString() + @$".png");
 
 			#endregion
 
@@ -1682,89 +1689,89 @@ class TextureLoader {
 
 			#region [Default values]
 
-			OpenTaiko.Skin.Characters_Menu_Offset[i] = new int[] { 0, 0 };
-			OpenTaiko.Skin.Characters_Result_Offset[i] = new int[] { 0, 0 };
-			OpenTaiko.Skin.Characters_X[i] = new int[] { 0, 0 };
-			OpenTaiko.Skin.Characters_Y[i] = new int[] { 0, 537 };
-			OpenTaiko.Skin.Characters_4P[i] = new int[] { 165, 68 };
-			OpenTaiko.Skin.Characters_5P[i] = new int[] { 165, 40 };
-			OpenTaiko.Skin.Characters_X_AI[i] = new int[] { 472, 602 };
-			OpenTaiko.Skin.Characters_Y_AI[i] = new int[] { 152, 152 };
-			OpenTaiko.Skin.Characters_Balloon_X[i] = new int[] { 240, 240, 0, 0 };
-			OpenTaiko.Skin.Characters_Balloon_Y[i] = new int[] { 0, 297, 0, 0 };
-			OpenTaiko.Skin.Characters_Balloon_4P[i] = new int[] { 0, -176 };
-			OpenTaiko.Skin.Characters_Balloon_5P[i] = new int[] { 0, -168 };
-			OpenTaiko.Skin.Characters_Kusudama_X[i] = new int[] { 290, 690, 90, 890, 490 };
-			OpenTaiko.Skin.Characters_Kusudama_Y[i] = new int[] { 420, 420, 420, 420, 420 };
-			OpenTaiko.Skin.Characters_Motion_Normal[i] = CreateNumberedArrayFromInt(OpenTaiko.Skin.Characters_Normal_Ptn[i]);
-			OpenTaiko.Skin.Characters_Motion_10Combo[i] = CreateNumberedArrayFromInt(OpenTaiko.Skin.Characters_10Combo_Ptn[i]);
-			OpenTaiko.Skin.Characters_Motion_10Combo_Clear[i] = CreateNumberedArrayFromInt(OpenTaiko.Skin.Characters_10Combo_Clear_Ptn[i]);
-			OpenTaiko.Skin.Characters_Motion_10ComboMax[i] = CreateNumberedArrayFromInt(OpenTaiko.Skin.Characters_10Combo_Maxed_Ptn[i]);
-			OpenTaiko.Skin.Characters_Motion_Miss[i] = CreateNumberedArrayFromInt(OpenTaiko.Skin.Characters_Normal_Missed_Ptn[i]);
-			OpenTaiko.Skin.Characters_Motion_MissDown[i] = CreateNumberedArrayFromInt(OpenTaiko.Skin.Characters_Normal_MissedDown_Ptn[i]);
-			OpenTaiko.Skin.Characters_Motion_ClearIn[i] = CreateNumberedArrayFromInt(OpenTaiko.Skin.Characters_Become_Cleared_Ptn[i]);
-			OpenTaiko.Skin.Characters_Motion_Clear[i] = CreateNumberedArrayFromInt(OpenTaiko.Skin.Characters_Normal_Cleared_Ptn[i]);
-			OpenTaiko.Skin.Characters_Motion_ClearMax[i] = CreateNumberedArrayFromInt(OpenTaiko.Skin.Characters_Normal_Maxed_Ptn[i]);
-			OpenTaiko.Skin.Characters_Motion_MissIn[i] = CreateNumberedArrayFromInt(OpenTaiko.Skin.Characters_MissIn_Ptn[i]);
-			OpenTaiko.Skin.Characters_Motion_MissDownIn[i] = CreateNumberedArrayFromInt(OpenTaiko.Skin.Characters_MissDownIn_Ptn[i]);
-			OpenTaiko.Skin.Characters_Motion_GoGoStart[i] = CreateNumberedArrayFromInt(OpenTaiko.Skin.Characters_GoGoStart_Ptn[i]);
-			OpenTaiko.Skin.Characters_Motion_GoGoStart_Clear[i] = CreateNumberedArrayFromInt(OpenTaiko.Skin.Characters_GoGoStart_Clear_Ptn[i]);
-			OpenTaiko.Skin.Characters_Motion_GoGoStartMax[i] = CreateNumberedArrayFromInt(OpenTaiko.Skin.Characters_GoGoStart_Maxed_Ptn[i]);
-			OpenTaiko.Skin.Characters_Motion_GoGo[i] = CreateNumberedArrayFromInt(OpenTaiko.Skin.Characters_GoGoTime_Ptn[i]);
-			OpenTaiko.Skin.Characters_Motion_GoGoMax[i] = CreateNumberedArrayFromInt(OpenTaiko.Skin.Characters_GoGoTime_Maxed_Ptn[i]);
-			OpenTaiko.Skin.Characters_Motion_SoulIn[i] = CreateNumberedArrayFromInt(OpenTaiko.Skin.Characters_Become_Maxed_Ptn[i]);
-			OpenTaiko.Skin.Characters_Motion_SoulOut[i] = CreateNumberedArrayFromInt(OpenTaiko.Skin.Characters_SoulOut_Ptn[i]);
-			OpenTaiko.Skin.Characters_Motion_ClearOut[i] = CreateNumberedArrayFromInt(OpenTaiko.Skin.Characters_ClearOut_Ptn[i]);
-			OpenTaiko.Skin.Characters_Motion_Return[i] = CreateNumberedArrayFromInt(OpenTaiko.Skin.Characters_Return_Ptn[i]);
+			OpenTaiko.SkinG.Characters_Menu_Offset[i] = new int[] { 0, 0 };
+			OpenTaiko.SkinG.Characters_Result_Offset[i] = new int[] { 0, 0 };
+			OpenTaiko.SkinG.Characters_X[i] = new int[] { 0, 0 };
+			OpenTaiko.SkinG.Characters_Y[i] = new int[] { 0, 537 };
+			OpenTaiko.SkinG.Characters_4P[i] = new int[] { 165, 68 };
+			OpenTaiko.SkinG.Characters_5P[i] = new int[] { 165, 40 };
+			OpenTaiko.SkinG.Characters_X_AI[i] = new int[] { 472, 602 };
+			OpenTaiko.SkinG.Characters_Y_AI[i] = new int[] { 152, 152 };
+			OpenTaiko.SkinG.Characters_Balloon_X[i] = new int[] { 240, 240, 0, 0 };
+			OpenTaiko.SkinG.Characters_Balloon_Y[i] = new int[] { 0, 297, 0, 0 };
+			OpenTaiko.SkinG.Characters_Balloon_4P[i] = new int[] { 0, -176 };
+			OpenTaiko.SkinG.Characters_Balloon_5P[i] = new int[] { 0, -168 };
+			OpenTaiko.SkinG.Characters_Kusudama_X[i] = new int[] { 290, 690, 90, 890, 490 };
+			OpenTaiko.SkinG.Characters_Kusudama_Y[i] = new int[] { 420, 420, 420, 420, 420 };
+			OpenTaiko.SkinG.Characters_Motion_Normal[i] = CreateNumberedArrayFromInt(OpenTaiko.SkinG.Characters_Normal_Ptn[i]);
+			OpenTaiko.SkinG.Characters_Motion_10Combo[i] = CreateNumberedArrayFromInt(OpenTaiko.SkinG.Characters_10Combo_Ptn[i]);
+			OpenTaiko.SkinG.Characters_Motion_10Combo_Clear[i] = CreateNumberedArrayFromInt(OpenTaiko.SkinG.Characters_10Combo_Clear_Ptn[i]);
+			OpenTaiko.SkinG.Characters_Motion_10ComboMax[i] = CreateNumberedArrayFromInt(OpenTaiko.SkinG.Characters_10Combo_Maxed_Ptn[i]);
+			OpenTaiko.SkinG.Characters_Motion_Miss[i] = CreateNumberedArrayFromInt(OpenTaiko.SkinG.Characters_Normal_Missed_Ptn[i]);
+			OpenTaiko.SkinG.Characters_Motion_MissDown[i] = CreateNumberedArrayFromInt(OpenTaiko.SkinG.Characters_Normal_MissedDown_Ptn[i]);
+			OpenTaiko.SkinG.Characters_Motion_ClearIn[i] = CreateNumberedArrayFromInt(OpenTaiko.SkinG.Characters_Become_Cleared_Ptn[i]);
+			OpenTaiko.SkinG.Characters_Motion_Clear[i] = CreateNumberedArrayFromInt(OpenTaiko.SkinG.Characters_Normal_Cleared_Ptn[i]);
+			OpenTaiko.SkinG.Characters_Motion_ClearMax[i] = CreateNumberedArrayFromInt(OpenTaiko.SkinG.Characters_Normal_Maxed_Ptn[i]);
+			OpenTaiko.SkinG.Characters_Motion_MissIn[i] = CreateNumberedArrayFromInt(OpenTaiko.SkinG.Characters_MissIn_Ptn[i]);
+			OpenTaiko.SkinG.Characters_Motion_MissDownIn[i] = CreateNumberedArrayFromInt(OpenTaiko.SkinG.Characters_MissDownIn_Ptn[i]);
+			OpenTaiko.SkinG.Characters_Motion_GoGoStart[i] = CreateNumberedArrayFromInt(OpenTaiko.SkinG.Characters_GoGoStart_Ptn[i]);
+			OpenTaiko.SkinG.Characters_Motion_GoGoStart_Clear[i] = CreateNumberedArrayFromInt(OpenTaiko.SkinG.Characters_GoGoStart_Clear_Ptn[i]);
+			OpenTaiko.SkinG.Characters_Motion_GoGoStartMax[i] = CreateNumberedArrayFromInt(OpenTaiko.SkinG.Characters_GoGoStart_Maxed_Ptn[i]);
+			OpenTaiko.SkinG.Characters_Motion_GoGo[i] = CreateNumberedArrayFromInt(OpenTaiko.SkinG.Characters_GoGoTime_Ptn[i]);
+			OpenTaiko.SkinG.Characters_Motion_GoGoMax[i] = CreateNumberedArrayFromInt(OpenTaiko.SkinG.Characters_GoGoTime_Maxed_Ptn[i]);
+			OpenTaiko.SkinG.Characters_Motion_SoulIn[i] = CreateNumberedArrayFromInt(OpenTaiko.SkinG.Characters_Become_Maxed_Ptn[i]);
+			OpenTaiko.SkinG.Characters_Motion_SoulOut[i] = CreateNumberedArrayFromInt(OpenTaiko.SkinG.Characters_SoulOut_Ptn[i]);
+			OpenTaiko.SkinG.Characters_Motion_ClearOut[i] = CreateNumberedArrayFromInt(OpenTaiko.SkinG.Characters_ClearOut_Ptn[i]);
+			OpenTaiko.SkinG.Characters_Motion_Return[i] = CreateNumberedArrayFromInt(OpenTaiko.SkinG.Characters_Return_Ptn[i]);
 			/*
-            TJAPlayer3.Skin.Characters_Motion_Tower_Standing[i] = CreateNumberedArrayFromInt(TJAPlayer3.Skin.Characters_Tower_Standing_Ptn[i]);
-            TJAPlayer3.Skin.Characters_Motion_Tower_Climbing[i] = CreateNumberedArrayFromInt(TJAPlayer3.Skin.Characters_Tower_Climbing_Ptn[i]);
-            TJAPlayer3.Skin.Characters_Motion_Tower_Running[i] = CreateNumberedArrayFromInt(TJAPlayer3.Skin.Characters_Tower_Running_Ptn[i]);
-            TJAPlayer3.Skin.Characters_Motion_Tower_Clear[i] = CreateNumberedArrayFromInt(TJAPlayer3.Skin.Characters_Tower_Clear_Ptn[i]);
-            TJAPlayer3.Skin.Characters_Motion_Tower_Fail[i] = CreateNumberedArrayFromInt(TJAPlayer3.Skin.Characters_Tower_Fail_Ptn[i]);
-            TJAPlayer3.Skin.Characters_Motion_Tower_Standing_Tired[i] = CreateNumberedArrayFromInt(TJAPlayer3.Skin.Characters_Tower_Standing_Tired_Ptn[i]);
-            TJAPlayer3.Skin.Characters_Motion_Tower_Climbing_Tired[i] = CreateNumberedArrayFromInt(TJAPlayer3.Skin.Characters_Tower_Climbing_Tired_Ptn[i]);
-            TJAPlayer3.Skin.Characters_Motion_Tower_Running_Tired[i] = CreateNumberedArrayFromInt(TJAPlayer3.Skin.Characters_Tower_Running_Tired_Ptn[i]);
-            TJAPlayer3.Skin.Characters_Motion_Tower_Clear_Tired[i] = CreateNumberedArrayFromInt(TJAPlayer3.Skin.Characters_Tower_Clear_Tired_Ptn[i]);
+            TJAPlayer3.SkinG.Characters_Motion_Tower_Standing[i] = CreateNumberedArrayFromInt(TJAPlayer3.SkinG.Characters_Tower_Standing_Ptn[i]);
+            TJAPlayer3.SkinG.Characters_Motion_Tower_Climbing[i] = CreateNumberedArrayFromInt(TJAPlayer3.SkinG.Characters_Tower_Climbing_Ptn[i]);
+            TJAPlayer3.SkinG.Characters_Motion_Tower_Running[i] = CreateNumberedArrayFromInt(TJAPlayer3.SkinG.Characters_Tower_Running_Ptn[i]);
+            TJAPlayer3.SkinG.Characters_Motion_Tower_Clear[i] = CreateNumberedArrayFromInt(TJAPlayer3.SkinG.Characters_Tower_Clear_Ptn[i]);
+            TJAPlayer3.SkinG.Characters_Motion_Tower_Fail[i] = CreateNumberedArrayFromInt(TJAPlayer3.SkinG.Characters_Tower_Fail_Ptn[i]);
+            TJAPlayer3.SkinG.Characters_Motion_Tower_Standing_Tired[i] = CreateNumberedArrayFromInt(TJAPlayer3.SkinG.Characters_Tower_Standing_Tired_Ptn[i]);
+            TJAPlayer3.SkinG.Characters_Motion_Tower_Climbing_Tired[i] = CreateNumberedArrayFromInt(TJAPlayer3.SkinG.Characters_Tower_Climbing_Tired_Ptn[i]);
+            TJAPlayer3.SkinG.Characters_Motion_Tower_Running_Tired[i] = CreateNumberedArrayFromInt(TJAPlayer3.SkinG.Characters_Tower_Running_Tired_Ptn[i]);
+            TJAPlayer3.SkinG.Characters_Motion_Tower_Clear_Tired[i] = CreateNumberedArrayFromInt(TJAPlayer3.SkinG.Characters_Tower_Clear_Tired_Ptn[i]);
             */
-			OpenTaiko.Skin.Characters_Beat_Normal[i] = 1;
-			OpenTaiko.Skin.Characters_Beat_Miss[i] = 1;
-			OpenTaiko.Skin.Characters_Beat_MissDown[i] = 1;
-			OpenTaiko.Skin.Characters_Beat_Clear[i] = 2;
-			OpenTaiko.Skin.Characters_Beat_GoGo[i] = 2;
-			OpenTaiko.Skin.Characters_Beat_MissIn[i] = 1.5f;
-			OpenTaiko.Skin.Characters_Beat_MissDownIn[i] = 1.5f;
-			OpenTaiko.Skin.Characters_Beat_10Combo[i] = 1.5f;
-			OpenTaiko.Skin.Characters_Beat_10Combo_Clear[i] = 1.5f;
-			OpenTaiko.Skin.Characters_Beat_10ComboMax[i] = 1.5f;
-			OpenTaiko.Skin.Characters_Beat_ClearIn[i] = 1.5f;
-			OpenTaiko.Skin.Characters_Beat_ClearMax[i] = 1.5f;
-			OpenTaiko.Skin.Characters_Beat_GoGoStart[i] = 1.5f;
-			OpenTaiko.Skin.Characters_Beat_GoGoStart_Clear[i] = 1.5f;
-			OpenTaiko.Skin.Characters_Beat_GoGoStartMax[i] = 1.5f;
-			OpenTaiko.Skin.Characters_Beat_GoGoMax[i] = 2;
-			OpenTaiko.Skin.Characters_Beat_SoulIn[i] = 1.5f;
-			OpenTaiko.Skin.Characters_Beat_SoulOut[i] = 1.5f;
-			OpenTaiko.Skin.Characters_Beat_ClearOut[i] = 1.5f;
-			OpenTaiko.Skin.Characters_Beat_Return[i] = 1.5f;
-			OpenTaiko.Skin.Characters_Beat_Tower_Standing[i] = 1;
-			OpenTaiko.Skin.Characters_Beat_Tower_Clear[i] = 1;
-			OpenTaiko.Skin.Characters_Beat_Tower_Fail[i] = 1;
-			OpenTaiko.Skin.Characters_Beat_Tower_Standing_Tired[i] = 1;
-			OpenTaiko.Skin.Characters_Beat_Tower_Clear_Tired[i] = 1;
-			OpenTaiko.Skin.Characters_Balloon_Timer[i] = 28;
-			OpenTaiko.Skin.Characters_Balloon_Delay[i] = 500;
-			OpenTaiko.Skin.Characters_Balloon_FadeOut[i] = 84;
-			OpenTaiko.Skin.Characters_Title_Entry_AnimationDuration[i] = 1000;
-			OpenTaiko.Skin.Characters_Title_Normal_AnimationDuration[i] = 1000;
-			OpenTaiko.Skin.Characters_Menu_Loop_AnimationDuration[i] = 1000;
-			OpenTaiko.Skin.Characters_Menu_Select_AnimationDuration[i] = 1000;
-			OpenTaiko.Skin.Characters_Menu_Start_AnimationDuration[i] = 1000;
-			OpenTaiko.Skin.Characters_Menu_Wait_AnimationDuration[i] = 1000;
-			OpenTaiko.Skin.Characters_Result_Normal_AnimationDuration[i] = 1000;
-			OpenTaiko.Skin.Characters_Result_Clear_AnimationDuration[i] = 1000;
-			OpenTaiko.Skin.Characters_Result_Failed_In_AnimationDuration[i] = 1000;
-			OpenTaiko.Skin.Characters_Result_Failed_AnimationDuration[i] = 1000;
+			OpenTaiko.SkinG.Characters_Beat_Normal[i] = 1;
+			OpenTaiko.SkinG.Characters_Beat_Miss[i] = 1;
+			OpenTaiko.SkinG.Characters_Beat_MissDown[i] = 1;
+			OpenTaiko.SkinG.Characters_Beat_Clear[i] = 2;
+			OpenTaiko.SkinG.Characters_Beat_GoGo[i] = 2;
+			OpenTaiko.SkinG.Characters_Beat_MissIn[i] = 1.5f;
+			OpenTaiko.SkinG.Characters_Beat_MissDownIn[i] = 1.5f;
+			OpenTaiko.SkinG.Characters_Beat_10Combo[i] = 1.5f;
+			OpenTaiko.SkinG.Characters_Beat_10Combo_Clear[i] = 1.5f;
+			OpenTaiko.SkinG.Characters_Beat_10ComboMax[i] = 1.5f;
+			OpenTaiko.SkinG.Characters_Beat_ClearIn[i] = 1.5f;
+			OpenTaiko.SkinG.Characters_Beat_ClearMax[i] = 1.5f;
+			OpenTaiko.SkinG.Characters_Beat_GoGoStart[i] = 1.5f;
+			OpenTaiko.SkinG.Characters_Beat_GoGoStart_Clear[i] = 1.5f;
+			OpenTaiko.SkinG.Characters_Beat_GoGoStartMax[i] = 1.5f;
+			OpenTaiko.SkinG.Characters_Beat_GoGoMax[i] = 2;
+			OpenTaiko.SkinG.Characters_Beat_SoulIn[i] = 1.5f;
+			OpenTaiko.SkinG.Characters_Beat_SoulOut[i] = 1.5f;
+			OpenTaiko.SkinG.Characters_Beat_ClearOut[i] = 1.5f;
+			OpenTaiko.SkinG.Characters_Beat_Return[i] = 1.5f;
+			OpenTaiko.SkinG.Characters_Beat_Tower_Standing[i] = 1;
+			OpenTaiko.SkinG.Characters_Beat_Tower_Clear[i] = 1;
+			OpenTaiko.SkinG.Characters_Beat_Tower_Fail[i] = 1;
+			OpenTaiko.SkinG.Characters_Beat_Tower_Standing_Tired[i] = 1;
+			OpenTaiko.SkinG.Characters_Beat_Tower_Clear_Tired[i] = 1;
+			OpenTaiko.SkinG.Characters_Balloon_Timer[i] = 28;
+			OpenTaiko.SkinG.Characters_Balloon_Delay[i] = 500;
+			OpenTaiko.SkinG.Characters_Balloon_FadeOut[i] = 84;
+			OpenTaiko.SkinG.Characters_Title_Entry_AnimationDuration[i] = 1000;
+			OpenTaiko.SkinG.Characters_Title_Normal_AnimationDuration[i] = 1000;
+			OpenTaiko.SkinG.Characters_Menu_Loop_AnimationDuration[i] = 1000;
+			OpenTaiko.SkinG.Characters_Menu_Select_AnimationDuration[i] = 1000;
+			OpenTaiko.SkinG.Characters_Menu_Start_AnimationDuration[i] = 1000;
+			OpenTaiko.SkinG.Characters_Menu_Wait_AnimationDuration[i] = 1000;
+			OpenTaiko.SkinG.Characters_Result_Normal_AnimationDuration[i] = 1000;
+			OpenTaiko.SkinG.Characters_Result_Clear_AnimationDuration[i] = 1000;
+			OpenTaiko.SkinG.Characters_Result_Failed_In_AnimationDuration[i] = 1000;
+			OpenTaiko.SkinG.Characters_Result_Failed_AnimationDuration[i] = 1000;
 
 			#endregion
 
@@ -1790,385 +1797,385 @@ class TextureLoader {
 								case "Menu_Offset": {
 										string[] strSplit = strParam.Split(',');
 										for (int k = 0; k < 2; k++) {
-											OpenTaiko.Skin.Characters_Menu_Offset[i][k] = int.Parse(strSplit[k]);
+											OpenTaiko.SkinG.Characters_Menu_Offset[i][k] = int.Parse(strSplit[k]);
 										}
 										break;
 									}
 								case "Result_Offset": {
 										string[] strSplit = strParam.Split(',');
 										for (int k = 0; k < 2; k++) {
-											OpenTaiko.Skin.Characters_Result_Offset[i][k] = int.Parse(strSplit[k]);
+											OpenTaiko.SkinG.Characters_Result_Offset[i][k] = int.Parse(strSplit[k]);
 										}
 										break;
 									}
 								case "Game_Chara_X": {
 										string[] strSplit = strParam.Split(',');
 										for (int k = 0; k < 2; k++) {
-											OpenTaiko.Skin.Characters_X[i][k] = int.Parse(strSplit[k]);
+											OpenTaiko.SkinG.Characters_X[i][k] = int.Parse(strSplit[k]);
 										}
 										break;
 									}
 								case "Game_Chara_Y": {
 										string[] strSplit = strParam.Split(',');
 										for (int k = 0; k < 2; k++) {
-											OpenTaiko.Skin.Characters_Y[i][k] = int.Parse(strSplit[k]);
+											OpenTaiko.SkinG.Characters_Y[i][k] = int.Parse(strSplit[k]);
 										}
 										break;
 									}
 								case "Game_Chara_4P": {
 										string[] strSplit = strParam.Split(',');
 										for (int k = 0; k < 2; k++) {
-											OpenTaiko.Skin.Characters_4P[i][k] = int.Parse(strSplit[k]);
+											OpenTaiko.SkinG.Characters_4P[i][k] = int.Parse(strSplit[k]);
 										}
 										break;
 									}
 								case "Game_Chara_5P": {
 										string[] strSplit = strParam.Split(',');
 										for (int k = 0; k < 2; k++) {
-											OpenTaiko.Skin.Characters_5P[i][k] = int.Parse(strSplit[k]);
+											OpenTaiko.SkinG.Characters_5P[i][k] = int.Parse(strSplit[k]);
 										}
 										break;
 									}
 								case "Game_Chara_X_AI": {
 										string[] strSplit = strParam.Split(',');
 										for (int k = 0; k < 2; k++) {
-											OpenTaiko.Skin.Characters_X_AI[i][k] = int.Parse(strSplit[k]);
+											OpenTaiko.SkinG.Characters_X_AI[i][k] = int.Parse(strSplit[k]);
 										}
 										break;
 									}
 								case "Game_Chara_Y_AI": {
 										string[] strSplit = strParam.Split(',');
 										for (int k = 0; k < 2; k++) {
-											OpenTaiko.Skin.Characters_Y_AI[i][k] = int.Parse(strSplit[k]);
+											OpenTaiko.SkinG.Characters_Y_AI[i][k] = int.Parse(strSplit[k]);
 										}
 										break;
 									}
 								case "Game_Chara_Balloon_X": {
 										string[] strSplit = strParam.Split(',');
 										for (int k = 0; k < 2; k++) {
-											OpenTaiko.Skin.Characters_Balloon_X[i][k] = int.Parse(strSplit[k]);
+											OpenTaiko.SkinG.Characters_Balloon_X[i][k] = int.Parse(strSplit[k]);
 										}
 										break;
 									}
 								case "Game_Chara_Balloon_Y": {
 										string[] strSplit = strParam.Split(',');
 										for (int k = 0; k < 2; k++) {
-											OpenTaiko.Skin.Characters_Balloon_Y[i][k] = int.Parse(strSplit[k]);
+											OpenTaiko.SkinG.Characters_Balloon_Y[i][k] = int.Parse(strSplit[k]);
 										}
 										break;
 									}
 								case "Game_Chara_Balloon_4P": {
 										string[] strSplit = strParam.Split(',');
 										for (int k = 0; k < 2; k++) {
-											OpenTaiko.Skin.Characters_Balloon_4P[i][k] = int.Parse(strSplit[k]);
+											OpenTaiko.SkinG.Characters_Balloon_4P[i][k] = int.Parse(strSplit[k]);
 										}
 										break;
 									}
 								case "Game_Chara_Balloon_5P": {
 										string[] strSplit = strParam.Split(',');
 										for (int k = 0; k < 2; k++) {
-											OpenTaiko.Skin.Characters_Balloon_5P[i][k] = int.Parse(strSplit[k]);
+											OpenTaiko.SkinG.Characters_Balloon_5P[i][k] = int.Parse(strSplit[k]);
 										}
 										break;
 									}
 								case "Game_Chara_Kusudama_X": {
 										string[] strSplit = strParam.Split(',');
 										for (int k = 0; k < 5; k++) {
-											OpenTaiko.Skin.Characters_Kusudama_X[i][k] = int.Parse(strSplit[k]);
+											OpenTaiko.SkinG.Characters_Kusudama_X[i][k] = int.Parse(strSplit[k]);
 										}
 										break;
 									}
 								case "Game_Chara_Kusudama_Y": {
 										string[] strSplit = strParam.Split(',');
 										for (int k = 0; k < 5; k++) {
-											OpenTaiko.Skin.Characters_Kusudama_Y[i][k] = int.Parse(strSplit[k]);
+											OpenTaiko.SkinG.Characters_Kusudama_Y[i][k] = int.Parse(strSplit[k]);
 										}
 										break;
 									}
 								case "Game_Chara_Balloon_Timer": {
 										if (int.Parse(strParam) > 0)
-											OpenTaiko.Skin.Characters_Balloon_Timer[i] = int.Parse(strParam);
+											OpenTaiko.SkinG.Characters_Balloon_Timer[i] = int.Parse(strParam);
 										break;
 									}
 								case "Game_Chara_Balloon_Delay": {
 										if (int.Parse(strParam) > 0)
-											OpenTaiko.Skin.Characters_Balloon_Delay[i] = int.Parse(strParam);
+											OpenTaiko.SkinG.Characters_Balloon_Delay[i] = int.Parse(strParam);
 										break;
 									}
 								case "Game_Chara_Balloon_FadeOut": {
 										if (int.Parse(strParam) > 0)
-											OpenTaiko.Skin.Characters_Balloon_FadeOut[i] = int.Parse(strParam);
+											OpenTaiko.SkinG.Characters_Balloon_FadeOut[i] = int.Parse(strParam);
 										break;
 									}
 								// パターン数の設定はTextureLoader.csで反映されます。
 								case "Game_Chara_Motion_Normal": {
-										OpenTaiko.Skin.Characters_Motion_Normal[i] = CConversion.StringToIntArray(strParam);
+										OpenTaiko.SkinG.Characters_Motion_Normal[i] = CConversion.StringToIntArray(strParam);
 										break;
 									}
 								case "Game_Chara_Motion_10Combo": {
-										OpenTaiko.Skin.Characters_Motion_10Combo[i] = CConversion.StringToIntArray(strParam);
+										OpenTaiko.SkinG.Characters_Motion_10Combo[i] = CConversion.StringToIntArray(strParam);
 										break;
 									}
 								case "Game_Chara_Motion_10Combo_Clear": {
-										OpenTaiko.Skin.Characters_Motion_10Combo_Clear[i] = CConversion.StringToIntArray(strParam);
+										OpenTaiko.SkinG.Characters_Motion_10Combo_Clear[i] = CConversion.StringToIntArray(strParam);
 										break;
 									}
 								case "Game_Chara_Motion_10Combo_Max": {
-										OpenTaiko.Skin.Characters_Motion_10ComboMax[i] = CConversion.StringToIntArray(strParam);
+										OpenTaiko.SkinG.Characters_Motion_10ComboMax[i] = CConversion.StringToIntArray(strParam);
 										break;
 									}
 								case "Game_Chara_Motion_Miss": {
-										OpenTaiko.Skin.Characters_Motion_Miss[i] = CConversion.StringToIntArray(strParam);
+										OpenTaiko.SkinG.Characters_Motion_Miss[i] = CConversion.StringToIntArray(strParam);
 										break;
 									}
 								case "Game_Chara_Motion_MissDown": {
-										OpenTaiko.Skin.Characters_Motion_MissDown[i] = CConversion.StringToIntArray(strParam);
+										OpenTaiko.SkinG.Characters_Motion_MissDown[i] = CConversion.StringToIntArray(strParam);
 										break;
 									}
 								case "Game_Chara_Motion_ClearIn": {
-										OpenTaiko.Skin.Characters_Motion_ClearIn[i] = CConversion.StringToIntArray(strParam);
+										OpenTaiko.SkinG.Characters_Motion_ClearIn[i] = CConversion.StringToIntArray(strParam);
 										break;
 									}
 								case "Game_Chara_Motion_Clear": {
-										OpenTaiko.Skin.Characters_Motion_Clear[i] = CConversion.StringToIntArray(strParam);
-										OpenTaiko.Skin.Characters_Motion_ClearMax[i] = OpenTaiko.Skin.Characters_Motion_Clear[i];
+										OpenTaiko.SkinG.Characters_Motion_Clear[i] = CConversion.StringToIntArray(strParam);
+										OpenTaiko.SkinG.Characters_Motion_ClearMax[i] = OpenTaiko.SkinG.Characters_Motion_Clear[i];
 										break;
 									}
 								case "Game_Chara_Motion_ClearMax": {
-										OpenTaiko.Skin.Characters_Motion_ClearMax[i] = CConversion.StringToIntArray(strParam);
+										OpenTaiko.SkinG.Characters_Motion_ClearMax[i] = CConversion.StringToIntArray(strParam);
 										break;
 									}
 								case "Game_Chara_Motion_MissIn": {
-										OpenTaiko.Skin.Characters_Motion_MissIn[i] = CConversion.StringToIntArray(strParam);
+										OpenTaiko.SkinG.Characters_Motion_MissIn[i] = CConversion.StringToIntArray(strParam);
 										break;
 									}
 								case "Game_Chara_Motion_MissDownIn": {
-										OpenTaiko.Skin.Characters_Motion_MissDownIn[i] = CConversion.StringToIntArray(strParam);
+										OpenTaiko.SkinG.Characters_Motion_MissDownIn[i] = CConversion.StringToIntArray(strParam);
 										break;
 									}
 								case "Game_Chara_Motion_GoGoStart": {
-										OpenTaiko.Skin.Characters_Motion_GoGoStart[i] = CConversion.StringToIntArray(strParam);
-										OpenTaiko.Skin.Characters_Motion_GoGoStartMax[i] = OpenTaiko.Skin.Characters_Motion_GoGoStart[i];
+										OpenTaiko.SkinG.Characters_Motion_GoGoStart[i] = CConversion.StringToIntArray(strParam);
+										OpenTaiko.SkinG.Characters_Motion_GoGoStartMax[i] = OpenTaiko.SkinG.Characters_Motion_GoGoStart[i];
 										break;
 									}
 								case "Game_Chara_Motion_GoGoStart_Clear": {
-										OpenTaiko.Skin.Characters_Motion_GoGoStart_Clear[i] = CConversion.StringToIntArray(strParam);
+										OpenTaiko.SkinG.Characters_Motion_GoGoStart_Clear[i] = CConversion.StringToIntArray(strParam);
 										break;
 									}
 								case "Game_Chara_Motion_GoGoStart_Max": {
-										OpenTaiko.Skin.Characters_Motion_GoGoStartMax[i] = CConversion.StringToIntArray(strParam);
+										OpenTaiko.SkinG.Characters_Motion_GoGoStartMax[i] = CConversion.StringToIntArray(strParam);
 										break;
 									}
 								case "Game_Chara_Motion_GoGo": {
-										OpenTaiko.Skin.Characters_Motion_GoGo[i] = CConversion.StringToIntArray(strParam);
-										OpenTaiko.Skin.Characters_Motion_GoGoMax[i] = OpenTaiko.Skin.Characters_Motion_GoGo[i];
+										OpenTaiko.SkinG.Characters_Motion_GoGo[i] = CConversion.StringToIntArray(strParam);
+										OpenTaiko.SkinG.Characters_Motion_GoGoMax[i] = OpenTaiko.SkinG.Characters_Motion_GoGo[i];
 										break;
 									}
 								case "Game_Chara_Motion_GoGo_Max": {
-										OpenTaiko.Skin.Characters_Motion_GoGoMax[i] = CConversion.StringToIntArray(strParam);
+										OpenTaiko.SkinG.Characters_Motion_GoGoMax[i] = CConversion.StringToIntArray(strParam);
 										break;
 									}
 								case "Game_Chara_Motion_SoulIn": {
-										OpenTaiko.Skin.Characters_Motion_SoulIn[i] = CConversion.StringToIntArray(strParam);
+										OpenTaiko.SkinG.Characters_Motion_SoulIn[i] = CConversion.StringToIntArray(strParam);
 										break;
 									}
 								case "Game_Chara_Motion_SoulOut": {
-										OpenTaiko.Skin.Characters_Motion_SoulOut[i] = CConversion.StringToIntArray(strParam);
+										OpenTaiko.SkinG.Characters_Motion_SoulOut[i] = CConversion.StringToIntArray(strParam);
 										break;
 									}
 								case "Game_Chara_Motion_ClearOut": {
-										OpenTaiko.Skin.Characters_Motion_ClearOut[i] = CConversion.StringToIntArray(strParam);
+										OpenTaiko.SkinG.Characters_Motion_ClearOut[i] = CConversion.StringToIntArray(strParam);
 										break;
 									}
 								case "Game_Chara_Motion_Return": {
-										OpenTaiko.Skin.Characters_Motion_Return[i] = CConversion.StringToIntArray(strParam);
+										OpenTaiko.SkinG.Characters_Motion_Return[i] = CConversion.StringToIntArray(strParam);
 										break;
 									}
 								/*case "Game_Chara_Motion_Tower_Standing":
                                 {
-                                    TJAPlayer3.Skin.Characters_Motion_Tower_Standing[i] = CConversion.StringToIntArray(strParam);
+                                    TJAPlayer3.SkinG.Characters_Motion_Tower_Standing[i] = CConversion.StringToIntArray(strParam);
                                     break;
                                 }
                                 case "Game_Chara_Motion_Tower_Climbing":
                                 {
-                                    TJAPlayer3.Skin.Characters_Motion_Tower_Climbing[i] = CConversion.StringToIntArray(strParam);
+                                    TJAPlayer3.SkinG.Characters_Motion_Tower_Climbing[i] = CConversion.StringToIntArray(strParam);
                                     break;
                                 }
                                 case "Game_Chara_Motion_Tower_Running":
                                 {
-                                    TJAPlayer3.Skin.Characters_Motion_Tower_Running[i] = CConversion.StringToIntArray(strParam);
+                                    TJAPlayer3.SkinG.Characters_Motion_Tower_Running[i] = CConversion.StringToIntArray(strParam);
                                     break;
                                 }
                                 case "Game_Chara_Motion_Tower_Clear":
                                 {
-                                    TJAPlayer3.Skin.Characters_Motion_Tower_Clear[i] = CConversion.StringToIntArray(strParam);
+                                    TJAPlayer3.SkinG.Characters_Motion_Tower_Clear[i] = CConversion.StringToIntArray(strParam);
                                     break;
                                 }
                                 case "Game_Chara_Motion_Tower_Fail":
                                 {
-                                    TJAPlayer3.Skin.Characters_Motion_Tower_Fail[i] = CConversion.StringToIntArray(strParam);
+                                    TJAPlayer3.SkinG.Characters_Motion_Tower_Fail[i] = CConversion.StringToIntArray(strParam);
                                     break;
                                 }
                                 case "Game_Chara_Motion_Tower_Standing_Tired":
                                 {
-                                    TJAPlayer3.Skin.Characters_Motion_Tower_Standing_Tired[i] = CConversion.StringToIntArray(strParam);
+                                    TJAPlayer3.SkinG.Characters_Motion_Tower_Standing_Tired[i] = CConversion.StringToIntArray(strParam);
                                     break;
                                 }
                                 case "Game_Chara_Motion_Tower_Climbing_Tired":
                                 {
-                                    TJAPlayer3.Skin.Characters_Motion_Tower_Climbing_Tired[i] = CConversion.StringToIntArray(strParam);
+                                    TJAPlayer3.SkinG.Characters_Motion_Tower_Climbing_Tired[i] = CConversion.StringToIntArray(strParam);
                                     break;
                                 }
                                 case "Game_Chara_Motion_Tower_Running_Tired":
                                 {
-                                    TJAPlayer3.Skin.Characters_Motion_Tower_Running_Tired[i] = CConversion.StringToIntArray(strParam);
+                                    TJAPlayer3.SkinG.Characters_Motion_Tower_Running_Tired[i] = CConversion.StringToIntArray(strParam);
                                     break;
                                 }
                                 case "Game_Chara_Motion_Tower_Clear_Tired":
                                 {
-                                    TJAPlayer3.Skin.Characters_Motion_Tower_Clear_Tired[i] = CConversion.StringToIntArray(strParam);
+                                    TJAPlayer3.SkinG.Characters_Motion_Tower_Clear_Tired[i] = CConversion.StringToIntArray(strParam);
                                     break;
                                 }*/
 								case "Game_Chara_Beat_Normal": {
-										OpenTaiko.Skin.Characters_Beat_Normal[i] = float.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Beat_Normal[i] = float.Parse(strParam);
 										break;
 									}
 								case "Game_Chara_Beat_10Combo": {
-										OpenTaiko.Skin.Characters_Beat_10Combo[i] = float.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Beat_10Combo[i] = float.Parse(strParam);
 										break;
 									}
 								case "Game_Chara_Beat_10ComboMax": {
-										OpenTaiko.Skin.Characters_Beat_10ComboMax[i] = float.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Beat_10ComboMax[i] = float.Parse(strParam);
 										break;
 									}
 								case "Game_Chara_Beat_Miss": {
-										OpenTaiko.Skin.Characters_Beat_Miss[i] = float.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Beat_Miss[i] = float.Parse(strParam);
 										break;
 									}
 								case "Game_Chara_Beat_MissDown": {
-										OpenTaiko.Skin.Characters_Beat_MissDown[i] = float.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Beat_MissDown[i] = float.Parse(strParam);
 										break;
 									}
 								case "Game_Chara_Beat_ClearIn": {
-										OpenTaiko.Skin.Characters_Beat_ClearIn[i] = float.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Beat_ClearIn[i] = float.Parse(strParam);
 										break;
 									}
 								case "Game_Chara_Beat_Clear": {
-										OpenTaiko.Skin.Characters_Beat_Clear[i] = float.Parse(strParam);
-										OpenTaiko.Skin.Characters_Beat_ClearMax[i] = float.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Beat_Clear[i] = float.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Beat_ClearMax[i] = float.Parse(strParam);
 										break;
 									}
 								case "Game_Chara_Beat_ClearMax": {
-										OpenTaiko.Skin.Characters_Beat_ClearMax[i] = float.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Beat_ClearMax[i] = float.Parse(strParam);
 										break;
 									}
 								case "Game_Chara_Beat_MissIn": {
-										OpenTaiko.Skin.Characters_Beat_MissIn[i] = float.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Beat_MissIn[i] = float.Parse(strParam);
 										break;
 									}
 								case "Game_Chara_Beat_MissDownIn": {
-										OpenTaiko.Skin.Characters_Beat_MissDownIn[i] = float.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Beat_MissDownIn[i] = float.Parse(strParam);
 										break;
 									}
 								case "Game_Chara_Beat_GoGoStart": {
-										OpenTaiko.Skin.Characters_Beat_GoGoStart[i] = float.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Beat_GoGoStart[i] = float.Parse(strParam);
 										break;
 									}
 								case "Game_Chara_Beat_GoGoStartClear": {
-										OpenTaiko.Skin.Characters_Beat_GoGoStart_Clear[i] = float.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Beat_GoGoStart_Clear[i] = float.Parse(strParam);
 										break;
 									}
 								case "Game_Chara_Beat_GoGoStartMax": {
-										OpenTaiko.Skin.Characters_Beat_GoGoStartMax[i] = float.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Beat_GoGoStartMax[i] = float.Parse(strParam);
 										break;
 									}
 								case "Game_Chara_Beat_GoGo": {
-										OpenTaiko.Skin.Characters_Beat_GoGo[i] = float.Parse(strParam);
-										OpenTaiko.Skin.Characters_Beat_GoGoMax[i] = float.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Beat_GoGo[i] = float.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Beat_GoGoMax[i] = float.Parse(strParam);
 										break;
 									}
 								case "Game_Chara_Beat_GoGoMax": {
-										OpenTaiko.Skin.Characters_Beat_GoGoMax[i] = float.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Beat_GoGoMax[i] = float.Parse(strParam);
 										break;
 									}
 								case "Game_Chara_Beat_SoulIn": {
-										OpenTaiko.Skin.Characters_Beat_SoulIn[i] = float.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Beat_SoulIn[i] = float.Parse(strParam);
 										break;
 									}
 								case "Game_Chara_Beat_Return": {
-										OpenTaiko.Skin.Characters_Beat_Return[i] = float.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Beat_Return[i] = float.Parse(strParam);
 										break;
 									}
 								case "Game_Chara_Beat_Tower_Standing": {
-										OpenTaiko.Skin.Characters_Beat_Tower_Standing[i] = float.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Beat_Tower_Standing[i] = float.Parse(strParam);
 										break;
 									}
 								case "Game_Chara_Beat_Tower_Standing_Tired": {
-										OpenTaiko.Skin.Characters_Beat_Tower_Standing_Tired[i] = float.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Beat_Tower_Standing_Tired[i] = float.Parse(strParam);
 										break;
 									}
 								case "Game_Chara_Beat_Tower_Fail": {
-										OpenTaiko.Skin.Characters_Beat_Tower_Fail[i] = float.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Beat_Tower_Fail[i] = float.Parse(strParam);
 										break;
 									}
 								case "Game_Chara_Beat_Tower_Clear": {
-										OpenTaiko.Skin.Characters_Beat_Tower_Clear[i] = float.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Beat_Tower_Clear[i] = float.Parse(strParam);
 										break;
 									}
 								case "Game_Chara_Beat_Tower_Clear_Tired": {
-										OpenTaiko.Skin.Characters_Beat_Tower_Clear_Tired[i] = float.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Beat_Tower_Clear_Tired[i] = float.Parse(strParam);
 										break;
 									}
 								case "Game_Chara_Tower_Clear_IsLooping": {
-										OpenTaiko.Skin.Characters_Tower_Clear_IsLooping[i] = int.Parse(strParam) != 0;
+										OpenTaiko.SkinG.Characters_Tower_Clear_IsLooping[i] = int.Parse(strParam) != 0;
 										break;
 									}
 								case "Game_Chara_Tower_Clear_Tired_IsLooping": {
-										OpenTaiko.Skin.Characters_Tower_Clear_Tired_IsLooping[i] = int.Parse(strParam) != 0;
+										OpenTaiko.SkinG.Characters_Tower_Clear_Tired_IsLooping[i] = int.Parse(strParam) != 0;
 										break;
 									}
 								case "Game_Chara_Tower_Fail_IsLooping": {
-										OpenTaiko.Skin.Characters_Tower_Fail_IsLooping[i] = int.Parse(strParam) != 0;
+										OpenTaiko.SkinG.Characters_Tower_Fail_IsLooping[i] = int.Parse(strParam) != 0;
 										break;
 									}
 								case "Chara_Entry_AnimationDuration": {
-										OpenTaiko.Skin.Characters_Title_Entry_AnimationDuration[i] = int.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Title_Entry_AnimationDuration[i] = int.Parse(strParam);
 										break;
 									}
 								case "Chara_Normal_AnimationDuration": {
-										OpenTaiko.Skin.Characters_Title_Normal_AnimationDuration[i] = int.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Title_Normal_AnimationDuration[i] = int.Parse(strParam);
 										break;
 									}
 								case "Chara_Menu_Loop_AnimationDuration": {
-										OpenTaiko.Skin.Characters_Menu_Loop_AnimationDuration[i] = int.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Menu_Loop_AnimationDuration[i] = int.Parse(strParam);
 										break;
 									}
 								case "Chara_Menu_Select_AnimationDuration": {
-										OpenTaiko.Skin.Characters_Menu_Select_AnimationDuration[i] = int.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Menu_Select_AnimationDuration[i] = int.Parse(strParam);
 										break;
 									}
 								case "Chara_Menu_Start_AnimationDuration": {
-										OpenTaiko.Skin.Characters_Menu_Start_AnimationDuration[i] = int.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Menu_Start_AnimationDuration[i] = int.Parse(strParam);
 										break;
 									}
 								case "Chara_Menu_Wait_AnimationDuration": {
-										OpenTaiko.Skin.Characters_Menu_Wait_AnimationDuration[i] = int.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Menu_Wait_AnimationDuration[i] = int.Parse(strParam);
 										break;
 									}
 								case "Chara_Result_Normal_AnimationDuration": {
-										OpenTaiko.Skin.Characters_Result_Normal_AnimationDuration[i] = int.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Result_Normal_AnimationDuration[i] = int.Parse(strParam);
 										break;
 									}
 								case "Chara_Result_Clear_AnimationDuration": {
-										OpenTaiko.Skin.Characters_Result_Clear_AnimationDuration[i] = int.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Result_Clear_AnimationDuration[i] = int.Parse(strParam);
 										break;
 									}
 								case "Chara_Result_Failed_In_AnimationDuration": {
-										OpenTaiko.Skin.Characters_Result_Failed_In_AnimationDuration[i] = int.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Result_Failed_In_AnimationDuration[i] = int.Parse(strParam);
 										break;
 									}
 								case "Chara_Result_Failed_AnimationDuration": {
-										OpenTaiko.Skin.Characters_Result_Failed_AnimationDuration[i] = int.Parse(strParam);
+										OpenTaiko.SkinG.Characters_Result_Failed_AnimationDuration[i] = int.Parse(strParam);
 										break;
 									}
 								/*
@@ -2177,7 +2184,7 @@ class TextureLoader {
                                     string[] strSplit = strParam.Split(',');
                                     for (int j = 0; j < 6; j++)
                                     {
-                                        TJAPlayer3.Skin.Characters_Result_SpeechText[i][j] = strSplit[j];
+                                        TJAPlayer3.SkinG.Characters_Result_SpeechText[i][j] = strSplit[j];
                                     }
                                     break;
                                 }
@@ -2201,7 +2208,7 @@ class TextureLoader {
 
 		#region [Voice samples]
 
-		var _skin = OpenTaiko.Skin;
+		var _skin = OpenTaiko.SkinG;
 
 		#region [Dispose previously allocated sound effects]
 
@@ -2258,7 +2265,7 @@ class TextureLoader {
 		#endregion
 	}
 
-	public void DisposeTexture() {
+	public static void DisposeTexture(List<CTexture> listTexture) {
 		foreach (var tex in listTexture) {
 			var texture = tex;
 			OpenTaiko.tテクスチャの解放(ref texture);
@@ -2266,7 +2273,17 @@ class TextureLoader {
 			texture = null;
 		}
 		listTexture.Clear();
+	}
 
+	public void DisposeTexture() {
+		DisposeSkinTexture();
+		DisposeGlobalTexture();
+	}
+
+	public void DisposeSkinTexture() => DisposeTexture(this.listSkinTexture);
+	public void DisposeGlobalTexture() => DisposeTexture(this.listGlobalTexture);
+
+	public void UnloadTopActivityAssets() {
 		//if (TJAPlayer3.ConfigIni.PreAssetsLoading)
 		{
 			foreach (var act in OpenTaiko.app.listTopLevelActivities) {
@@ -2835,7 +2852,8 @@ Result_Mountain = new CTexture[4]*/;
 
 
 	#region [ 解放用 ]
-	public List<CTexture> listTexture = new List<CTexture>();
+	public List<CTexture> listSkinTexture = new List<CTexture>();
+	public List<CTexture> listGlobalTexture = new List<CTexture>();
 	#endregion
 
 }

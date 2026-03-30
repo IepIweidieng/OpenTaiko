@@ -43,15 +43,15 @@ internal class CActImplCharacter : CActivity {
 			// Currently used character
 			int p = OpenTaiko.GetActualPlayer(i);
 
-			this.iCurrentCharacter[i] = Math.Max(0, Math.Min(OpenTaiko.SaveFileInstances[p].data.Character, OpenTaiko.Skin.Characters_Ptn - 1));
+			this.iCurrentCharacter[i] = Math.Max(0, Math.Min(OpenTaiko.SaveFileInstances[p].data.Character, OpenTaiko.SkinG.Characters_Ptn - 1));
 
-			if (OpenTaiko.Skin.Characters_Normal_Ptn[this.iCurrentCharacter[i]] != 0) ChangeAnime(i, Anime.Normal, true);
+			if (OpenTaiko.SkinG.Characters_Normal_Ptn[this.iCurrentCharacter[i]] != 0) ChangeAnime(i, Anime.Normal, true);
 			else ChangeAnime(i, Anime.None, true);
 
 			this.IsInKusudama = false;
 			this.b風船連打中[i] = false;
 
-			CharaAction_Balloon_FadeOut[i] = new Animations.FadeOut(OpenTaiko.Skin.Characters_Balloon_FadeOut[this.iCurrentCharacter[i]]);
+			CharaAction_Balloon_FadeOut[i] = new Animations.FadeOut(OpenTaiko.SkinG.Characters_Balloon_FadeOut[this.iCurrentCharacter[i]]);
 			if (CharaAction_Balloon_Delay[i] != null) CharaAction_Balloon_Delay[i].CurrentValue = (int)CharaAction_Balloon_Delay[i].EndValue;
 		}
 
@@ -111,7 +111,7 @@ internal class CActImplCharacter : CActivity {
 		for (int i = 0; i < OpenTaiko.ConfigIni.nPlayerCount; i++) {
 			int Character = this.iCurrentCharacter[i];
 
-			if (OpenTaiko.Skin.Characters_Ptn == 0)
+			if (OpenTaiko.SkinG.Characters_Ptn == 0)
 				break;
 
 			// Blinking animation during invincibility frames
@@ -165,42 +165,42 @@ internal class CActImplCharacter : CActivity {
 							getNowCharaFrameLooped();
 							updateNormal();
 							ReturnDefaultAnime(i, false);
-							nowChara = OpenTaiko.Tx.Characters_Normal[Character][OpenTaiko.Skin.Characters_Motion_Normal[Character][nNowCharaFrame[i]]];
+							nowChara = OpenTaiko.Tx.Characters_Normal[Character][OpenTaiko.SkinG.Characters_Motion_Normal[Character][nNowCharaFrame[i]]];
 						}
 						break;
 					case Anime.Miss: {
 							getNowCharaFrameLooped();
 							updateNormal();
 							ReturnDefaultAnime(i, false);
-							nowChara = OpenTaiko.Tx.Characters_Normal_Missed[Character][OpenTaiko.Skin.Characters_Motion_Miss[Character][nNowCharaFrame[i]]];
+							nowChara = OpenTaiko.Tx.Characters_Normal_Missed[Character][OpenTaiko.SkinG.Characters_Motion_Miss[Character][nNowCharaFrame[i]]];
 						}
 						break;
 					case Anime.MissDown: {
 							getNowCharaFrameLooped();
 							updateNormal();
 							ReturnDefaultAnime(i, false);
-							nowChara = OpenTaiko.Tx.Characters_Normal_MissedDown[Character][OpenTaiko.Skin.Characters_Motion_MissDown[Character][nNowCharaFrame[i]]];
+							nowChara = OpenTaiko.Tx.Characters_Normal_MissedDown[Character][OpenTaiko.SkinG.Characters_Motion_MissDown[Character][nNowCharaFrame[i]]];
 						}
 						break;
 					case Anime.Cleared: {
 							getNowCharaFrameLooped();
 							updateNormal();
 							ReturnDefaultAnime(i, false);
-							nowChara = OpenTaiko.Tx.Characters_Normal_Cleared[Character][OpenTaiko.Skin.Characters_Motion_Clear[Character][nNowCharaFrame[i]]];
+							nowChara = OpenTaiko.Tx.Characters_Normal_Cleared[Character][OpenTaiko.SkinG.Characters_Motion_Clear[Character][nNowCharaFrame[i]]];
 						}
 						break;
 					case Anime.Maxed: {
 							getNowCharaFrameLooped();
 							updateNormal();
 							ReturnDefaultAnime(i, false);
-							nowChara = OpenTaiko.Tx.Characters_Normal_Maxed[Character][OpenTaiko.Skin.Characters_Motion_ClearMax[Character][nNowCharaFrame[i]]];
+							nowChara = OpenTaiko.Tx.Characters_Normal_Maxed[Character][OpenTaiko.SkinG.Characters_Motion_ClearMax[Character][nNowCharaFrame[i]]];
 						}
 						break;
 					case Anime.MissIn: {
 							getNowCharaFrame();
 							updateNormal();
-							if (OpenTaiko.Tx.Characters_MissIn[Character] != null && OpenTaiko.Skin.Characters_MissIn_Ptn[Character] != 0) {
-								nowChara = OpenTaiko.Tx.Characters_MissIn[Character][OpenTaiko.Skin.Characters_Motion_MissIn[Character][nNowCharaFrame[i]]];
+							if (OpenTaiko.Tx.Characters_MissIn[Character] != null && OpenTaiko.SkinG.Characters_MissIn_Ptn[Character] != 0) {
+								nowChara = OpenTaiko.Tx.Characters_MissIn[Character][OpenTaiko.SkinG.Characters_Motion_MissIn[Character][nNowCharaFrame[i]]];
 							}
 							if (endAnime) {
 								ReturnDefaultAnime(i, true);
@@ -210,8 +210,8 @@ internal class CActImplCharacter : CActivity {
 					case Anime.MissDownIn: {
 							getNowCharaFrame();
 							updateNormal();
-							if (OpenTaiko.Tx.Characters_MissDownIn[Character] != null && OpenTaiko.Skin.Characters_MissDownIn_Ptn[Character] != 0) {
-								nowChara = OpenTaiko.Tx.Characters_MissDownIn[Character][OpenTaiko.Skin.Characters_Motion_MissDownIn[Character][nNowCharaFrame[i]]];
+							if (OpenTaiko.Tx.Characters_MissDownIn[Character] != null && OpenTaiko.SkinG.Characters_MissDownIn_Ptn[Character] != 0) {
+								nowChara = OpenTaiko.Tx.Characters_MissDownIn[Character][OpenTaiko.SkinG.Characters_Motion_MissDownIn[Character][nNowCharaFrame[i]]];
 							}
 							if (endAnime) {
 								ReturnDefaultAnime(i, true);
@@ -222,21 +222,21 @@ internal class CActImplCharacter : CActivity {
 							getNowCharaFrameLooped();
 							updateNormal();
 							ReturnDefaultAnime(i, false);
-							nowChara = OpenTaiko.Tx.Characters_GoGoTime[Character][OpenTaiko.Skin.Characters_Motion_GoGo[Character][nNowCharaFrame[i]]];
+							nowChara = OpenTaiko.Tx.Characters_GoGoTime[Character][OpenTaiko.SkinG.Characters_Motion_GoGo[Character][nNowCharaFrame[i]]];
 						}
 						break;
 					case Anime.GoGoTime_Maxed: {
 							getNowCharaFrameLooped();
 							updateNormal();
 							ReturnDefaultAnime(i, false);
-							nowChara = OpenTaiko.Tx.Characters_GoGoTime_Maxed[Character][OpenTaiko.Skin.Characters_Motion_GoGoMax[Character][nNowCharaFrame[i]]];
+							nowChara = OpenTaiko.Tx.Characters_GoGoTime_Maxed[Character][OpenTaiko.SkinG.Characters_Motion_GoGoMax[Character][nNowCharaFrame[i]]];
 						}
 						break;
 					case Anime.Combo10: {
 							getNowCharaFrame();
 							updateNormal();
-							if (OpenTaiko.Tx.Characters_10Combo[Character] != null && OpenTaiko.Skin.Characters_10Combo_Ptn[Character] != 0) {
-								nowChara = OpenTaiko.Tx.Characters_10Combo[Character][OpenTaiko.Skin.Characters_Motion_10Combo[Character][nNowCharaFrame[i]]];
+							if (OpenTaiko.Tx.Characters_10Combo[Character] != null && OpenTaiko.SkinG.Characters_10Combo_Ptn[Character] != 0) {
+								nowChara = OpenTaiko.Tx.Characters_10Combo[Character][OpenTaiko.SkinG.Characters_Motion_10Combo[Character][nNowCharaFrame[i]]];
 							}
 							if (endAnime) {
 								ReturnDefaultAnime(i, true);
@@ -246,8 +246,8 @@ internal class CActImplCharacter : CActivity {
 					case Anime.Combo10_Clear: {
 							getNowCharaFrame();
 							updateNormal();
-							if (OpenTaiko.Tx.Characters_10Combo_Clear[Character] != null && OpenTaiko.Skin.Characters_10Combo_Clear_Ptn[Character] != 0) {
-								nowChara = OpenTaiko.Tx.Characters_10Combo_Clear[Character][OpenTaiko.Skin.Characters_Motion_10Combo_Clear[Character][nNowCharaFrame[i]]];
+							if (OpenTaiko.Tx.Characters_10Combo_Clear[Character] != null && OpenTaiko.SkinG.Characters_10Combo_Clear_Ptn[Character] != 0) {
+								nowChara = OpenTaiko.Tx.Characters_10Combo_Clear[Character][OpenTaiko.SkinG.Characters_Motion_10Combo_Clear[Character][nNowCharaFrame[i]]];
 							}
 							if (endAnime) {
 								ReturnDefaultAnime(i, true);
@@ -257,8 +257,8 @@ internal class CActImplCharacter : CActivity {
 					case Anime.Combo10_Max: {
 							getNowCharaFrame();
 							updateNormal();
-							if (OpenTaiko.Tx.Characters_10Combo_Maxed[Character] != null && OpenTaiko.Skin.Characters_10Combo_Maxed_Ptn[Character] != 0) {
-								nowChara = OpenTaiko.Tx.Characters_10Combo_Maxed[Character][OpenTaiko.Skin.Characters_Motion_10ComboMax[Character][nNowCharaFrame[i]]];
+							if (OpenTaiko.Tx.Characters_10Combo_Maxed[Character] != null && OpenTaiko.SkinG.Characters_10Combo_Maxed_Ptn[Character] != 0) {
+								nowChara = OpenTaiko.Tx.Characters_10Combo_Maxed[Character][OpenTaiko.SkinG.Characters_Motion_10ComboMax[Character][nNowCharaFrame[i]]];
 							}
 							if (endAnime) {
 								ReturnDefaultAnime(i, true);
@@ -268,8 +268,8 @@ internal class CActImplCharacter : CActivity {
 					case Anime.GoGoStart: {
 							getNowCharaFrame();
 							updateNormal();
-							if (OpenTaiko.Tx.Characters_GoGoStart[Character] != null && OpenTaiko.Skin.Characters_GoGoStart_Ptn[Character] != 0) {
-								nowChara = OpenTaiko.Tx.Characters_GoGoStart[Character][OpenTaiko.Skin.Characters_Motion_GoGoStart[Character][nNowCharaFrame[i]]];
+							if (OpenTaiko.Tx.Characters_GoGoStart[Character] != null && OpenTaiko.SkinG.Characters_GoGoStart_Ptn[Character] != 0) {
+								nowChara = OpenTaiko.Tx.Characters_GoGoStart[Character][OpenTaiko.SkinG.Characters_Motion_GoGoStart[Character][nNowCharaFrame[i]]];
 							}
 							if (endAnime) {
 								ReturnDefaultAnime(i, true);
@@ -279,8 +279,8 @@ internal class CActImplCharacter : CActivity {
 					case Anime.GoGoStart_Clear: {
 							getNowCharaFrame();
 							updateNormal();
-							if (OpenTaiko.Tx.Characters_GoGoStart_Clear[Character] != null && OpenTaiko.Skin.Characters_GoGoStart_Clear_Ptn[Character] != 0) {
-								nowChara = OpenTaiko.Tx.Characters_GoGoStart_Clear[Character][OpenTaiko.Skin.Characters_Motion_GoGoStart_Clear[Character][nNowCharaFrame[i]]];
+							if (OpenTaiko.Tx.Characters_GoGoStart_Clear[Character] != null && OpenTaiko.SkinG.Characters_GoGoStart_Clear_Ptn[Character] != 0) {
+								nowChara = OpenTaiko.Tx.Characters_GoGoStart_Clear[Character][OpenTaiko.SkinG.Characters_Motion_GoGoStart_Clear[Character][nNowCharaFrame[i]]];
 							}
 							if (endAnime) {
 								ReturnDefaultAnime(i, true);
@@ -290,8 +290,8 @@ internal class CActImplCharacter : CActivity {
 					case Anime.GoGoStart_Max: {
 							getNowCharaFrame();
 							updateNormal();
-							if (OpenTaiko.Tx.Characters_GoGoStart_Maxed[Character] != null && OpenTaiko.Skin.Characters_GoGoStart_Maxed_Ptn[Character] != 0) {
-								nowChara = OpenTaiko.Tx.Characters_GoGoStart_Maxed[Character][OpenTaiko.Skin.Characters_Motion_GoGoStartMax[Character][nNowCharaFrame[i]]];
+							if (OpenTaiko.Tx.Characters_GoGoStart_Maxed[Character] != null && OpenTaiko.SkinG.Characters_GoGoStart_Maxed_Ptn[Character] != 0) {
+								nowChara = OpenTaiko.Tx.Characters_GoGoStart_Maxed[Character][OpenTaiko.SkinG.Characters_Motion_GoGoStartMax[Character][nNowCharaFrame[i]]];
 							}
 							if (endAnime) {
 								ReturnDefaultAnime(i, true);
@@ -301,8 +301,8 @@ internal class CActImplCharacter : CActivity {
 					case Anime.Become_Cleared: {
 							getNowCharaFrame();
 							updateNormal();
-							if (OpenTaiko.Tx.Characters_Become_Cleared[Character] != null && OpenTaiko.Skin.Characters_Become_Cleared_Ptn[Character] != 0) {
-								nowChara = OpenTaiko.Tx.Characters_Become_Cleared[Character][OpenTaiko.Skin.Characters_Motion_ClearIn[Character][nNowCharaFrame[i]]];
+							if (OpenTaiko.Tx.Characters_Become_Cleared[Character] != null && OpenTaiko.SkinG.Characters_Become_Cleared_Ptn[Character] != 0) {
+								nowChara = OpenTaiko.Tx.Characters_Become_Cleared[Character][OpenTaiko.SkinG.Characters_Motion_ClearIn[Character][nNowCharaFrame[i]]];
 							}
 							if (endAnime) {
 								ReturnDefaultAnime(i, true);
@@ -312,8 +312,8 @@ internal class CActImplCharacter : CActivity {
 					case Anime.Become_Maxed: {
 							getNowCharaFrame();
 							updateNormal();
-							if (OpenTaiko.Tx.Characters_Become_Maxed[Character] != null && OpenTaiko.Skin.Characters_Become_Maxed_Ptn[Character] != 0) {
-								nowChara = OpenTaiko.Tx.Characters_Become_Maxed[Character][OpenTaiko.Skin.Characters_Motion_SoulIn[Character][nNowCharaFrame[i]]];
+							if (OpenTaiko.Tx.Characters_Become_Maxed[Character] != null && OpenTaiko.SkinG.Characters_Become_Maxed_Ptn[Character] != 0) {
+								nowChara = OpenTaiko.Tx.Characters_Become_Maxed[Character][OpenTaiko.SkinG.Characters_Motion_SoulIn[Character][nNowCharaFrame[i]]];
 							}
 							if (endAnime) {
 								ReturnDefaultAnime(i, true);
@@ -323,8 +323,8 @@ internal class CActImplCharacter : CActivity {
 					case Anime.SoulOut: {
 							getNowCharaFrame();
 							updateNormal();
-							if (OpenTaiko.Tx.Characters_SoulOut[Character] != null && OpenTaiko.Skin.Characters_SoulOut_Ptn[Character] != 0) {
-								nowChara = OpenTaiko.Tx.Characters_SoulOut[Character][OpenTaiko.Skin.Characters_Motion_SoulOut[Character][nNowCharaFrame[i]]];
+							if (OpenTaiko.Tx.Characters_SoulOut[Character] != null && OpenTaiko.SkinG.Characters_SoulOut_Ptn[Character] != 0) {
+								nowChara = OpenTaiko.Tx.Characters_SoulOut[Character][OpenTaiko.SkinG.Characters_Motion_SoulOut[Character][nNowCharaFrame[i]]];
 							}
 							if (endAnime) {
 								ReturnDefaultAnime(i, true);
@@ -334,8 +334,8 @@ internal class CActImplCharacter : CActivity {
 					case Anime.ClearOut: {
 							getNowCharaFrame();
 							updateNormal();
-							if (OpenTaiko.Tx.Characters_ClearOut[Character] != null && OpenTaiko.Skin.Characters_ClearOut_Ptn[Character] != 0) {
-								nowChara = OpenTaiko.Tx.Characters_ClearOut[Character][OpenTaiko.Skin.Characters_Motion_ClearOut[Character][nNowCharaFrame[i]]];
+							if (OpenTaiko.Tx.Characters_ClearOut[Character] != null && OpenTaiko.SkinG.Characters_ClearOut_Ptn[Character] != 0) {
+								nowChara = OpenTaiko.Tx.Characters_ClearOut[Character][OpenTaiko.SkinG.Characters_Motion_ClearOut[Character][nNowCharaFrame[i]]];
 							}
 							if (endAnime) {
 								ReturnDefaultAnime(i, true);
@@ -345,8 +345,8 @@ internal class CActImplCharacter : CActivity {
 					case Anime.Return: {
 							getNowCharaFrame();
 							updateNormal();
-							if (OpenTaiko.Tx.Characters_Return[Character] != null && OpenTaiko.Skin.Characters_Return_Ptn[Character] != 0) {
-								nowChara = OpenTaiko.Tx.Characters_Return[Character][OpenTaiko.Skin.Characters_Motion_Return[Character][nNowCharaFrame[i]]];
+							if (OpenTaiko.Tx.Characters_Return[Character] != null && OpenTaiko.SkinG.Characters_Return_Ptn[Character] != 0) {
+								nowChara = OpenTaiko.Tx.Characters_Return[Character][OpenTaiko.SkinG.Characters_Motion_Return[Character][nNowCharaFrame[i]]];
 							}
 							if (endAnime) {
 								ReturnDefaultAnime(i, true);
@@ -379,33 +379,33 @@ internal class CActImplCharacter : CActivity {
 			if (nowChara != null) {
 				bool flipX = OpenTaiko.ConfigIni.bAIBattleMode ? (i == 1) : false;
 
-				float resolutionScaleX = OpenTaiko.Skin.Resolution[0] / (float)OpenTaiko.Skin.Characters_Resolution[Character][0];
-				float resolutionScaleY = OpenTaiko.Skin.Resolution[1] / (float)OpenTaiko.Skin.Characters_Resolution[Character][1];
+				float resolutionScaleX = OpenTaiko.Skin.Resolution[0] / (float)OpenTaiko.SkinG.Characters_Resolution[Character][0];
+				float resolutionScaleY = OpenTaiko.Skin.Resolution[1] / (float)OpenTaiko.SkinG.Characters_Resolution[Character][1];
 
 				if (OpenTaiko.ConfigIni.bAIBattleMode) {
-					chara_x = (OpenTaiko.Skin.Characters_X_AI[Character][i] * resolutionScaleX);
-					chara_y = (OpenTaiko.Skin.Characters_Y_AI[Character][i] * resolutionScaleY);
+					chara_x = (OpenTaiko.SkinG.Characters_X_AI[Character][i] * resolutionScaleX);
+					chara_y = (OpenTaiko.SkinG.Characters_Y_AI[Character][i] * resolutionScaleY);
 
 					if (nowChara != null) {
 						charaScale = 0.58f;
 					}
 				} else if (OpenTaiko.ConfigIni.nPlayerCount <= 2) {
-					chara_x = (OpenTaiko.Skin.Characters_X[Character][i] * resolutionScaleX);
-					chara_y = (OpenTaiko.Skin.Characters_Y[Character][i] * resolutionScaleY);
+					chara_x = (OpenTaiko.SkinG.Characters_X[Character][i] * resolutionScaleX);
+					chara_y = (OpenTaiko.SkinG.Characters_Y[Character][i] * resolutionScaleY);
 
 					if (nowChara != null) {
 						charaScale = 1.0f;
 					}
 				} else if (OpenTaiko.ConfigIni.nPlayerCount == 5) {
-					chara_x = (OpenTaiko.Skin.Characters_5P[Character][0] * resolutionScaleX) + (OpenTaiko.Skin.Game_UIMove_5P[0] * i);
-					chara_y = (OpenTaiko.Skin.Characters_5P[Character][1] * resolutionScaleY) + (OpenTaiko.Skin.Game_UIMove_5P[1] * i);
+					chara_x = (OpenTaiko.SkinG.Characters_5P[Character][0] * resolutionScaleX) + (OpenTaiko.Skin.Game_UIMove_5P[0] * i);
+					chara_y = (OpenTaiko.SkinG.Characters_5P[Character][1] * resolutionScaleY) + (OpenTaiko.Skin.Game_UIMove_5P[1] * i);
 
 					if (nowChara != null) {
 						charaScale = 0.58f;
 					}
 				} else {
-					chara_x = (OpenTaiko.Skin.Characters_4P[Character][0] * resolutionScaleX) + (OpenTaiko.Skin.Game_UIMove_4P[0] * i);
-					chara_y = (OpenTaiko.Skin.Characters_4P[Character][1] * resolutionScaleY) + (OpenTaiko.Skin.Game_UIMove_4P[1] * i);
+					chara_x = (OpenTaiko.SkinG.Characters_4P[Character][0] * resolutionScaleX) + (OpenTaiko.Skin.Game_UIMove_4P[0] * i);
+					chara_y = (OpenTaiko.SkinG.Characters_4P[Character][1] * resolutionScaleY) + (OpenTaiko.Skin.Game_UIMove_4P[1] * i);
 
 					if (nowChara != null) {
 						charaScale = 0.58f;
@@ -449,34 +449,34 @@ internal class CActImplCharacter : CActivity {
 
 	public void OnDraw_Balloon() {
 		for (int i = 0; i < OpenTaiko.ConfigIni.nPlayerCount; i++) {
-			//if (TJAPlayer3.Skin.Characters_Balloon_Breaking_Ptn[iCurrentCharacter[i]] != 0) CharaAction_Balloon_Breaking[i]?.t進行();
-			//if (TJAPlayer3.Skin.Characters_Balloon_Broke_Ptn[iCurrentCharacter[i]] != 0) CharaAction_Balloon_Broke[i]?.t進行();
+			//if (TJAPlayer3.SkinG.Characters_Balloon_Breaking_Ptn[iCurrentCharacter[i]] != 0) CharaAction_Balloon_Breaking[i]?.t進行();
+			//if (TJAPlayer3.SkinG.Characters_Balloon_Broke_Ptn[iCurrentCharacter[i]] != 0) CharaAction_Balloon_Broke[i]?.t進行();
 			CharaAction_Balloon_Delay[i]?.Tick();
-			//if (TJAPlayer3.Skin.Characters_Balloon_Miss_Ptn[iCurrentCharacter[i]] != 0) CharaAction_Balloon_Miss[i]?.t進行();
+			//if (TJAPlayer3.SkinG.Characters_Balloon_Miss_Ptn[iCurrentCharacter[i]] != 0) CharaAction_Balloon_Miss[i]?.t進行();
 			//CharaAction_Balloon_FadeOut[i].Tick();
 
 			{
 				bool endAnime = nNowCharaCounter[i] >= 1;
 				var nowOpacity = 255;
 
-				float resolutionScaleX = OpenTaiko.Skin.Resolution[0] / (float)OpenTaiko.Skin.Characters_Resolution[this.iCurrentCharacter[i]][0];
-				float resolutionScaleY = OpenTaiko.Skin.Resolution[1] / (float)OpenTaiko.Skin.Characters_Resolution[this.iCurrentCharacter[i]][1];
+				float resolutionScaleX = OpenTaiko.Skin.Resolution[0] / (float)OpenTaiko.SkinG.Characters_Resolution[this.iCurrentCharacter[i]][0];
+				float resolutionScaleY = OpenTaiko.Skin.Resolution[1] / (float)OpenTaiko.SkinG.Characters_Resolution[this.iCurrentCharacter[i]][1];
 
 				float chara_x = 0;
 				float chara_y = 0;
-				float kusu_chara_x = OpenTaiko.Skin.Characters_Kusudama_X[this.iCurrentCharacter[i]][i] * resolutionScaleX;
-				float kusu_chara_y = OpenTaiko.Skin.Characters_Kusudama_Y[this.iCurrentCharacter[i]][i] * resolutionScaleY;
+				float kusu_chara_x = OpenTaiko.SkinG.Characters_Kusudama_X[this.iCurrentCharacter[i]][i] * resolutionScaleX;
+				float kusu_chara_y = OpenTaiko.SkinG.Characters_Kusudama_Y[this.iCurrentCharacter[i]][i] * resolutionScaleY;
 
 				if (OpenTaiko.ConfigIni.nPlayerCount <= 2) {
-					chara_x = OpenTaiko.Skin.Characters_Balloon_X[this.iCurrentCharacter[i]][i];
-					chara_y = OpenTaiko.Skin.Characters_Balloon_Y[this.iCurrentCharacter[i]][i];
+					chara_x = OpenTaiko.SkinG.Characters_Balloon_X[this.iCurrentCharacter[i]][i];
+					chara_y = OpenTaiko.SkinG.Characters_Balloon_Y[this.iCurrentCharacter[i]][i];
 				} else {
 					if (OpenTaiko.ConfigIni.nPlayerCount == 5) {
-						chara_x = OpenTaiko.Skin.Characters_Balloon_5P[this.iCurrentCharacter[i]][0] + (OpenTaiko.Skin.Game_UIMove_5P[0] * i);
-						chara_y = OpenTaiko.Skin.Characters_Balloon_5P[this.iCurrentCharacter[i]][1] + (OpenTaiko.Skin.Game_UIMove_5P[1] * i);
+						chara_x = OpenTaiko.SkinG.Characters_Balloon_5P[this.iCurrentCharacter[i]][0] + (OpenTaiko.Skin.Game_UIMove_5P[0] * i);
+						chara_y = OpenTaiko.SkinG.Characters_Balloon_5P[this.iCurrentCharacter[i]][1] + (OpenTaiko.Skin.Game_UIMove_5P[1] * i);
 					} else {
-						chara_x = OpenTaiko.Skin.Characters_Balloon_4P[this.iCurrentCharacter[i]][0] + (OpenTaiko.Skin.Game_UIMove_4P[0] * i);
-						chara_y = OpenTaiko.Skin.Characters_Balloon_4P[this.iCurrentCharacter[i]][1] + (OpenTaiko.Skin.Game_UIMove_4P[1] * i);
+						chara_x = OpenTaiko.SkinG.Characters_Balloon_4P[this.iCurrentCharacter[i]][0] + (OpenTaiko.Skin.Game_UIMove_4P[0] * i);
+						chara_y = OpenTaiko.SkinG.Characters_Balloon_4P[this.iCurrentCharacter[i]][1] + (OpenTaiko.Skin.Game_UIMove_4P[1] * i);
 					}
 				}
 
@@ -487,7 +487,7 @@ internal class CActImplCharacter : CActivity {
 
 
 				if (eNowAnime[i] == Anime.Balloon_Broke) {
-					if (OpenTaiko.Skin.Characters_Balloon_Broke_Ptn[this.iCurrentCharacter[i]] != 0 && OpenTaiko.Tx.Characters_Balloon_Broke[this.iCurrentCharacter[i]][nNowCharaFrame[i]] != null) {
+					if (OpenTaiko.SkinG.Characters_Balloon_Broke_Ptn[this.iCurrentCharacter[i]] != 0 && OpenTaiko.Tx.Characters_Balloon_Broke[this.iCurrentCharacter[i]][nNowCharaFrame[i]] != null) {
 						OpenTaiko.Tx.Characters_Balloon_Broke[this.iCurrentCharacter[i]][nNowCharaFrame[i]].Opacity = nowOpacity;
 						OpenTaiko.Tx.Characters_Balloon_Broke[this.iCurrentCharacter[i]][nNowCharaFrame[i]].vcScaleRatio.X = charaScale;
 						OpenTaiko.Tx.Characters_Balloon_Broke[this.iCurrentCharacter[i]][nNowCharaFrame[i]].vcScaleRatio.Y = charaScale;
@@ -505,7 +505,7 @@ internal class CActImplCharacter : CActivity {
 						ReturnDefaultAnime(i, true);
 					}
 				} else if (eNowAnime[i] == Anime.Balloon_Miss) {
-					if (OpenTaiko.Skin.Characters_Balloon_Miss_Ptn[this.iCurrentCharacter[i]] != 0 && OpenTaiko.Tx.Characters_Balloon_Miss[this.iCurrentCharacter[i]][nNowCharaFrame[i]] != null) {
+					if (OpenTaiko.SkinG.Characters_Balloon_Miss_Ptn[this.iCurrentCharacter[i]] != 0 && OpenTaiko.Tx.Characters_Balloon_Miss[this.iCurrentCharacter[i]][nNowCharaFrame[i]] != null) {
 						OpenTaiko.Tx.Characters_Balloon_Miss[this.iCurrentCharacter[i]][nNowCharaFrame[i]].Opacity = nowOpacity;
 						OpenTaiko.Tx.Characters_Balloon_Miss[this.iCurrentCharacter[i]][nNowCharaFrame[i]].vcScaleRatio.X = charaScale;
 						OpenTaiko.Tx.Characters_Balloon_Miss[this.iCurrentCharacter[i]][nNowCharaFrame[i]].vcScaleRatio.Y = charaScale;
@@ -523,7 +523,7 @@ internal class CActImplCharacter : CActivity {
 						ReturnDefaultAnime(i, true);
 					}
 				} else if (eNowAnime[i] == Anime.Balloon_Breaking) {
-					if (OpenTaiko.Skin.Characters_Balloon_Breaking_Ptn[this.iCurrentCharacter[i]] != 0 && OpenTaiko.Tx.Characters_Balloon_Breaking[this.iCurrentCharacter[i]][nNowCharaFrame[i]] != null) {
+					if (OpenTaiko.SkinG.Characters_Balloon_Breaking_Ptn[this.iCurrentCharacter[i]] != 0 && OpenTaiko.Tx.Characters_Balloon_Breaking[this.iCurrentCharacter[i]][nNowCharaFrame[i]] != null) {
 						OpenTaiko.Tx.Characters_Balloon_Breaking[this.iCurrentCharacter[i]][nNowCharaFrame[i]].vcScaleRatio.X = charaScale;
 						OpenTaiko.Tx.Characters_Balloon_Breaking[this.iCurrentCharacter[i]][nNowCharaFrame[i]].vcScaleRatio.Y = charaScale;
 						OpenTaiko.Tx.Characters_Balloon_Breaking[this.iCurrentCharacter[i]][nNowCharaFrame[i]].t2D描画(
@@ -539,7 +539,7 @@ internal class CActImplCharacter : CActivity {
 					float kusuOutX = ((1.0f - MathF.Cos(Math.Min(1, nNowCharaCounter[i]) * MathF.PI)) * OpenTaiko.Skin.Resolution[0] / 2.0f) * resolutionScaleX;
 					float kusuOutY = (MathF.Sin(Math.Min(1, nNowCharaCounter[i]) * MathF.PI / 2) * OpenTaiko.Skin.Resolution[1] / 2.0f) * resolutionScaleY;
 
-					if (OpenTaiko.Skin.Characters_Kusudama_Broke_Ptn[this.iCurrentCharacter[i]] != 0 && OpenTaiko.Tx.Characters_Kusudama_Broke[this.iCurrentCharacter[i]][nNowCharaFrame[i]] != null) {
+					if (OpenTaiko.SkinG.Characters_Kusudama_Broke_Ptn[this.iCurrentCharacter[i]] != 0 && OpenTaiko.Tx.Characters_Kusudama_Broke[this.iCurrentCharacter[i]][nNowCharaFrame[i]] != null) {
 						OpenTaiko.Tx.Characters_Kusudama_Broke[this.iCurrentCharacter[i]][nNowCharaFrame[i]].Opacity = nowOpacity;
 						OpenTaiko.Tx.Characters_Kusudama_Broke[this.iCurrentCharacter[i]][nNowCharaFrame[i]].vcScaleRatio.X = charaScale;
 						OpenTaiko.Tx.Characters_Kusudama_Broke[this.iCurrentCharacter[i]][nNowCharaFrame[i]].vcScaleRatio.Y = charaScale;
@@ -565,7 +565,7 @@ internal class CActImplCharacter : CActivity {
 				} else if (eNowAnime[i] == Anime.Kusudama_Miss) {
 					float kusuOutY = (Math.Max(Math.Min(1, nNowCharaCounter[i]) - 0.5f, 0) * OpenTaiko.Skin.Resolution[1] * 2) * resolutionScaleY;
 
-					if (OpenTaiko.Skin.Characters_Kusudama_Miss_Ptn[this.iCurrentCharacter[i]] != 0 && OpenTaiko.Tx.Characters_Kusudama_Miss[this.iCurrentCharacter[i]][nNowCharaFrame[i]] != null) {
+					if (OpenTaiko.SkinG.Characters_Kusudama_Miss_Ptn[this.iCurrentCharacter[i]] != 0 && OpenTaiko.Tx.Characters_Kusudama_Miss[this.iCurrentCharacter[i]][nNowCharaFrame[i]] != null) {
 						OpenTaiko.Tx.Characters_Kusudama_Miss[this.iCurrentCharacter[i]][nNowCharaFrame[i]].Opacity = nowOpacity;
 						OpenTaiko.Tx.Characters_Kusudama_Miss[this.iCurrentCharacter[i]][nNowCharaFrame[i]].vcScaleRatio.X = charaScale;
 						OpenTaiko.Tx.Characters_Kusudama_Miss[this.iCurrentCharacter[i]][nNowCharaFrame[i]].vcScaleRatio.Y = charaScale;
@@ -590,7 +590,7 @@ internal class CActImplCharacter : CActivity {
 					float kusuInY = -((MathF.Cos(ctKusuIn[i].CurrentValue / 1000.0f * MathF.PI / 2)) * OpenTaiko.Skin.Resolution[1] / 2.0f) * resolutionScaleY;
 
 
-					if (OpenTaiko.Skin.Characters_Kusudama_Breaking_Ptn[this.iCurrentCharacter[i]] != 0 && OpenTaiko.Tx.Characters_Kusudama_Breaking[this.iCurrentCharacter[i]][nNowCharaFrame[i]] != null) {
+					if (OpenTaiko.SkinG.Characters_Kusudama_Breaking_Ptn[this.iCurrentCharacter[i]] != 0 && OpenTaiko.Tx.Characters_Kusudama_Breaking[this.iCurrentCharacter[i]][nNowCharaFrame[i]] != null) {
 						OpenTaiko.Tx.Characters_Kusudama_Breaking[this.iCurrentCharacter[i]][nNowCharaFrame[i]].vcScaleRatio.X = charaScale;
 						OpenTaiko.Tx.Characters_Kusudama_Breaking[this.iCurrentCharacter[i]][nNowCharaFrame[i]].vcScaleRatio.Y = charaScale;
 						if (i % 2 == 0) {
@@ -617,7 +617,7 @@ internal class CActImplCharacter : CActivity {
 					float kusuInX = ((1.0f - MathF.Sin(ctKusuIn[i].CurrentValue / 2000.0f * MathF.PI)) * OpenTaiko.Skin.Resolution[0] / 2.0f) * resolutionScaleX;
 					float kusuInY = -((MathF.Cos(ctKusuIn[i].CurrentValue / 1000.0f * MathF.PI / 2)) * OpenTaiko.Skin.Resolution[1] / 2.0f) * resolutionScaleY;
 
-					if (OpenTaiko.Skin.Characters_Kusudama_Idle_Ptn[this.iCurrentCharacter[i]] != 0 && OpenTaiko.Tx.Characters_Kusudama_Idle[this.iCurrentCharacter[i]][nNowCharaFrame[i]] != null) {
+					if (OpenTaiko.SkinG.Characters_Kusudama_Idle_Ptn[this.iCurrentCharacter[i]] != 0 && OpenTaiko.Tx.Characters_Kusudama_Idle[this.iCurrentCharacter[i]][nNowCharaFrame[i]] != null) {
 						OpenTaiko.Tx.Characters_Kusudama_Idle[this.iCurrentCharacter[i]][nNowCharaFrame[i]].vcScaleRatio.X = charaScale;
 						OpenTaiko.Tx.Characters_Kusudama_Idle[this.iCurrentCharacter[i]][nNowCharaFrame[i]].vcScaleRatio.Y = charaScale;
 						if (i % 2 == 0) {
@@ -657,25 +657,25 @@ internal class CActImplCharacter : CActivity {
 		}
 
 		bool isStageFailed = OpenTaiko.stageGameScreen.IsStageFailed(player);
-		if (!isStageFailed && OpenTaiko.stageGameScreen.bIsGOGOTIME[player] && OpenTaiko.Skin.Characters_GoGoTime_Ptn[this.iCurrentCharacter[player]] != 0) {
-			if (OpenTaiko.stageGameScreen.bIsAlreadyMaxed[player] && OpenTaiko.Skin.Characters_GoGoTime_Maxed_Ptn[this.iCurrentCharacter[player]] != 0) {
+		if (!isStageFailed && OpenTaiko.stageGameScreen.bIsGOGOTIME[player] && OpenTaiko.SkinG.Characters_GoGoTime_Ptn[this.iCurrentCharacter[player]] != 0) {
+			if (OpenTaiko.stageGameScreen.bIsAlreadyMaxed[player] && OpenTaiko.SkinG.Characters_GoGoTime_Maxed_Ptn[this.iCurrentCharacter[player]] != 0) {
 				ChangeAnime(player, Anime.GoGoTime_Maxed, resetCounter);
 			} else {
 				ChangeAnime(player, Anime.GoGoTime, resetCounter);
 			}
 		} else {
-			if ((isStageFailed || OpenTaiko.stageGameScreen.bIsMiss[player]) && OpenTaiko.Skin.Characters_Normal_Missed_Ptn[this.iCurrentCharacter[player]] != 0) {
-				if ((isStageFailed || OpenTaiko.stageGameScreen.Chara_MissCount[player] >= 6) && OpenTaiko.Skin.Characters_Normal_MissedDown_Ptn[this.iCurrentCharacter[player]] != 0) {
+			if ((isStageFailed || OpenTaiko.stageGameScreen.bIsMiss[player]) && OpenTaiko.SkinG.Characters_Normal_Missed_Ptn[this.iCurrentCharacter[player]] != 0) {
+				if ((isStageFailed || OpenTaiko.stageGameScreen.Chara_MissCount[player] >= 6) && OpenTaiko.SkinG.Characters_Normal_MissedDown_Ptn[this.iCurrentCharacter[player]] != 0) {
 					ChangeAnime(player, Anime.MissDown, resetCounter);
 				} else {
 					ChangeAnime(player, Anime.Miss, resetCounter);
 				}
 			} else {
-				if (!isStageFailed && OpenTaiko.stageGameScreen.bIsAlreadyMaxed[player] && OpenTaiko.Skin.Characters_Normal_Maxed_Ptn[this.iCurrentCharacter[player]] != 0) {
+				if (!isStageFailed && OpenTaiko.stageGameScreen.bIsAlreadyMaxed[player] && OpenTaiko.SkinG.Characters_Normal_Maxed_Ptn[this.iCurrentCharacter[player]] != 0) {
 					ChangeAnime(player, Anime.Maxed, resetCounter);
-				} else if (!isStageFailed && OpenTaiko.stageGameScreen.bIsAlreadyCleared[player] && OpenTaiko.Skin.Characters_Normal_Cleared_Ptn[this.iCurrentCharacter[player]] != 0) {
+				} else if (!isStageFailed && OpenTaiko.stageGameScreen.bIsAlreadyCleared[player] && OpenTaiko.SkinG.Characters_Normal_Cleared_Ptn[this.iCurrentCharacter[player]] != 0) {
 					ChangeAnime(player, Anime.Cleared, resetCounter);
-				} else if (OpenTaiko.Skin.Characters_Normal_Ptn[this.iCurrentCharacter[player]] != 0) {
+				} else if (OpenTaiko.SkinG.Characters_Normal_Ptn[this.iCurrentCharacter[player]] != 0) {
 					ChangeAnime(player, Anime.Normal, resetCounter);
 				} else {
 					ChangeAnime(player, Anime.None, resetCounter);
@@ -750,111 +750,111 @@ internal class CActImplCharacter : CActivity {
 			case Anime.None:
 				break;
 			case Anime.Normal:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Motion_Normal[iCurrentCharacter[player]].Length - 1;
-				nCharaBeat[player] = OpenTaiko.Skin.Characters_Beat_Normal[iCurrentCharacter[player]];
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Motion_Normal[iCurrentCharacter[player]].Length - 1;
+				nCharaBeat[player] = OpenTaiko.SkinG.Characters_Beat_Normal[iCurrentCharacter[player]];
 				break;
 			case Anime.Miss:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Motion_Miss[iCurrentCharacter[player]].Length - 1;
-				nCharaBeat[player] = OpenTaiko.Skin.Characters_Beat_Miss[iCurrentCharacter[player]];
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Motion_Miss[iCurrentCharacter[player]].Length - 1;
+				nCharaBeat[player] = OpenTaiko.SkinG.Characters_Beat_Miss[iCurrentCharacter[player]];
 				break;
 			case Anime.MissDown:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Motion_MissDown[iCurrentCharacter[player]].Length - 1;
-				nCharaBeat[player] = OpenTaiko.Skin.Characters_Beat_MissDown[iCurrentCharacter[player]];
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Motion_MissDown[iCurrentCharacter[player]].Length - 1;
+				nCharaBeat[player] = OpenTaiko.SkinG.Characters_Beat_MissDown[iCurrentCharacter[player]];
 				break;
 			case Anime.Cleared:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Motion_Clear[iCurrentCharacter[player]].Length - 1;
-				nCharaBeat[player] = OpenTaiko.Skin.Characters_Beat_Clear[iCurrentCharacter[player]];
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Motion_Clear[iCurrentCharacter[player]].Length - 1;
+				nCharaBeat[player] = OpenTaiko.SkinG.Characters_Beat_Clear[iCurrentCharacter[player]];
 				break;
 			case Anime.Maxed:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Motion_ClearMax[iCurrentCharacter[player]].Length - 1;
-				nCharaBeat[player] = OpenTaiko.Skin.Characters_Beat_ClearMax[iCurrentCharacter[player]];
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Motion_ClearMax[iCurrentCharacter[player]].Length - 1;
+				nCharaBeat[player] = OpenTaiko.SkinG.Characters_Beat_ClearMax[iCurrentCharacter[player]];
 				break;
 			case Anime.MissIn:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Motion_MissIn[iCurrentCharacter[player]].Length - 1;
-				nCharaBeat[player] = OpenTaiko.Skin.Characters_Beat_MissIn[iCurrentCharacter[player]];
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Motion_MissIn[iCurrentCharacter[player]].Length - 1;
+				nCharaBeat[player] = OpenTaiko.SkinG.Characters_Beat_MissIn[iCurrentCharacter[player]];
 				break;
 			case Anime.MissDownIn:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Motion_MissDownIn[iCurrentCharacter[player]].Length - 1;
-				nCharaBeat[player] = OpenTaiko.Skin.Characters_Beat_MissDownIn[iCurrentCharacter[player]];
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Motion_MissDownIn[iCurrentCharacter[player]].Length - 1;
+				nCharaBeat[player] = OpenTaiko.SkinG.Characters_Beat_MissDownIn[iCurrentCharacter[player]];
 				break;
 			case Anime.GoGoTime:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Motion_GoGo[iCurrentCharacter[player]].Length - 1;
-				nCharaBeat[player] = OpenTaiko.Skin.Characters_Beat_GoGo[iCurrentCharacter[player]];
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Motion_GoGo[iCurrentCharacter[player]].Length - 1;
+				nCharaBeat[player] = OpenTaiko.SkinG.Characters_Beat_GoGo[iCurrentCharacter[player]];
 				break;
 			case Anime.GoGoTime_Maxed:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Motion_GoGoMax[iCurrentCharacter[player]].Length - 1;
-				nCharaBeat[player] = OpenTaiko.Skin.Characters_Beat_GoGoMax[iCurrentCharacter[player]];
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Motion_GoGoMax[iCurrentCharacter[player]].Length - 1;
+				nCharaBeat[player] = OpenTaiko.SkinG.Characters_Beat_GoGoMax[iCurrentCharacter[player]];
 				break;
 			case Anime.Combo10:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Motion_10Combo[iCurrentCharacter[player]].Length - 1;
-				nCharaBeat[player] = OpenTaiko.Skin.Characters_Beat_10Combo[iCurrentCharacter[player]];
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Motion_10Combo[iCurrentCharacter[player]].Length - 1;
+				nCharaBeat[player] = OpenTaiko.SkinG.Characters_Beat_10Combo[iCurrentCharacter[player]];
 				break;
 			case Anime.Combo10_Clear:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Motion_10Combo_Clear[iCurrentCharacter[player]].Length - 1;
-				nCharaBeat[player] = OpenTaiko.Skin.Characters_Beat_10Combo_Clear[iCurrentCharacter[player]];
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Motion_10Combo_Clear[iCurrentCharacter[player]].Length - 1;
+				nCharaBeat[player] = OpenTaiko.SkinG.Characters_Beat_10Combo_Clear[iCurrentCharacter[player]];
 				break;
 			case Anime.Combo10_Max:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Motion_10ComboMax[iCurrentCharacter[player]].Length - 1;
-				nCharaBeat[player] = OpenTaiko.Skin.Characters_Beat_10ComboMax[iCurrentCharacter[player]];
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Motion_10ComboMax[iCurrentCharacter[player]].Length - 1;
+				nCharaBeat[player] = OpenTaiko.SkinG.Characters_Beat_10ComboMax[iCurrentCharacter[player]];
 				break;
 			case Anime.GoGoStart:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Motion_GoGoStart[iCurrentCharacter[player]].Length - 1;
-				nCharaBeat[player] = OpenTaiko.Skin.Characters_Beat_GoGoStart[iCurrentCharacter[player]];
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Motion_GoGoStart[iCurrentCharacter[player]].Length - 1;
+				nCharaBeat[player] = OpenTaiko.SkinG.Characters_Beat_GoGoStart[iCurrentCharacter[player]];
 				break;
 			case Anime.GoGoStart_Clear:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Motion_GoGoStart_Clear[iCurrentCharacter[player]].Length - 1;
-				nCharaBeat[player] = OpenTaiko.Skin.Characters_Beat_GoGoStart_Clear[iCurrentCharacter[player]];
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Motion_GoGoStart_Clear[iCurrentCharacter[player]].Length - 1;
+				nCharaBeat[player] = OpenTaiko.SkinG.Characters_Beat_GoGoStart_Clear[iCurrentCharacter[player]];
 				break;
 			case Anime.GoGoStart_Max:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Motion_GoGoStartMax[iCurrentCharacter[player]].Length - 1;
-				nCharaBeat[player] = OpenTaiko.Skin.Characters_Beat_GoGoStartMax[iCurrentCharacter[player]];
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Motion_GoGoStartMax[iCurrentCharacter[player]].Length - 1;
+				nCharaBeat[player] = OpenTaiko.SkinG.Characters_Beat_GoGoStartMax[iCurrentCharacter[player]];
 				break;
 			case Anime.Become_Cleared:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Motion_ClearIn[iCurrentCharacter[player]].Length - 1;
-				nCharaBeat[player] = OpenTaiko.Skin.Characters_Beat_ClearIn[iCurrentCharacter[player]];
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Motion_ClearIn[iCurrentCharacter[player]].Length - 1;
+				nCharaBeat[player] = OpenTaiko.SkinG.Characters_Beat_ClearIn[iCurrentCharacter[player]];
 				break;
 			case Anime.Become_Maxed:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Motion_SoulIn[iCurrentCharacter[player]].Length - 1;
-				nCharaBeat[player] = OpenTaiko.Skin.Characters_Beat_SoulIn[iCurrentCharacter[player]];
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Motion_SoulIn[iCurrentCharacter[player]].Length - 1;
+				nCharaBeat[player] = OpenTaiko.SkinG.Characters_Beat_SoulIn[iCurrentCharacter[player]];
 				break;
 			case Anime.SoulOut:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Motion_SoulOut[iCurrentCharacter[player]].Length - 1;
-				nCharaBeat[player] = OpenTaiko.Skin.Characters_Beat_SoulOut[iCurrentCharacter[player]];
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Motion_SoulOut[iCurrentCharacter[player]].Length - 1;
+				nCharaBeat[player] = OpenTaiko.SkinG.Characters_Beat_SoulOut[iCurrentCharacter[player]];
 				break;
 			case Anime.ClearOut:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Motion_ClearOut[iCurrentCharacter[player]].Length - 1;
-				nCharaBeat[player] = OpenTaiko.Skin.Characters_Beat_ClearOut[iCurrentCharacter[player]];
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Motion_ClearOut[iCurrentCharacter[player]].Length - 1;
+				nCharaBeat[player] = OpenTaiko.SkinG.Characters_Beat_ClearOut[iCurrentCharacter[player]];
 				break;
 			case Anime.Return:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Motion_Return[iCurrentCharacter[player]].Length - 1;
-				nCharaBeat[player] = OpenTaiko.Skin.Characters_Beat_Return[iCurrentCharacter[player]];
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Motion_Return[iCurrentCharacter[player]].Length - 1;
+				nCharaBeat[player] = OpenTaiko.SkinG.Characters_Beat_Return[iCurrentCharacter[player]];
 				break;
 			case Anime.Balloon_Breaking:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Balloon_Breaking_Ptn[iCurrentCharacter[player]] - 1;
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Balloon_Breaking_Ptn[iCurrentCharacter[player]] - 1;
 				nCharaBeat[player] = 0.2f;
 				break;
 			case Anime.Balloon_Broke:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Balloon_Broke_Ptn[iCurrentCharacter[player]] - 1;
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Balloon_Broke_Ptn[iCurrentCharacter[player]] - 1;
 				nCharaBeat[player] = 0.2f;
 				break;
 			case Anime.Balloon_Miss:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Balloon_Miss_Ptn[iCurrentCharacter[player]] - 1;
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Balloon_Miss_Ptn[iCurrentCharacter[player]] - 1;
 				nCharaBeat[player] = 0.2f;
 				break;
 			case Anime.Kusudama_Idle:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Kusudama_Idle_Ptn[iCurrentCharacter[player]] - 1;
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Kusudama_Idle_Ptn[iCurrentCharacter[player]] - 1;
 				nCharaBeat[player] = 0.4f;
 				break;
 			case Anime.Kusudama_Breaking:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Kusudama_Breaking_Ptn[iCurrentCharacter[player]] - 1;
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Kusudama_Breaking_Ptn[iCurrentCharacter[player]] - 1;
 				nCharaBeat[player] = 0.2f;
 				break;
 			case Anime.Kusudama_Broke:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Kusudama_Broke_Ptn[iCurrentCharacter[player]] - 1;
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Kusudama_Broke_Ptn[iCurrentCharacter[player]] - 1;
 				nCharaBeat[player] = 1f;
 				break;
 			case Anime.Kusudama_Miss:
-				nCharaFrameCount[player] = OpenTaiko.Skin.Characters_Kusudama_Miss_Ptn[iCurrentCharacter[player]] - 1;
+				nCharaFrameCount[player] = OpenTaiko.SkinG.Characters_Kusudama_Miss_Ptn[iCurrentCharacter[player]] - 1;
 				nCharaBeat[player] = 0.5f;
 				break;
 		}
@@ -863,7 +863,7 @@ internal class CActImplCharacter : CActivity {
 			CharaAction_Balloon_FadeOut[player].Start();
 			if (this.CharaAction_Balloon_Delay[player] != null) {
 				this.CharaAction_Balloon_Delay[player] = new CCounter(
-					0, OpenTaiko.Skin.Characters_Balloon_Delay[this.iCurrentCharacter[player]] - 1,
+					0, OpenTaiko.SkinG.Characters_Balloon_Delay[this.iCurrentCharacter[player]] - 1,
 					1,
 					OpenTaiko.Timer);
 			}

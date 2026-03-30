@@ -275,28 +275,28 @@ internal class CActImplClearAnimation : CActivity {
 			this.ct進行メイン[iPlayer].Tick();
 
 			var (script, sound, voices) = this.Mode[iPlayer] switch {
-				EndMode.StageFailed => (FailedScript, this.soundFailed[iPlayer], OpenTaiko.Skin.voiceClearFailed),
-				EndMode.StageCleared => (ClearScript, this.soundClear[iPlayer], OpenTaiko.Skin.voiceClearClear),
-				EndMode.StageFullCombo => (FullComboScript, this.soundFullCombo[iPlayer], OpenTaiko.Skin.voiceClearFullCombo),
-				EndMode.StagePerfectCombo => (PerfectComboScript, this.soundPerfectCombo[iPlayer], OpenTaiko.Skin.voiceClearAllPerfect),
+				EndMode.StageFailed => (FailedScript, this.soundFailed[iPlayer], OpenTaiko.SkinG.voiceClearFailed),
+				EndMode.StageCleared => (ClearScript, this.soundClear[iPlayer], OpenTaiko.SkinG.voiceClearClear),
+				EndMode.StageFullCombo => (FullComboScript, this.soundFullCombo[iPlayer], OpenTaiko.SkinG.voiceClearFullCombo),
+				EndMode.StagePerfectCombo => (PerfectComboScript, this.soundPerfectCombo[iPlayer], OpenTaiko.SkinG.voiceClearAllPerfect),
 
-				EndMode.AI_Lose => (AILoseScript, this.soundAILose ?? this.soundFailed[iPlayer], OpenTaiko.Skin.voiceAILose),
-				EndMode.AI_Win => (AIWinScript, this.soundAIWin ?? this.soundClear[iPlayer], OpenTaiko.Skin.voiceAIWin),
-				EndMode.AI_Win_FullCombo => (AIWin_FullComboScript, this.soundAIWinFullCombo ?? this.soundFullCombo[iPlayer], OpenTaiko.Skin.voiceAIWin),
-				EndMode.AI_Win_Perfect => (AIWin_PerfectScript, this.soundAIWinPerfectCombo ?? this.soundPerfectCombo[iPlayer], OpenTaiko.Skin.voiceAIWin),
+				EndMode.AI_Lose => (AILoseScript, this.soundAILose ?? this.soundFailed[iPlayer], OpenTaiko.SkinG.voiceAILose),
+				EndMode.AI_Win => (AIWinScript, this.soundAIWin ?? this.soundClear[iPlayer], OpenTaiko.SkinG.voiceAIWin),
+				EndMode.AI_Win_FullCombo => (AIWin_FullComboScript, this.soundAIWinFullCombo ?? this.soundFullCombo[iPlayer], OpenTaiko.SkinG.voiceAIWin),
+				EndMode.AI_Win_Perfect => (AIWin_PerfectScript, this.soundAIWinPerfectCombo ?? this.soundPerfectCombo[iPlayer], OpenTaiko.SkinG.voiceAIWin),
 
-				EndMode.Tower_Dropout => (Tower_DropoutScript, this.soundTowerDropout ?? this.soundFailed[iPlayer], OpenTaiko.Skin.voiceClearFailed),
-				EndMode.Tower_TopReached_Pass => (Tower_TopReached_PassScript, this.soundTowerTopPass ?? this.soundClear[iPlayer], OpenTaiko.Skin.voiceClearClear),
-				EndMode.Tower_TopReached_FullCombo => (Tower_TopReached_FullComboScript, this.soundTowerTopFC ?? this.soundFullCombo[iPlayer], OpenTaiko.Skin.voiceClearFullCombo),
-				EndMode.Tower_TopReached_Perfect => (Tower_TopReached_PerfectScript, this.soundTowerTopPerfect ?? this.soundPerfectCombo[iPlayer], OpenTaiko.Skin.voiceClearAllPerfect),
+				EndMode.Tower_Dropout => (Tower_DropoutScript, this.soundTowerDropout ?? this.soundFailed[iPlayer], OpenTaiko.SkinG.voiceClearFailed),
+				EndMode.Tower_TopReached_Pass => (Tower_TopReached_PassScript, this.soundTowerTopPass ?? this.soundClear[iPlayer], OpenTaiko.SkinG.voiceClearClear),
+				EndMode.Tower_TopReached_FullCombo => (Tower_TopReached_FullComboScript, this.soundTowerTopFC ?? this.soundFullCombo[iPlayer], OpenTaiko.SkinG.voiceClearFullCombo),
+				EndMode.Tower_TopReached_Perfect => (Tower_TopReached_PerfectScript, this.soundTowerTopPerfect ?? this.soundPerfectCombo[iPlayer], OpenTaiko.SkinG.voiceClearAllPerfect),
 
-				EndMode.Dan_Fail => (Dan_FailScript, this.soundDanFailed ?? this.soundFailed[iPlayer], OpenTaiko.Skin.voiceClearFailed),
-				EndMode.Dan_Red_Pass => (Dan_Red_PassScript, this.soundDanRedClear ?? this.soundClear[iPlayer], OpenTaiko.Skin.voiceClearClear),
-				EndMode.Dan_Red_FullCombo => (Dan_Red_FullComboScript, this.soundDanRedFC ?? this.soundFullCombo[iPlayer], OpenTaiko.Skin.voiceClearFullCombo),
-				EndMode.Dan_Red_Perfect => (Dan_Red_PerfectScript, this.soundDanRedPerfect ?? this.soundPerfectCombo[iPlayer], OpenTaiko.Skin.voiceClearAllPerfect),
-				EndMode.Dan_Gold_Pass => (Dan_Gold_PassScript, this.soundDanGoldClear ?? this.soundDanRedClear ?? this.soundClear[iPlayer], OpenTaiko.Skin.voiceClearClear),
-				EndMode.Dan_Gold_FullCombo => (Dan_Gold_FullComboScript, this.soundDanGoldFC ?? this.soundDanRedFC ?? this.soundFullCombo[iPlayer], OpenTaiko.Skin.voiceClearFullCombo),
-				EndMode.Dan_Gold_Perfect => (Dan_Gold_PerfectScript, this.soundDanGoldPerfect ?? this.soundDanRedPerfect ?? this.soundPerfectCombo[iPlayer], OpenTaiko.Skin.voiceClearAllPerfect),
+				EndMode.Dan_Fail => (Dan_FailScript, this.soundDanFailed ?? this.soundFailed[iPlayer], OpenTaiko.SkinG.voiceClearFailed),
+				EndMode.Dan_Red_Pass => (Dan_Red_PassScript, this.soundDanRedClear ?? this.soundClear[iPlayer], OpenTaiko.SkinG.voiceClearClear),
+				EndMode.Dan_Red_FullCombo => (Dan_Red_FullComboScript, this.soundDanRedFC ?? this.soundFullCombo[iPlayer], OpenTaiko.SkinG.voiceClearFullCombo),
+				EndMode.Dan_Red_Perfect => (Dan_Red_PerfectScript, this.soundDanRedPerfect ?? this.soundPerfectCombo[iPlayer], OpenTaiko.SkinG.voiceClearAllPerfect),
+				EndMode.Dan_Gold_Pass => (Dan_Gold_PassScript, this.soundDanGoldClear ?? this.soundDanRedClear ?? this.soundClear[iPlayer], OpenTaiko.SkinG.voiceClearClear),
+				EndMode.Dan_Gold_FullCombo => (Dan_Gold_FullComboScript, this.soundDanGoldFC ?? this.soundDanRedFC ?? this.soundFullCombo[iPlayer], OpenTaiko.SkinG.voiceClearFullCombo),
+				EndMode.Dan_Gold_Perfect => (Dan_Gold_PerfectScript, this.soundDanGoldPerfect ?? this.soundDanRedPerfect ?? this.soundPerfectCombo[iPlayer], OpenTaiko.SkinG.voiceClearAllPerfect),
 
 				_ => (null, null, null),
 			};

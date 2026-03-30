@@ -255,7 +255,7 @@ internal class CStageSongSelect : CStage {
 			this.ct背景スクロール用タイマー = new CCounter(0, txGenreBack.szTextureSize.Width, 30, OpenTaiko.Timer);
 			this.ctOldBGScroll = new CCounter(0, txOldGenreBack.szTextureSize.Width, 30, OpenTaiko.Timer);
 
-			OpenTaiko.Skin.voiceMenuSongSelect[OpenTaiko.SaveFile]?.tPlay();
+			OpenTaiko.SkinG.voiceMenuSongSelect[OpenTaiko.SaveFile]?.tPlay();
 
 			for (int i = 0; i < 2; i++)
 				this.ctキー反復用[i] = new CCounter(0, 0, 0, OpenTaiko.Timer);
@@ -910,7 +910,7 @@ internal class CStageSongSelect : CStage {
 																	CFloorManagement.reinitialize(this.rNowSelectedSong.score[(int)Difficulty.Tower].譜面情報.nLife);
 
 																OpenTaiko.Skin.soundDecideSFX.tPlay();
-																OpenTaiko.Skin.voiceMenuSongDecide[OpenTaiko.SaveFile]?.tPlay();
+																OpenTaiko.SkinG.voiceMenuSongDecide[OpenTaiko.SaveFile]?.tPlay();
 
 																this.t曲を選択する();
 															} else {

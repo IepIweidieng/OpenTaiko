@@ -144,7 +144,7 @@ class CStage段位選択 : CStage {
 		} else if (stamp == 6000) {
 			if (!ctChara_In.IsStarted) {
 				//TJAPlayer3.Skin.soundDanSelectStart.t再生する();
-				OpenTaiko.Skin.voiceMenuDanSelectStart[OpenTaiko.SaveFile]?.tPlay();
+				OpenTaiko.SkinG.voiceMenuDanSelectStart[OpenTaiko.SaveFile]?.tPlay();
 				OpenTaiko.Skin.soundDanSelectBGM.tPlay();
 				ctChara_In.Start(0, 180, 1.25f, OpenTaiko.Timer);
 			}
@@ -181,7 +181,7 @@ class CStage段位選択 : CStage {
 						case CSongListNode.ENodeType.RANDOM: {
 								//this.t段位を選択する();
 								//TJAPlayer3.Skin.soundDanSongSelectCheck.t再生する();
-								OpenTaiko.Skin.voiceMenuDanSelectPrompt[OpenTaiko.SaveFile]?.tPlay();
+								OpenTaiko.SkinG.voiceMenuDanSelectPrompt[OpenTaiko.SaveFile]?.tPlay();
 								this.bDifficultyIn = true;
 								this.段位挑戦選択画面.ctBarIn.Start(0, 255, 1, OpenTaiko.Timer);
 							}

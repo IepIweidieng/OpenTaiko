@@ -406,8 +406,8 @@ public static class ImGuiDebugWindow {
 								OpenTaiko.Tx.ReloadCharacter(current_chara, chara, save);
 								OpenTaiko.SaveFileInstances[save].data.Character = chara;
 
-								OpenTaiko.SaveFileInstances[save].tUpdateCharacterName(OpenTaiko.Skin.Characters_DirName[chara]);
-								OpenTaiko.Skin.voiceTitleSanka[save]?.tPlay();
+								OpenTaiko.SaveFileInstances[save].tUpdateCharacterName(OpenTaiko.SkinG.Characters_DirName[chara]);
+								OpenTaiko.SkinG.voiceTitleSanka[save]?.tPlay();
 								foreach (var animation in Enum.GetValues<CMenuCharacter.ECharacterAnimation>()) {
 									CMenuCharacter.tMenuResetTimer(animation);
 								}
@@ -541,7 +541,7 @@ public static class ImGuiDebugWindow {
 							ImGui.TextColored(OpenTaiko.ConfigIni.bAutoPlay[i] ? diff : normal,
 								"Auto: " + OpenTaiko.ConfigIni.bAutoPlay[i]);
 
-							ImGui.Text("Hitsound: " + OpenTaiko.Skin.hsHitSoundsInformations.names[OpenTaiko.ConfigIni.nHitSounds[i]].GetString("???"));
+							ImGui.Text("Hitsound: " + OpenTaiko.SkinG.hsHitSoundsInformations.names[OpenTaiko.ConfigIni.nHitSounds[i]].GetString("???"));
 
 							ImGui.TextColored(OpenTaiko.ConfigIni.nFunMods[i] == EFunMods.None ? normal : diff,
 								"Fun Mods: " + OpenTaiko.ConfigIni.nFunMods[i].ToString());
@@ -659,22 +659,27 @@ public static class ImGuiDebugWindow {
 	}
 	private static void Textures() {
 		if (ImGui.BeginTabItem("Textures")) {
-			if (ImGui.BeginCombo("Change listTexture Sort###TEXTURE_TOTAL_SORT", sortType != -1 ? sortNames[sortType] : "(Default)")) {
-				if (ImGui.Selectable(sortNames[0], sortType == 0)) {
-					OpenTaiko.Tx.listTexture.Sort((tex1, tex2) => (tex2 != null ? tex2.szTextureSize.Width * tex2.szTextureSize.Height : -1).CompareTo(tex1 != null ? tex1.szTextureSize.Width * tex1.szTextureSize.Height : -1));
-					sortType = 0;
+			foreach ((List<CTexture> list, string name, string key) in new[]{
+				(OpenTaiko.Tx.listSkinTexture, nameof(OpenTaiko.Tx.listSkinTexture), "TEXTURE_SKIN"),
+				(OpenTaiko.Tx.listGlobalTexture, nameof(OpenTaiko.Tx.listGlobalTexture), "TEXTURE_GLOBAL"),
+				}) {
+				if (ImGui.BeginCombo($"Change {name} Sort###{key}_TOTAL_SORT", sortType != -1 ? sortNames[sortType] : "(Default)")) {
+					if (ImGui.Selectable(sortNames[0], sortType == 0)) {
+						list.Sort((tex1, tex2) => (tex2 != null ? tex2.szTextureSize.Width * tex2.szTextureSize.Height : -1).CompareTo(tex1 != null ? tex1.szTextureSize.Width * tex1.szTextureSize.Height : -1));
+						sortType = 0;
+					}
+					if (ImGui.Selectable(sortNames[1], sortType == 1)) {
+						list.Sort((tex1, tex2) => (tex1 != null ? tex1.szTextureSize.Width * tex1.szTextureSize.Height : -1).CompareTo(tex2 != null ? tex2.szTextureSize.Width * tex2.szTextureSize.Height : -1));
+						sortType = 1;
+					}
+					if (ImGui.Selectable(sortNames[2], sortType == 2)) {
+						list.Sort((tex1, tex2) => (tex1 != null ? (int)tex1.Pointer : -1).CompareTo(tex2 != null ? (int)tex2.Pointer : -1));
+						sortType = 2;
+					}
+					ImGui.EndCombo();
 				}
-				if (ImGui.Selectable(sortNames[1], sortType == 1)) {
-					OpenTaiko.Tx.listTexture.Sort((tex1, tex2) => (tex1 != null ? tex1.szTextureSize.Width * tex1.szTextureSize.Height : -1).CompareTo(tex2 != null ? tex2.szTextureSize.Width * tex2.szTextureSize.Height : -1));
-					sortType = 1;
-				}
-				if (ImGui.Selectable(sortNames[2], sortType == 2)) {
-					OpenTaiko.Tx.listTexture.Sort((tex1, tex2) => (tex1 != null ? (int)tex1.Pointer : -1).CompareTo(tex2 != null ? (int)tex2.Pointer : -1));
-					sortType = 2;
-				}
-				ImGui.EndCombo();
+				CTextureListPopup(list, $"Show {name}", $"{key}_ALL");
 			}
-			CTextureListPopup(OpenTaiko.Tx.listTexture, "Show listTexture", "TEXTURE_ALL");
 
 			currentStageMemoryUsage = 0;
 

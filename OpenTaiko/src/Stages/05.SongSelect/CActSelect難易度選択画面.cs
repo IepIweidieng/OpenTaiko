@@ -139,7 +139,7 @@ internal class CActSelect難易度選択画面 : CActivity {
 			ctBarAnimeIn = new CCounter(0, 170, 4, OpenTaiko.Timer);
 			// this.soundSelectAnnounce?.tサウンドを再生する();
 			//TJAPlayer3.Skin.soundSelectAnnounce.t再生する();
-			OpenTaiko.Skin.voiceMenuDiffSelect[OpenTaiko.SaveFile]?.tPlay();
+			OpenTaiko.SkinG.voiceMenuDiffSelect[OpenTaiko.SaveFile]?.tPlay();
 			base.IsFirstDraw = false;
 		}
 		//-----------------
@@ -251,9 +251,9 @@ internal class CActSelect難易度選択画面 : CActivity {
 
 									for (int i2 = 0; i2 < OpenTaiko.ConfigIni.nPlayerCount; i2++) {
 										if (OpenTaiko.ConfigIni.bAIBattleMode) {
-											OpenTaiko.Skin.voiceMenuSongDecide_AI[OpenTaiko.GetActualPlayer(i2)]?.tPlay();
+											OpenTaiko.SkinG.voiceMenuSongDecide_AI[OpenTaiko.GetActualPlayer(i2)]?.tPlay();
 										} else {
-											OpenTaiko.Skin.voiceMenuSongDecide[OpenTaiko.GetActualPlayer(i2)]?.tPlay();
+											OpenTaiko.SkinG.voiceMenuSongDecide[OpenTaiko.GetActualPlayer(i2)]?.tPlay();
 										}
 										CMenuCharacter.tMenuResetTimer(i2, CMenuCharacter.ECharacterAnimation.START);
 										if (OpenTaiko.ConfigIni.bAIBattleMode) {

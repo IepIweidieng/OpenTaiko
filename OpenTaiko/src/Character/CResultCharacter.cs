@@ -35,7 +35,7 @@ class CResultCharacter {
 	private static bool _usesSubstituteTexture(int player, ECharacterResult eca) {
 		int _charaId = OpenTaiko.SaveFileInstances[OpenTaiko.GetActualPlayer(player)].data.Character;
 
-		if (_charaId >= 0 && _charaId < OpenTaiko.Skin.Characters_Ptn) {
+		if (_charaId >= 0 && _charaId < OpenTaiko.SkinG.Characters_Ptn) {
 			switch (eca) {
 				case (ECharacterResult.NORMAL): {
 						if (OpenTaiko.Tx.Characters_Result_Normal[_charaId].Length > 0)
@@ -66,7 +66,7 @@ class CResultCharacter {
 	public static CTexture[] _getReferenceArray(int player, ECharacterResult eca) {
 		int _charaId = OpenTaiko.SaveFileInstances[OpenTaiko.GetActualPlayer(player)].data.Character;
 
-		if (_charaId >= 0 && _charaId < OpenTaiko.Skin.Characters_Ptn) {
+		if (_charaId >= 0 && _charaId < OpenTaiko.SkinG.Characters_Ptn) {
 			switch (eca) {
 				case (ECharacterResult.NORMAL): {
 						if (OpenTaiko.Tx.Characters_Result_Normal[_charaId].Length > 0)
@@ -126,16 +126,16 @@ class CResultCharacter {
 
 		switch (eca) {
 			case (ECharacterResult.NORMAL): {
-					return OpenTaiko.Skin.Characters_Result_Normal_AnimationDuration[_charaId];
+					return OpenTaiko.SkinG.Characters_Result_Normal_AnimationDuration[_charaId];
 				}
 			case (ECharacterResult.CLEAR): {
-					return OpenTaiko.Skin.Characters_Result_Clear_AnimationDuration[_charaId];
+					return OpenTaiko.SkinG.Characters_Result_Clear_AnimationDuration[_charaId];
 				}
 			case (ECharacterResult.FAILED): {
-					return OpenTaiko.Skin.Characters_Result_Failed_AnimationDuration[_charaId];
+					return OpenTaiko.SkinG.Characters_Result_Failed_AnimationDuration[_charaId];
 				}
 			case (ECharacterResult.FAILED_IN): {
-					return OpenTaiko.Skin.Characters_Result_Failed_In_AnimationDuration[_charaId];
+					return OpenTaiko.SkinG.Characters_Result_Failed_In_AnimationDuration[_charaId];
 				}
 		}
 		return 1000;
@@ -205,11 +205,11 @@ class CResultCharacter {
 
 			_tex.Opacity = opacity;
 
-			float resolutionRatioX = OpenTaiko.Skin.Resolution[0] / (float)OpenTaiko.Skin.Characters_Resolution[_charaId][0];
-			float resolutionRatioY = OpenTaiko.Skin.Resolution[1] / (float)OpenTaiko.Skin.Characters_Resolution[_charaId][1];
+			float resolutionRatioX = OpenTaiko.Skin.Resolution[0] / (float)OpenTaiko.SkinG.Characters_Resolution[_charaId][0];
+			float resolutionRatioY = OpenTaiko.Skin.Resolution[1] / (float)OpenTaiko.SkinG.Characters_Resolution[_charaId][1];
 
-			float _x = x + (OpenTaiko.Skin.Characters_Result_Offset[_charaId][0] * _tex.vcScaleRatio.X);
-			float _y = y + (OpenTaiko.Skin.Characters_Result_Offset[_charaId][1] * _tex.vcScaleRatio.Y);
+			float _x = x + (OpenTaiko.SkinG.Characters_Result_Offset[_charaId][0] * _tex.vcScaleRatio.X);
+			float _y = y + (OpenTaiko.SkinG.Characters_Result_Offset[_charaId][1] * _tex.vcScaleRatio.Y);
 
 			_tex.vcScaleRatio.X *= resolutionRatioX;
 			_tex.vcScaleRatio.Y *= resolutionRatioY;

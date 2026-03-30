@@ -60,10 +60,10 @@ class CActNewHeya : CActivity {
 				CurrentMode = (ModeType)(CurrentIndex - 1);
 				switch (CurrentMode) {
 					case ModeType.Chara:
-						CurrentMaxIndex = OpenTaiko.Skin.Characters_Ptn;
+						CurrentMaxIndex = OpenTaiko.SkinG.Characters_Ptn;
 						break;
 					case ModeType.PuchiChara:
-						CurrentMaxIndex = OpenTaiko.Skin.Puchichara_Ptn;
+						CurrentMaxIndex = OpenTaiko.SkinG.Puchichara_Ptn;
 						break;
 					case ModeType.DanTitle: {
 							int amount = 1;
@@ -163,20 +163,20 @@ class CActNewHeya : CActivity {
 		MenuTitleKeys[3] = new TitleTextureKey(CLangManager.LangInstance.GetString("HEYA_DAN"), MenuFont, Color.White, Color.Black, 9999);
 		MenuTitleKeys[4] = new TitleTextureKey(CLangManager.LangInstance.GetString("HEYA_NAMEPLATE"), MenuFont, Color.White, Color.Black, 9999);
 
-		ttkPuchiCharaNames = new TitleTextureKey[OpenTaiko.Skin.Puchichara_Ptn];
-		ttkPuchiCharaAuthors = new TitleTextureKey[OpenTaiko.Skin.Puchichara_Ptn];
+		ttkPuchiCharaNames = new TitleTextureKey[OpenTaiko.SkinG.Puchichara_Ptn];
+		ttkPuchiCharaAuthors = new TitleTextureKey[OpenTaiko.SkinG.Puchichara_Ptn];
 
-		for (int i = 0; i < OpenTaiko.Skin.Puchichara_Ptn; i++) {
+		for (int i = 0; i < OpenTaiko.SkinG.Puchichara_Ptn; i++) {
 			var textColor = HRarity.tRarityToColor(OpenTaiko.Tx.Puchichara[i].metadata.Rarity);
 			ttkPuchiCharaNames[i] = new TitleTextureKey(OpenTaiko.Tx.Puchichara[i].metadata.tGetName(), this.MenuFont, textColor, Color.Black, 1000);
 			ttkPuchiCharaAuthors[i] = new TitleTextureKey(OpenTaiko.Tx.Puchichara[i].metadata.tGetAuthor(), this.MenuFont, Color.White, Color.Black, 1000);
 		}
 
 
-		ttkCharacterAuthors = new TitleTextureKey[OpenTaiko.Skin.Characters_Ptn];
-		ttkCharacterNames = new TitleTextureKey[OpenTaiko.Skin.Characters_Ptn];
+		ttkCharacterAuthors = new TitleTextureKey[OpenTaiko.SkinG.Characters_Ptn];
+		ttkCharacterNames = new TitleTextureKey[OpenTaiko.SkinG.Characters_Ptn];
 
-		for (int i = 0; i < OpenTaiko.Skin.Characters_Ptn; i++) {
+		for (int i = 0; i < OpenTaiko.SkinG.Characters_Ptn; i++) {
 			var textColor = HRarity.tRarityToColor(OpenTaiko.Tx.Characters[i].metadata.Rarity);
 			ttkCharacterNames[i] = new TitleTextureKey(OpenTaiko.Tx.Characters[i].metadata.tGetName(), this.MenuFont, textColor, Color.Black, 1000);
 			ttkCharacterAuthors[i] = new TitleTextureKey(OpenTaiko.Tx.Characters[i].metadata.tGetAuthor(), this.MenuFont, Color.White, Color.Black, 1000);
@@ -243,7 +243,7 @@ class CActNewHeya : CActivity {
 										//PuchiChara.tGetPuchiCharaIndexByName(p);
 										//TJAPlayer3.NamePlateConfig.data.PuchiChara[iPlayer] = TJAPlayer3.Skin.Puchicharas_Name[iPuchiCharaCurrent];// iPuchiCharaCurrent;
 										//TJAPlayer3.NamePlateConfig.tApplyHeyaChanges();
-										OpenTaiko.SaveFileInstances[CurrentPlayer].data.PuchiChara = OpenTaiko.Skin.Puchicharas_Name[CurrentIndex];// iPuchiCharaCurrent;
+										OpenTaiko.SaveFileInstances[CurrentPlayer].data.PuchiChara = OpenTaiko.SkinG.Puchicharas_Name[CurrentIndex];// iPuchiCharaCurrent;
 										OpenTaiko.SaveFileInstances[CurrentPlayer].tApplyHeyaChanges();
 										OpenTaiko.Skin.soundDecideSFX.tPlay();
 										OpenTaiko.Tx.Puchichara[CurrentIndex].welcome.tPlay();
@@ -252,7 +252,7 @@ class CActNewHeya : CActivity {
 									} else if (ess == ESelectStatus.SUCCESS) {
 										//TJAPlayer3.NamePlateConfig.data.UnlockedPuchicharas[iPlayer].Add(TJAPlayer3.Skin.Puchicharas_Name[iPuchiCharaCurrent]);
 										//TJAPlayer3.NamePlateConfig.tSpendCoins(TJAPlayer3.Tx.Puchichara[iPuchiCharaCurrent].unlock.Values[0], iPlayer);
-										OpenTaiko.SaveFileInstances[CurrentPlayer].data.UnlockedPuchicharas.Add(OpenTaiko.Skin.Puchicharas_Name[CurrentIndex]);
+										OpenTaiko.SaveFileInstances[CurrentPlayer].data.UnlockedPuchicharas.Add(OpenTaiko.SkinG.Puchicharas_Name[CurrentIndex]);
 										if (OpenTaiko.Tx.Puchichara[CurrentIndex].unlock is CUnlockCH)
 											OpenTaiko.SaveFileInstances[CurrentPlayer].tSpendCoins(OpenTaiko.Tx.Puchichara[CurrentIndex].unlock.Values[0]);
 										else if (OpenTaiko.Tx.Puchichara[CurrentIndex].unlock is CUnlockAndComb || OpenTaiko.Tx.Puchichara[CurrentIndex].unlock is CUnlockOrComb)
@@ -274,11 +274,11 @@ class CActNewHeya : CActivity {
 										OpenTaiko.SaveFileInstances[CurrentPlayer].data.Character = CurrentIndex;
 
 										// Update the character
-										OpenTaiko.SaveFileInstances[CurrentPlayer].tUpdateCharacterName(OpenTaiko.Skin.Characters_DirName[CurrentIndex]);
+										OpenTaiko.SaveFileInstances[CurrentPlayer].tUpdateCharacterName(OpenTaiko.SkinG.Characters_DirName[CurrentIndex]);
 
 										// Welcome voice using Sanka
 										OpenTaiko.Skin.soundDecideSFX.tPlay();
-										OpenTaiko.Skin.voiceTitleSanka[CurrentPlayer]?.tPlay();
+										OpenTaiko.SkinG.voiceTitleSanka[CurrentPlayer]?.tPlay();
 
 										CMenuCharacter.tMenuResetTimer(CMenuCharacter.ECharacterAnimation.NORMAL);
 
@@ -287,7 +287,7 @@ class CActNewHeya : CActivity {
 										SetState(SelectableInfo.PlayerSelect);
 										CurrentMode = ModeType.None;
 									} else if (ess == ESelectStatus.SUCCESS) {
-										OpenTaiko.SaveFileInstances[CurrentPlayer].data.UnlockedCharacters.Add(OpenTaiko.Skin.Characters_DirName[CurrentIndex]);
+										OpenTaiko.SaveFileInstances[CurrentPlayer].data.UnlockedCharacters.Add(OpenTaiko.SkinG.Characters_DirName[CurrentIndex]);
 										if (OpenTaiko.Tx.Characters[CurrentIndex].unlock is CUnlockCH)
 											OpenTaiko.SaveFileInstances[CurrentPlayer].tSpendCoins(OpenTaiko.Tx.Characters[CurrentIndex].unlock.Values[0]);
 										else if (OpenTaiko.Tx.Characters[CurrentIndex].unlock is CUnlockAndComb || OpenTaiko.Tx.Characters[CurrentIndex].unlock is CUnlockOrComb)
@@ -411,9 +411,9 @@ class CActNewHeya : CActivity {
 
 								float charaRatioX = 1.0f;
 								float charaRatioY = 1.0f;
-								if (OpenTaiko.Skin.Characters_Resolution[index] != null) {
-									charaRatioX = OpenTaiko.Skin.Resolution[0] / (float)OpenTaiko.Skin.Characters_Resolution[index][0];
-									charaRatioY = OpenTaiko.Skin.Resolution[1] / (float)OpenTaiko.Skin.Characters_Resolution[index][1];
+								if (OpenTaiko.SkinG.Characters_Resolution[index] != null) {
+									charaRatioX = OpenTaiko.Skin.Resolution[0] / (float)OpenTaiko.SkinG.Characters_Resolution[index][0];
+									charaRatioY = OpenTaiko.Skin.Resolution[1] / (float)OpenTaiko.SkinG.Characters_Resolution[index][1];
 								}
 
 								if (OpenTaiko.Tx.Characters_Heya_Preview[index] != null) {
@@ -437,7 +437,7 @@ class CActNewHeya : CActivity {
 								}
 
 								if (OpenTaiko.Tx.Characters[index].unlock != null
-									&& !OpenTaiko.SaveFileInstances[CurrentPlayer].data.UnlockedCharacters.Contains(OpenTaiko.Skin.Characters_DirName[index])) {
+									&& !OpenTaiko.SaveFileInstances[CurrentPlayer].data.UnlockedCharacters.Contains(OpenTaiko.SkinG.Characters_DirName[index])) {
 									OpenTaiko.Tx.NewHeya_Lock?.t2D描画(x + OpenTaiko.Skin.SongSelect_NewHeya_Lock_Offset[0], y + OpenTaiko.Skin.SongSelect_NewHeya_Lock_Offset[1]);
 
 									if (this.ttkInfoSection != null)
@@ -479,7 +479,7 @@ class CActNewHeya : CActivity {
 								}
 
 								if (OpenTaiko.Tx.Puchichara[index].unlock != null
-									&& !OpenTaiko.SaveFileInstances[CurrentPlayer].data.UnlockedPuchicharas.Contains(OpenTaiko.Skin.Puchicharas_Name[index])) {
+									&& !OpenTaiko.SaveFileInstances[CurrentPlayer].data.UnlockedPuchicharas.Contains(OpenTaiko.SkinG.Puchicharas_Name[index])) {
 									OpenTaiko.Tx.NewHeya_Lock?.t2D描画(x + OpenTaiko.Skin.SongSelect_NewHeya_Lock_Offset[0], y + OpenTaiko.Skin.SongSelect_NewHeya_Lock_Offset[1]);
 
 									if (this.ttkInfoSection != null)
@@ -612,7 +612,7 @@ class CActNewHeya : CActivity {
 		// Add "If unlocked" to select directly
 
 		if (OpenTaiko.Tx.Puchichara[CurrentIndex].unlock != null
-			&& !OpenTaiko.SaveFileInstances[CurrentPlayer].data.UnlockedPuchicharas.Contains(OpenTaiko.Skin.Puchicharas_Name[CurrentIndex])) {
+			&& !OpenTaiko.SaveFileInstances[CurrentPlayer].data.UnlockedPuchicharas.Contains(OpenTaiko.SkinG.Puchicharas_Name[CurrentIndex])) {
 			(bool, string?) response = OpenTaiko.Tx.Puchichara[CurrentIndex].unlock.tConditionMet(CurrentPlayer);
 			//tConditionMet(
 			//new int[] { TJAPlayer3.SaveFileInstances[TJAPlayer3.SaveFile].data.Medals });
@@ -634,7 +634,7 @@ class CActNewHeya : CActivity {
 		#region [Check unlockable]
 
 		if (OpenTaiko.Tx.Puchichara[CurrentIndex].unlock != null
-			&& !OpenTaiko.SaveFileInstances[CurrentPlayer].data.UnlockedPuchicharas.Contains(OpenTaiko.Skin.Puchicharas_Name[CurrentIndex])) {
+			&& !OpenTaiko.SaveFileInstances[CurrentPlayer].data.UnlockedPuchicharas.Contains(OpenTaiko.SkinG.Puchicharas_Name[CurrentIndex])) {
 			this.ttkInfoSection = new TitleTextureKey(OpenTaiko.Tx.Puchichara[CurrentIndex].unlock.tConditionMessage()
 				, this.MenuFont, Color.White, Color.Black, 1000);
 		} else
@@ -646,7 +646,7 @@ class CActNewHeya : CActivity {
 		#region [Check unlockable]
 
 		if (OpenTaiko.Tx.Characters[CurrentIndex].unlock != null
-			&& !OpenTaiko.SaveFileInstances[CurrentPlayer].data.UnlockedCharacters.Contains(OpenTaiko.Skin.Characters_DirName[CurrentIndex])) {
+			&& !OpenTaiko.SaveFileInstances[CurrentPlayer].data.UnlockedCharacters.Contains(OpenTaiko.SkinG.Characters_DirName[CurrentIndex])) {
 			this.ttkInfoSection = new TitleTextureKey(OpenTaiko.Tx.Characters[CurrentIndex].unlock.tConditionMessage()
 				, this.MenuFont, Color.White, Color.Black, 1000);
 		} else
@@ -659,7 +659,7 @@ class CActNewHeya : CActivity {
 		// Add "If unlocked" to select directly
 
 		if (OpenTaiko.Tx.Characters[CurrentIndex].unlock != null
-			&& !OpenTaiko.SaveFileInstances[CurrentPlayer].data.UnlockedCharacters.Contains(OpenTaiko.Skin.Characters_DirName[CurrentIndex])) {
+			&& !OpenTaiko.SaveFileInstances[CurrentPlayer].data.UnlockedCharacters.Contains(OpenTaiko.SkinG.Characters_DirName[CurrentIndex])) {
 			(bool, string?) response = OpenTaiko.Tx.Characters[CurrentIndex].unlock.tConditionMet(CurrentPlayer);
 			//TJAPlayer3.Tx.Characters[iCharacterCurrent].unlock.tConditionMet(
 			//new int[] { TJAPlayer3.SaveFileInstances[TJAPlayer3.SaveFile].data.Medals });

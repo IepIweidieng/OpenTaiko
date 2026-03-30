@@ -109,10 +109,10 @@ internal class CActImplBackground : CActivity {
 
 		this.ct炎 = new CCounter(0, 6, 50, OpenTaiko.Timer);
 
-		this.currentCharacter = Math.Max(0, Math.Min(OpenTaiko.SaveFileInstances[0].data.Character, OpenTaiko.Skin.Characters_Ptn - 1));
+		this.currentCharacter = Math.Max(0, Math.Min(OpenTaiko.SaveFileInstances[0].data.Character, OpenTaiko.SkinG.Characters_Ptn - 1));
 
-		float resolutionScaleX = OpenTaiko.Skin.Resolution[0] / (float)OpenTaiko.Skin.Characters_Resolution[currentCharacter][0];
-		float resolutionScaleY = OpenTaiko.Skin.Resolution[1] / (float)OpenTaiko.Skin.Characters_Resolution[currentCharacter][1];
+		float resolutionScaleX = OpenTaiko.Skin.Resolution[0] / (float)OpenTaiko.SkinG.Characters_Resolution[currentCharacter][0];
+		float resolutionScaleY = OpenTaiko.Skin.Resolution[1] / (float)OpenTaiko.SkinG.Characters_Resolution[currentCharacter][1];
 
 		// Scale tower chara
 		foreach (CTexture texture in OpenTaiko.Tx.Characters_Tower_Standing[currentCharacter]) {
@@ -154,7 +154,7 @@ internal class CActImplBackground : CActivity {
 
 		this.ctSlideAnimation = new CCounter();
 		this.ctClimbDuration = new CCounter();
-		this.ctStandingAnimation = new CCounter(0, 1000, (60000f / (float)CTja.TjaBeatSpeedToGameBeatSpeed(OpenTaiko.stageGameScreen.actPlayInfo.dbBPM[0])) * OpenTaiko.Skin.Characters_Beat_Tower_Standing[currentCharacter] / OpenTaiko.Skin.Characters_Tower_Standing_Ptn[currentCharacter], OpenTaiko.Timer);
+		this.ctStandingAnimation = new CCounter(0, 1000, (60000f / (float)CTja.TjaBeatSpeedToGameBeatSpeed(OpenTaiko.stageGameScreen.actPlayInfo.dbBPM[0])) * OpenTaiko.SkinG.Characters_Beat_Tower_Standing[currentCharacter] / OpenTaiko.SkinG.Characters_Tower_Standing_Ptn[currentCharacter], OpenTaiko.Timer);
 		this.ctClimbingAnimation = new CCounter();
 		this.ctRunningAnimation = new CCounter();
 		this.ctClearAnimation = new CCounter();
@@ -420,84 +420,84 @@ internal class CActImplBackground : CActivity {
 			if (bFloorChanged == true) {
 				float floorBPM = (float)CTja.TjaBeatSpeedToGameBeatSpeed(OpenTaiko.stageGameScreen.actPlayInfo.dbBPM[0]);
 				ctClimbDuration.Start(0, 1500, 120f / floorBPM, OpenTaiko.Timer);
-				ctStandingAnimation.Start(0, 1000, (60000f / floorBPM) * OpenTaiko.Skin.Characters_Beat_Tower_Standing[currentCharacter] / OpenTaiko.Skin.Characters_Tower_Standing_Ptn[currentCharacter], OpenTaiko.Timer);
-				ctClimbingAnimation.Start(0, 1000, (120000f / floorBPM) / OpenTaiko.Skin.Characters_Tower_Climbing_Ptn[currentCharacter], OpenTaiko.Timer);
-				ctRunningAnimation.Start(0, 1000, (60000f / floorBPM) / OpenTaiko.Skin.Characters_Tower_Running_Ptn[currentCharacter], OpenTaiko.Timer);
-				ctStandTiredAnimation.Start(0, 1000, (60000f / floorBPM) * OpenTaiko.Skin.Characters_Beat_Tower_Standing_Tired[currentCharacter] / OpenTaiko.Skin.Characters_Tower_Standing_Tired_Ptn[currentCharacter], OpenTaiko.Timer);
-				ctClimbTiredAnimation.Start(0, 1000, (120000f / floorBPM) / OpenTaiko.Skin.Characters_Tower_Climbing_Tired_Ptn[currentCharacter], OpenTaiko.Timer);
-				ctRunTiredAnimation.Start(0, 1000, (60000f / floorBPM) / OpenTaiko.Skin.Characters_Tower_Running_Tired_Ptn[currentCharacter], OpenTaiko.Timer);
+				ctStandingAnimation.Start(0, 1000, (60000f / floorBPM) * OpenTaiko.SkinG.Characters_Beat_Tower_Standing[currentCharacter] / OpenTaiko.SkinG.Characters_Tower_Standing_Ptn[currentCharacter], OpenTaiko.Timer);
+				ctClimbingAnimation.Start(0, 1000, (120000f / floorBPM) / OpenTaiko.SkinG.Characters_Tower_Climbing_Ptn[currentCharacter], OpenTaiko.Timer);
+				ctRunningAnimation.Start(0, 1000, (60000f / floorBPM) / OpenTaiko.SkinG.Characters_Tower_Running_Ptn[currentCharacter], OpenTaiko.Timer);
+				ctStandTiredAnimation.Start(0, 1000, (60000f / floorBPM) * OpenTaiko.SkinG.Characters_Beat_Tower_Standing_Tired[currentCharacter] / OpenTaiko.SkinG.Characters_Tower_Standing_Tired_Ptn[currentCharacter], OpenTaiko.Timer);
+				ctClimbTiredAnimation.Start(0, 1000, (120000f / floorBPM) / OpenTaiko.SkinG.Characters_Tower_Climbing_Tired_Ptn[currentCharacter], OpenTaiko.Timer);
+				ctRunTiredAnimation.Start(0, 1000, (60000f / floorBPM) / OpenTaiko.SkinG.Characters_Tower_Running_Tired_Ptn[currentCharacter], OpenTaiko.Timer);
 			}
 
 			bool isClimbing = ctClimbDuration.CurrentValue > 0 && ctClimbDuration.CurrentValue < 1500;
 
 			if (stageEnded && !TowerFinished && !isClimbing) {
 				float floorBPM = (float)CTja.TjaBeatSpeedToGameBeatSpeed(OpenTaiko.stageGameScreen.actPlayInfo.dbBPM[0]);
-				ctClearAnimation.Start(0, 20000, (60000f / floorBPM) * OpenTaiko.Skin.Characters_Beat_Tower_Clear[currentCharacter] / OpenTaiko.Skin.Characters_Tower_Clear_Ptn[currentCharacter], OpenTaiko.Timer);
-				ctClearTiredAnimation.Start(0, 20000, (60000f / floorBPM) * OpenTaiko.Skin.Characters_Beat_Tower_Clear_Tired[currentCharacter] / OpenTaiko.Skin.Characters_Tower_Clear_Tired_Ptn[currentCharacter], OpenTaiko.Timer);
-				ctFailAnimation.Start(0, 20000, (60000f / floorBPM) * OpenTaiko.Skin.Characters_Beat_Tower_Fail[currentCharacter] / OpenTaiko.Skin.Characters_Tower_Fail_Ptn[currentCharacter], OpenTaiko.Timer);
+				ctClearAnimation.Start(0, 20000, (60000f / floorBPM) * OpenTaiko.SkinG.Characters_Beat_Tower_Clear[currentCharacter] / OpenTaiko.SkinG.Characters_Tower_Clear_Ptn[currentCharacter], OpenTaiko.Timer);
+				ctClearTiredAnimation.Start(0, 20000, (60000f / floorBPM) * OpenTaiko.SkinG.Characters_Beat_Tower_Clear_Tired[currentCharacter] / OpenTaiko.SkinG.Characters_Tower_Clear_Tired_Ptn[currentCharacter], OpenTaiko.Timer);
+				ctFailAnimation.Start(0, 20000, (60000f / floorBPM) * OpenTaiko.SkinG.Characters_Beat_Tower_Fail[currentCharacter] / OpenTaiko.SkinG.Characters_Tower_Fail_Ptn[currentCharacter], OpenTaiko.Timer);
 				TowerFinished = true;
 			}
 
 			if (isClimbing) {
 				// Tired Climb
-				if (ctIsTired && (ctClimbDuration.CurrentValue <= 1000) && OpenTaiko.Skin.Characters_Tower_Climbing_Tired_Ptn[currentCharacter] > 0) {
-					int animChar = ctClimbTiredAnimation.CurrentValue % OpenTaiko.Skin.Characters_Tower_Climbing_Ptn[currentCharacter];
+				if (ctIsTired && (ctClimbDuration.CurrentValue <= 1000) && OpenTaiko.SkinG.Characters_Tower_Climbing_Tired_Ptn[currentCharacter] > 0) {
+					int animChar = ctClimbTiredAnimation.CurrentValue % OpenTaiko.SkinG.Characters_Tower_Climbing_Ptn[currentCharacter];
 					int distDonX = (int)(ctClimbDuration.CurrentValue * (OpenTaiko.Skin.Game_Tower_Don_Move[0] / 1000f));
 					int distDonY = (int)(ctClimbDuration.CurrentValue * (OpenTaiko.Skin.Game_Tower_Don_Move[1] / 1000f));
 					OpenTaiko.Tx.Characters_Tower_Climbing_Tired[currentCharacter][animChar]?.t2D拡大率考慮下中心基準描画(OpenTaiko.Skin.Game_Tower_Don[0] + distDonX, OpenTaiko.Skin.Game_Tower_Don[1] + distDonY);
 				}
 				// Tired Run
-				else if (ctIsTired && (ctClimbDuration.CurrentValue > 1000 && ctClimbDuration.CurrentValue < 1500) && OpenTaiko.Skin.Characters_Tower_Running_Tired_Ptn[currentCharacter] > 0) {
-					int animChar = ctRunTiredAnimation.CurrentValue % OpenTaiko.Skin.Characters_Tower_Running_Ptn[currentCharacter];
+				else if (ctIsTired && (ctClimbDuration.CurrentValue > 1000 && ctClimbDuration.CurrentValue < 1500) && OpenTaiko.SkinG.Characters_Tower_Running_Tired_Ptn[currentCharacter] > 0) {
+					int animChar = ctRunTiredAnimation.CurrentValue % OpenTaiko.SkinG.Characters_Tower_Running_Ptn[currentCharacter];
 					int distDonX = (int)((1500 - ctClimbDuration.CurrentValue) * (OpenTaiko.Skin.Game_Tower_Don_Move[0] / 500f));
 					int distDonY = (int)((1500 - ctClimbDuration.CurrentValue) * (OpenTaiko.Skin.Game_Tower_Don_Move[1] / 500f));
 					OpenTaiko.Tx.Characters_Tower_Running_Tired[currentCharacter][animChar]?.t2D拡大率考慮下中心基準描画(OpenTaiko.Skin.Game_Tower_Don[0] + distDonX, OpenTaiko.Skin.Game_Tower_Don[1] + distDonY);
 				}
 				// Climb
-				else if ((ctClimbDuration.CurrentValue <= 1000) && OpenTaiko.Skin.Characters_Tower_Climbing_Ptn[currentCharacter] > 0) {
-					int animChar = ctClimbingAnimation.CurrentValue % OpenTaiko.Skin.Characters_Tower_Climbing_Ptn[currentCharacter];
+				else if ((ctClimbDuration.CurrentValue <= 1000) && OpenTaiko.SkinG.Characters_Tower_Climbing_Ptn[currentCharacter] > 0) {
+					int animChar = ctClimbingAnimation.CurrentValue % OpenTaiko.SkinG.Characters_Tower_Climbing_Ptn[currentCharacter];
 					int distDonX = (int)(ctClimbDuration.CurrentValue * (OpenTaiko.Skin.Game_Tower_Don_Move[0] / 1000f));
 					int distDonY = (int)(ctClimbDuration.CurrentValue * (OpenTaiko.Skin.Game_Tower_Don_Move[1] / 1000f));
 					OpenTaiko.Tx.Characters_Tower_Climbing[currentCharacter][animChar]?.t2D拡大率考慮下中心基準描画(OpenTaiko.Skin.Game_Tower_Don[0] + distDonX, OpenTaiko.Skin.Game_Tower_Don[1] + distDonY);
 				}
 				// Run
-				else if ((ctClimbDuration.CurrentValue > 1000 && ctClimbDuration.CurrentValue < 1500) && OpenTaiko.Skin.Characters_Tower_Running_Ptn[currentCharacter] > 0) {
-					int animChar = ctRunningAnimation.CurrentValue % OpenTaiko.Skin.Characters_Tower_Running_Ptn[currentCharacter];
+				else if ((ctClimbDuration.CurrentValue > 1000 && ctClimbDuration.CurrentValue < 1500) && OpenTaiko.SkinG.Characters_Tower_Running_Ptn[currentCharacter] > 0) {
+					int animChar = ctRunningAnimation.CurrentValue % OpenTaiko.SkinG.Characters_Tower_Running_Ptn[currentCharacter];
 					int distDonX = (int)((1500 - ctClimbDuration.CurrentValue) * (OpenTaiko.Skin.Game_Tower_Don_Move[0] / 500f));
 					int distDonY = (int)((1500 - ctClimbDuration.CurrentValue) * (OpenTaiko.Skin.Game_Tower_Don_Move[1] / 500f));
 					OpenTaiko.Tx.Characters_Tower_Running[currentCharacter][animChar]?.t2D拡大率考慮下中心基準描画(OpenTaiko.Skin.Game_Tower_Don[0] + distDonX, OpenTaiko.Skin.Game_Tower_Don[1] + distDonY);
 				}
 			} else {
 				// Fail
-				if (OpenTaiko.Skin.Characters_Tower_Fail_Ptn[currentCharacter] > 0 && CFloorManagement.CurrentNumberOfLives == 0) {
-					int animChar = OpenTaiko.Skin.Characters_Tower_Fail_IsLooping[currentCharacter] ?
-						ctFailAnimation.CurrentValue % OpenTaiko.Skin.Characters_Tower_Fail_Ptn[currentCharacter] :
-						Math.Min(ctFailAnimation.CurrentValue, OpenTaiko.Skin.Characters_Tower_Fail_Ptn[currentCharacter] - 1);
+				if (OpenTaiko.SkinG.Characters_Tower_Fail_Ptn[currentCharacter] > 0 && CFloorManagement.CurrentNumberOfLives == 0) {
+					int animChar = OpenTaiko.SkinG.Characters_Tower_Fail_IsLooping[currentCharacter] ?
+						ctFailAnimation.CurrentValue % OpenTaiko.SkinG.Characters_Tower_Fail_Ptn[currentCharacter] :
+						Math.Min(ctFailAnimation.CurrentValue, OpenTaiko.SkinG.Characters_Tower_Fail_Ptn[currentCharacter] - 1);
 					OpenTaiko.Tx.Characters_Tower_Fail[currentCharacter][animChar]?.t2D拡大率考慮下中心基準描画(OpenTaiko.Skin.Game_Tower_Don[0], OpenTaiko.Skin.Game_Tower_Don[1]);
 				}
 				// Tired Clear
-				else if (ctIsTired && stageEnded && OpenTaiko.Skin.Characters_Tower_Clear_Tired_Ptn[currentCharacter] > 0 && CFloorManagement.CurrentNumberOfLives > 0) {
-					int animChar = OpenTaiko.Skin.Characters_Tower_Clear_Tired_IsLooping[currentCharacter] ?
-						ctClearTiredAnimation.CurrentValue % OpenTaiko.Skin.Characters_Tower_Clear_Tired_Ptn[currentCharacter] :
-						Math.Min(ctClearTiredAnimation.CurrentValue, OpenTaiko.Skin.Characters_Tower_Clear_Tired_Ptn[currentCharacter] - 1);
+				else if (ctIsTired && stageEnded && OpenTaiko.SkinG.Characters_Tower_Clear_Tired_Ptn[currentCharacter] > 0 && CFloorManagement.CurrentNumberOfLives > 0) {
+					int animChar = OpenTaiko.SkinG.Characters_Tower_Clear_Tired_IsLooping[currentCharacter] ?
+						ctClearTiredAnimation.CurrentValue % OpenTaiko.SkinG.Characters_Tower_Clear_Tired_Ptn[currentCharacter] :
+						Math.Min(ctClearTiredAnimation.CurrentValue, OpenTaiko.SkinG.Characters_Tower_Clear_Tired_Ptn[currentCharacter] - 1);
 					OpenTaiko.Tx.Characters_Tower_Clear_Tired[currentCharacter][animChar]?.t2D拡大率考慮下中心基準描画(OpenTaiko.Skin.Game_Tower_Don[0], OpenTaiko.Skin.Game_Tower_Don[1]);
 				}
 				// Clear
-				else if (stageEnded && OpenTaiko.Skin.Characters_Tower_Clear_Ptn[currentCharacter] > 0 && CFloorManagement.CurrentNumberOfLives > 0) {
-					int animChar = OpenTaiko.Skin.Characters_Tower_Clear_IsLooping[currentCharacter] ?
-						ctClearAnimation.CurrentValue % OpenTaiko.Skin.Characters_Tower_Clear_Ptn[currentCharacter] :
-						Math.Min(ctClearAnimation.CurrentValue, OpenTaiko.Skin.Characters_Tower_Clear_Ptn[currentCharacter] - 1);
+				else if (stageEnded && OpenTaiko.SkinG.Characters_Tower_Clear_Ptn[currentCharacter] > 0 && CFloorManagement.CurrentNumberOfLives > 0) {
+					int animChar = OpenTaiko.SkinG.Characters_Tower_Clear_IsLooping[currentCharacter] ?
+						ctClearAnimation.CurrentValue % OpenTaiko.SkinG.Characters_Tower_Clear_Ptn[currentCharacter] :
+						Math.Min(ctClearAnimation.CurrentValue, OpenTaiko.SkinG.Characters_Tower_Clear_Ptn[currentCharacter] - 1);
 					OpenTaiko.Tx.Characters_Tower_Clear[currentCharacter][animChar]?.t2D拡大率考慮下中心基準描画(OpenTaiko.Skin.Game_Tower_Don[0], OpenTaiko.Skin.Game_Tower_Don[1]);
 				}
 
 				// Tired Stand
-				else if (ctIsTired && OpenTaiko.Skin.Characters_Tower_Standing_Tired_Ptn[currentCharacter] > 0) {
-					int animChar = ctStandTiredAnimation.CurrentValue % OpenTaiko.Skin.Characters_Tower_Standing_Tired_Ptn[currentCharacter];
+				else if (ctIsTired && OpenTaiko.SkinG.Characters_Tower_Standing_Tired_Ptn[currentCharacter] > 0) {
+					int animChar = ctStandTiredAnimation.CurrentValue % OpenTaiko.SkinG.Characters_Tower_Standing_Tired_Ptn[currentCharacter];
 					OpenTaiko.Tx.Characters_Tower_Standing_Tired[currentCharacter][animChar]?.t2D拡大率考慮下中心基準描画(OpenTaiko.Skin.Game_Tower_Don[0], OpenTaiko.Skin.Game_Tower_Don[1]); // Center X - 50
 				}
 				// Stand
-				else if (OpenTaiko.Skin.Characters_Tower_Standing_Ptn[currentCharacter] > 0) {
-					int animChar = ctStandingAnimation.CurrentValue % OpenTaiko.Skin.Characters_Tower_Standing_Ptn[currentCharacter];
+				else if (OpenTaiko.SkinG.Characters_Tower_Standing_Ptn[currentCharacter] > 0) {
+					int animChar = ctStandingAnimation.CurrentValue % OpenTaiko.SkinG.Characters_Tower_Standing_Ptn[currentCharacter];
 					OpenTaiko.Tx.Characters_Tower_Standing[currentCharacter][animChar]?.t2D拡大率考慮下中心基準描画(OpenTaiko.Skin.Game_Tower_Don[0], OpenTaiko.Skin.Game_Tower_Don[1]); // Center X - 50
 				}
 			}

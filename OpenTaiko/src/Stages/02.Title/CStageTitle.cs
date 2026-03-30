@@ -318,8 +318,8 @@ internal class CStageTitle : CStage {
 							TJAPlayer3.Skin.soundsanka.t再生する();
 						*/
 
-						if (OpenTaiko.Skin.voiceTitleSanka[OpenTaiko.SaveFile] != null && !OpenTaiko.Skin.voiceTitleSanka[OpenTaiko.SaveFile].bPlayed)
-							OpenTaiko.Skin.voiceTitleSanka[OpenTaiko.SaveFile]?.tPlay();
+						if (OpenTaiko.SkinG.voiceTitleSanka[OpenTaiko.SaveFile] != null && !OpenTaiko.SkinG.voiceTitleSanka[OpenTaiko.SaveFile].bPlayed)
+							OpenTaiko.SkinG.voiceTitleSanka[OpenTaiko.SaveFile]?.tPlay();
 
 						ctキャライン.Start(0, 180, 2, OpenTaiko.Timer);
 						ctBarAnimeIn.Start(0, 1295, 1, OpenTaiko.Timer);
@@ -902,8 +902,8 @@ internal class CStageTitle : CStage {
 			OpenTaiko.Skin.SoundBanapas.bPlayed = true;
 			//TJAPlayer3.Skin.soundsanka.bPlayed = true;
 
-			if (OpenTaiko.Skin.voiceTitleSanka[OpenTaiko.SaveFile] != null)
-				OpenTaiko.Skin.voiceTitleSanka[OpenTaiko.SaveFile].bPlayed = true;
+			if (OpenTaiko.SkinG.voiceTitleSanka[OpenTaiko.SaveFile] != null)
+				OpenTaiko.SkinG.voiceTitleSanka[OpenTaiko.SaveFile].bPlayed = true;
 		}
 	}
 

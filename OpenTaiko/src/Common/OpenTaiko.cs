@@ -115,6 +115,10 @@ internal class OpenTaiko : Game {
 		get;
 		private set;
 	}
+	public static CSkinGlobal SkinG {
+		get;
+		private set;
+	}
 	public static CSongs管理 Songs管理 {
 		get;
 		set;    // 2012.1.26 yyagi private解除 CStage起動でのdesirialize読み込みのため
@@ -331,11 +335,11 @@ internal class OpenTaiko : Game {
 	public static bool ConfigIsNew;
 
 	public void MountStage(CStage Stage) {
-		Stage.Activate();
 		if (!ConfigIni.PreAssetsLoading) {
 			Stage.CreateManagedResource();
 			Stage.CreateUnmanagedResource();
 		}
+		Stage.Activate();
 	}
 
 	public void UnmountStage(CStage Stage) {
@@ -1607,6 +1611,7 @@ internal class OpenTaiko : Game {
 #endif
 		{
 			Skin = new CSkin(OpenTaiko.ConfigIni.strSystemSkinSubfolderFullName, false);
+			SkinG = new CSkinGlobal();
 			OpenTaiko.ConfigIni.strSystemSkinSubfolderFullName = OpenTaiko.Skin.GetCurrentSkinSubfolderFullName(true);  // 旧指定のSkinフォルダが消滅していた場合に備える
 
 			ChangeResolution(OpenTaiko.Skin.Resolution[0], OpenTaiko.Skin.Resolution[1]);
@@ -1982,6 +1987,7 @@ internal class OpenTaiko : Game {
 			#endregion
 			#region TextureLoaderの処理
 			Tx.DisposeTexture();
+			Tx.UnloadTopActivityAssets();
 			#endregion
 			#region [ スキンの終了処理 ]
 			//---------------------
@@ -2171,11 +2177,12 @@ internal class OpenTaiko : Game {
 		OpenTaiko.Skin = null;
 		OpenTaiko.Skin = new CSkin(OpenTaiko.ConfigIni.strSystemSkinSubfolderFullName, false);
 
-		OpenTaiko.Tx.DisposeTexture();
+		OpenTaiko.Tx.DisposeSkinTexture();
 
 		ChangeResolution(OpenTaiko.Skin.Resolution[0], OpenTaiko.Skin.Resolution[1]);
 
-		OpenTaiko.Tx.LoadTexture();
+		OpenTaiko.Tx.LoadSkinTexture();
+		OpenTaiko.Tx.PreloadTopActivityAssets();
 
 		OpenTaiko.actTextConsole.Activate();
 		actTextConsole.CreateManagedResource();

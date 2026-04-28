@@ -245,6 +245,22 @@ static class CScoreIni_Importer {
 			} finally { totalcount++; }
 		}
 		Trace.TraceInformation($"Imported {successcount} of {_scoreFiles.Count} scores from score.ini files. ({errorcount} failed imports; {skipcount} skipped imports;)");
+
+		totalcount = successcount = skipcount = errorcount = 0;
+		for (int i = 0; i < OpenTaiko.SaveFileInstances.Length; ++i) {
+			try {
+				var saveFile = OpenTaiko.SaveFileInstances[i];
+				Status = CLangManager.LangInstance.GetString("SETTINGS_SYSTEM_IMPORTSCOREINI_STATUS3", OpenTaiko.SaveFileInstances.Length, successcount, totalcount, errorcount, saveFile.data.SaveId, saveFile.data.Name);
+				saveFile.tInitSaveFile();
+				successcount++;
+			} catch (Exception ex) {
+				Trace.TraceInformation($"Refreshed {successcount} of {OpenTaiko.SaveFileInstances.Length} players' scores. ({errorcount} failed while refreshing)");
+				errorcount++;
+			} finally {
+				totalcount++;
+			}
+		}
+		Trace.TraceInformation($"Refreshed {successcount} of {OpenTaiko.SaveFileInstances.Length} players' scores. ({errorcount} failed while refreshing)");
 		Status = "";
 	}
 

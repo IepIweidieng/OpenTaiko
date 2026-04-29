@@ -355,6 +355,8 @@
 		"SETTINGS_KEYASSIGN_TRAINING_JUMPTOFIRST_DESC": "Asignación de tecla de tambor:\nAsigna cualquier tecla para saltar al primer\ncompás.",
 		"SETTINGS_KEYASSIGN_TRAINING_JUMPTOLAST": "Saltar a Último Compás",
 		"SETTINGS_KEYASSIGN_TRAINING_JUMPTOLAST_DESC": "Asignación de tecla de tambor:\nAsigna cualquier tecla para saltar a la última\ncompás.",
+		"SETTINGS_KEYASSIGN_TRAINING_HOTRELOAD": "Recargar Rápidamente Partitura",
+		"SETTINGS_KEYASSIGN_TRAINING_HOTRELOAD_DESC": "Asignación de tecla de tambor:\nAsigna cualquier tecla para recargar rápidamente la partitura.",
 
 		// Title Screen
 		"TITLE_MODE_TAIKO": "Modo Taiko",

@@ -357,6 +357,8 @@
 		"SETTINGS_KEYASSIGN_TRAINING_JUMPTOFIRST_DESC": "Drums key assign:\nAssign any key for jumping to the first measure.",
 		"SETTINGS_KEYASSIGN_TRAINING_JUMPTOLAST": "Jump to Last Measure",
 		"SETTINGS_KEYASSIGN_TRAINING_JUMPTOLAST_DESC": "Drums key assign:\nAssign any key for jumping to the last measure.",
+		"SETTINGS_KEYASSIGN_TRAINING_HOTRELOAD": "Hot Reload Chart",
+		"SETTINGS_KEYASSIGN_TRAINING_HOTRELOAD_DESC": "Drums key assign:\nAssign any key for hot reloading the current chart.",
 
 		// Title Screen
 		"TITLE_MODE_TAIKO": "演奏ゲーム",

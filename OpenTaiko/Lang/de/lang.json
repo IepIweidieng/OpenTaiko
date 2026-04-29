@@ -355,6 +355,8 @@
 		"SETTINGS_KEYASSIGN_TRAINING_JUMPTOFIRST_DESC": "Trommel-Tastenzuweisung:\nWeise eine beliebige Taste zum Springen zum ersten Takt zu.",
 		"SETTINGS_KEYASSIGN_TRAINING_JUMPTOLAST": "Zum letzten Takt springen",
 		"SETTINGS_KEYASSIGN_TRAINING_JUMPTOLAST_DESC": "Trommel-Tastenzuweisung:\nWeise eine beliebige Taste zum Springen zum letzten Takt zu.",
+		"SETTINGS_KEYASSIGN_TRAINING_HOTRELOAD": "Zum schnellen Neuladen der Noten",
+		"SETTINGS_KEYASSIGN_TRAINING_HOTRELOAD_DESC": "Trommel-Tastenzuweisung:\nWeise eine beliebige Taste zum Springen zum schnellen Neuladen der Noten",
 
 		// Title Screen
 		"TITLE_MODE_TAIKO": "Taiko-Modus",

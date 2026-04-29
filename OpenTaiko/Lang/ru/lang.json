@@ -355,6 +355,8 @@
 		"SETTINGS_KEYASSIGN_TRAINING_JUMPTOFIRST_DESC": "Назначение клавиши барабанов:\nНазначать любую кнопку для прыжка к первой\nмере.",
 		"SETTINGS_KEYASSIGN_TRAINING_JUMPTOLAST": "Прыжок к последней мере",
 		"SETTINGS_KEYASSIGN_TRAINING_JUMPTOLAST_DESC": "Назначение клавиши барабанов:\nНазначать любую кнопку для прыжка к последней\nмере.",
+		"SETTINGS_KEYASSIGN_TRAINING_HOTRELOAD": "Быстрой перезагрузки нотного листа",
+		"SETTINGS_KEYASSIGN_TRAINING_HOTRELOAD_DESC": "Назначение клавиши барабанов:\nНазначать любую кнопку для быстрой перезарядка нотного листа.",
 
 		// Title Screen
 		"TITLE_MODE_TAIKO": "Режим Тайко",

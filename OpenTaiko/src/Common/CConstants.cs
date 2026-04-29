@@ -179,6 +179,7 @@ public enum EKeyConfigPad       // #24609 キーコンフィグで使うenum。c
 	TrainingSkipBackMeasure,
 	TrainingJumpToFirstMeasure,
 	TrainingJumpToLastMeasure,
+	TrainingReloadInPlace,
 	#endregion
 	Max,
 	Unknown = EPad.Unknown

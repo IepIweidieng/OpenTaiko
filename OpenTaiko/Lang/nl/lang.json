@@ -355,6 +355,8 @@
 		"SETTINGS_KEYASSIGN_TRAINING_JUMPTOFIRST_DESC": "Drum toets:\nEen toets toewijzen om naar de eerste maat van het nummer te springen.",
 		"SETTINGS_KEYASSIGN_TRAINING_JUMPTOLAST": "Naar Laatste Maat Springen",
 		"SETTINGS_KEYASSIGN_TRAINING_JUMPTOLAST_DESC": "Drum toets:\nEen toets toewijzen om naar de laatste maat van het nummer te springen.",
+		"SETTINGS_KEYASSIGN_TRAINING_HOTRELOAD": "Bladmuziek Snel Opnieuw Laden",
+		"SETTINGS_KEYASSIGN_TRAINING_HOTRELOAD_DESC": "Drum toets:\nEen toets toewijzen om de bladmuziek snel opnieuw te laden.",
 
 		// Title Screen
 		"TITLE_MODE_TAIKO": "Taiko Modus",

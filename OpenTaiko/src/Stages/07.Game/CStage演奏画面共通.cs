@@ -763,6 +763,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 	protected EStageAbort[] stageAbortType = { EStageAbort.None, EStageAbort.None, EStageAbort.None, EStageAbort.None, EStageAbort.None };
 
 	protected long msFailedStopSystemTime;
+	protected CTja? tja1PBeforeReload = null;
 
 	protected int nタイマ番号;
 	protected int n現在の音符の顔番号;
@@ -3636,7 +3637,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 				last_match = i;
 			}
 		}
-		return tja.listBPM[last_match];
+		return tja.listBPM.ElementAtOrDefault(last_match) ?? new CTja.CBPM { dbBPM値 = tja.BASEBPM };
 	}
 
 	public static double GetNowPBMTime(CTja.CBPM cBPM, double play_time) {
@@ -3650,6 +3651,42 @@ internal abstract class CStage演奏画面共通 : CStage {
 		this.bPAUSE = false;
 	}
 
+	public void ReloadInPlace() {
+		this.tja1PBeforeReload = OpenTaiko.TJA!;
+
+		OpenTaiko.app.UnmountStage(OpenTaiko.stageSongLoading); // cancel on-going tasks
+		OpenTaiko.app.MountStage(OpenTaiko.stageSongLoading);
+		OpenTaiko.stageSongLoading.ActivateReloadInPlace();
+		LogNotification.PopInfo("Reloading TJA... (press ESC to cancel)");
+	}
+
+	public bool UpdateReloadInPlace() {
+		if (!OpenTaiko.stageSongLoading.IsReloadInPlace)
+			return false;
+
+		var result = (ESongLoadingScreenReturnValue)OpenTaiko.stageSongLoading.Update();
+		switch (result) {
+			case ESongLoadingScreenReturnValue.LoadCanceled:
+				OpenTaiko.app.UnmountStage(OpenTaiko.stageSongLoading);
+				LogNotification.PopInfo("Reloading TJA canceled.");
+				return false;
+
+			case ESongLoadingScreenReturnValue.LoadComplete:
+				OpenTaiko.app.UnmountStage(OpenTaiko.stageSongLoading);
+
+				this.DeActivate(); // refresh calculated notechart states
+				this.Activate();
+
+				var msRawTjaTimeMusic = this.tja1PBeforeReload!.TjaTimeToRawTjaTimeMusic(this.tja1PBeforeReload.GameTimeToTjaTime(SoundManager.PlayTimer.NowTimeMs));
+				var msTjaTime = OpenTaiko.TJA!.RawTjaTimeToTjaTimeMusic(msRawTjaTimeMusic);
+				this.t演奏位置の変更(msStartTjaTime1P: (long)msTjaTime);
+				// this.msReloadRawTjaTimeMusic will be reset by first next draw
+				LogNotification.PopInfo("Reloading TJA done.");
+				return true;
+		}
+		return false;
+	}
+
 	public void t演奏やりなおし() {
 		OpenTaiko.HttpEventReporter.ReportGameplayStart();
 		OpenTaiko.TJA.t全チップの再生停止とミキサーからの削除();
@@ -3661,7 +3698,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 		this.actPanel.t歌詞テクスチャを削除する();
 		var cleared = (bool[])bIsAlreadyCleared.Clone();
 		this.t数値の初期化(true, true);
-		var (idxStartChip, msStartGameTime) = this.t演奏位置の変更(0);
+		var (idxStartChip, msStartGameTime, _) = this.t演奏位置の変更(0);
 		for (int i = 0; i < OpenTaiko.ConfigIni.nPlayerCount; i++) {
 			if (!bIsAlreadyCleared[i] && cleared[i]) {
 				OpenTaiko.stageGameScreen.actBackground.ClearOut(i);
@@ -3871,30 +3908,34 @@ internal abstract class CStage演奏画面共通 : CStage {
 	}
 
 	// returns the chip index at the target measure of the first player
-	public (int idxChip, int msStartGameTime) t演奏位置の変更(int nStartBar) {
+	// Negative nStartBar: directly seek to msStartTjaTime without padding time
+	public (int idxChip, long msStartGameTime, int iMeasure1to) t演奏位置の変更(int nStartBar = -1, long msStartTjaTime1P = 0) {
 		// まず全サウンドオフにする
 		OpenTaiko.TJA.tStopAllChips();
 		this.actAVI.Stop();
-		if (OpenTaiko.TJA == null) return (0, 0); //CDTXがnullの場合はプレイヤーが居ないのでその場で処理終了
+		if (OpenTaiko.TJA == null) return (0, 0, 0); //CDTXがnullの場合はプレイヤーが居ないのでその場で処理終了
 
 		#region [ 再生開始小節の変更 ]
 		//nStartBar++;									// +1が必要
 
 		CTja dTX = OpenTaiko.TJA;
 		#region [ 処理を開始するチップの特定 ]
-		int iTargetChip = dTX.GetListChipIndexOfMeasure(nStartBar);
+		int iTargetChip = dTX.GetListChipIndexOfMeasure(nStartBar, msTjaTime: msStartTjaTime1P);
+		CChip? targetChip = dTX.listChip.ElementAtOrDefault(iTargetChip);
+		int iMeasure1to = (targetChip?.nChannelNo == 0x50) ? targetChip.n整数値_内部番号 : 0;
 		#endregion
 		#region [ 演奏開始の発声時刻msを取得し、タイマに設定 ]
-		int nStartTime = (nStartBar == 0) ? 0
-			: ((int)dTX.TjaTimeToGameTime(dTX.listChip[iTargetChip].n発声時刻ms) - OpenTaiko.ConfigIni.MusicPreTimeMs);
+		long nStartTime = (nStartBar < 0) ? (long)dTX.TjaTimeToGameTime(msStartTjaTime1P)
+			: (nStartBar == 0) ? 0
+			: ((long)dTX.TjaTimeToGameTime(dTX.listChip[iTargetChip].n発声時刻ms) - OpenTaiko.ConfigIni.MusicPreTimeMs);
 
-		int[] iLastChipAtStart = new int[OpenTaiko.MAX_PLAYERS];
+		int[] iLastChipAtStart = Enumerable.Repeat(-1, OpenTaiko.MAX_PLAYERS).ToArray();
 
-		iLastChipAtStart[0] = iTargetChip;
+		iLastChipAtStart[0] = (nStartBar < 0) ? -1 : iTargetChip;
 		for (int nPlayer = 0; nPlayer < OpenTaiko.ConfigIni.nPlayerCount; ++nPlayer) {
 			CTja tjai = OpenTaiko.GetTJA(nPlayer)!;
 			int msStartTjaTime = (int)tjai.GameTimeToTjaTime(nStartTime);
-			if (nPlayer != 0) {
+			if (iLastChipAtStart[nPlayer] < 0) {
 				CChip targetDummy = new() { nChannelNo = CChip.nChannelNoLeastPrior, n発声時刻ms = msStartTjaTime };
 				iLastChipAtStart[nPlayer] = tjai.listChip.BinarySearch(targetDummy);
 				if (iLastChipAtStart[nPlayer] < 0)
@@ -3907,6 +3948,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 			while (iLastChipAtStart[nPlayer] + 1 < tjai.listChip.Count && hasChipBeenPlayedAt(tjai.listChip[iLastChipAtStart[nPlayer] + 1], msStartTjaTime))
 				iLastChipAtStart[nPlayer]++;
 		}
+		iTargetChip = iLastChipAtStart[0];
 
 		for (int nPlayer = 0; nPlayer < OpenTaiko.ConfigIni.nPlayerCount; ++nPlayer) {
 			CTja tjai = OpenTaiko.GetTJA(nPlayer)!;
@@ -3972,7 +4014,7 @@ internal abstract class CStage演奏画面共通 : CStage {
 		this.Resume(nStartTime);
 		#endregion
 
-		return (iTargetChip, nStartTime);
+		return (iTargetChip, nStartTime, iMeasure1to);
 	}
 
 	public void t演奏中止() {

@@ -93,6 +93,10 @@ class CActImplTrainingMode : CActivity {
 
 			OpenTaiko.actTextConsole.Print(0, 0, CTextConsole.EFontType.White, "TRAINING MODE (BETA)");
 
+			if (!OpenTaiko.stageSongLoading.IsReloadInPlace && OpenTaiko.ConfigIni.KeyAssign.Drums.TrainingReloadInPlace.IsPressed()) {
+				OpenTaiko.stageGameScreen.ReloadInPlace();
+			}
+
 			if (OpenTaiko.ConfigIni.KeyAssign.Drums.TrainingPause.IsPressedExcludePlayer(this.bTrainingPAUSE ? null : 0)) {
 				if (this.bTrainingPAUSE) {
 					OpenTaiko.Skin.sound特訓再生音.tPlay();
@@ -359,7 +363,7 @@ class CActImplTrainingMode : CActivity {
 		finalStartBar = this.nCurrentMeasure;
 		if (finalStartBar < 0) finalStartBar = 0;
 
-		var (n演奏開始Chip, msStartGameTime) = OpenTaiko.stageGameScreen.t演奏位置の変更(finalStartBar);
+		var (n演奏開始Chip, msStartGameTime, _) = OpenTaiko.stageGameScreen.t演奏位置の変更(finalStartBar);
 
 		OpenTaiko.stageGameScreen.t数値の初期化(true, true);
 
@@ -435,6 +439,7 @@ class CActImplTrainingMode : CActivity {
 	private long nスクロール前ms;
 	private long nスクロール後ms;
 	private long n最終演奏位置ms;
+	private double msReloadRawTjaTimeMusic;
 
 	public bool bTrainingPAUSE { get; private set; }
 	private bool bCurrentlyScrolling;

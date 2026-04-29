@@ -57,7 +57,7 @@ internal class CChip : IComparable<CChip>, ICloneable {
 	public int n整数値;
 	public int n文字数 = 16;
 
-	public int n整数値_内部番号;
+	public int n整数値_内部番号; // note: note define index, barline (0x50): iMeasure1to, bpm/wave/video/lyric: number key, dan-i (0x9B): dan-i song index
 	public int nOpacity = 255;
 	public int n発声位置;
 	public double nBranchCondition1_Professional;

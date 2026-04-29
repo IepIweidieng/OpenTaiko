@@ -611,6 +611,8 @@ internal class CActConfigList : CActivity {
 			OpenTaiko.stageConfig.tパッド選択通知(EKeyConfigPart.Drums, EKeyConfigPad.TrainingJumpToFirstMeasure);
 		} else if (this.list項目リスト[this.n現在の選択項目] == this.iKeyAssignTrainingJumpToLastMeasure) {
 			OpenTaiko.stageConfig.tパッド選択通知(EKeyConfigPart.Drums, EKeyConfigPad.TrainingJumpToLastMeasure);
+		} else if (this.list項目リスト[this.n現在の選択項目] == this.iKeyAssignTrainingHotReload) {
+			OpenTaiko.stageConfig.tパッド選択通知(EKeyConfigPart.Drums, EKeyConfigPad.TrainingReloadInPlace);
 		}
 		#endregion
 		else {
@@ -959,6 +961,10 @@ internal class CActConfigList : CActivity {
 		this.iKeyAssignTrainingJumpToLastMeasure = new CItemBase(CLangManager.LangInstance.GetString("SETTINGS_KEYASSIGN_TRAINING_JUMPTOLAST"),
 			CLangManager.LangInstance.GetString("SETTINGS_KEYASSIGN_TRAINING_JUMPTOLAST_DESC"));
 		this.list項目リスト.Add(this.iKeyAssignTrainingJumpToLastMeasure);
+
+		this.iKeyAssignTrainingHotReload = new CItemBase(CLangManager.LangInstance.GetString("SETTINGS_KEYASSIGN_TRAINING_HOTRELOAD"),
+			CLangManager.LangInstance.GetString("SETTINGS_KEYASSIGN_TRAINING_HOTRELOAD_DESC"));
+		this.list項目リスト.Add(this.iKeyAssignTrainingHotReload);
 
 		OnListMenuの初期化();
 		this.n現在の選択項目 = 0;
@@ -1510,6 +1516,7 @@ internal class CActConfigList : CActivity {
 	private CItemBase iKeyAssignTrainingDecreaseSongSpeed;
 	private CItemBase iKeyAssignTrainingJumpToFirstMeasure;
 	private CItemBase iKeyAssignTrainingJumpToLastMeasure;
+	private CItemBase iKeyAssignTrainingHotReload;
 	#endregion
 
 	#endregion

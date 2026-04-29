@@ -21,6 +21,7 @@ internal class CStage曲読み込み : CStage {
 		Trace.TraceInformation("曲読み込みステージを活性化します。");
 		Trace.Indent();
 		try {
+			this.IsReloadInPlace = false;
 			this.str曲タイトル = "";
 			this.strSTAGEFILE = "";
 			this.nBGM再生開始時刻 = -1;
@@ -100,6 +101,8 @@ internal class CStage曲読み込み : CStage {
 		Trace.TraceInformation("曲読み込みステージを非活性化します。");
 		Trace.Indent();
 		try {
+			this.IsReloadInPlace = false;
+
 			// Cancel any in-flight background tasks so they don't race with state
 			// that is about to be torn down (e.g. returning to song select via ESC).
 			_loadCts?.Cancel();
@@ -145,7 +148,6 @@ internal class CStage曲読み込み : CStage {
 		#region [ 初めての進行描画 ]
 		//-----------------------------
 		if (base.IsFirstDraw) {
-			CScore cスコア1 = OpenTaiko.SongMount.rChosenScore;
 			if (this.sd読み込み音 != null) {
 				if (OpenTaiko.Skin.sound曲読込開始音.bExclusive && (CSkin.CSystemSound.r最後に再生した排他システムサウンド != null)) {
 					CSkin.CSystemSound.r最後に再生した排他システムサウンド.tStop();
@@ -166,18 +168,10 @@ internal class CStage曲読み込み : CStage {
 		#endregion
 		this.ct待機.Tick();
 
-		#region [ Cancel loading with esc ]
-		if (tキー入力()) {
-			if (this.sd読み込み音 != null) {
-				this.sd読み込み音.tStopSound();
-				this.sd読み込み音.tDispose();
-			}
-			return (int)ESongLoadingScreenReturnValue.LoadCanceled;
-		}
-		#endregion
+		var ret = this.Update();
 
-		bool isDan   = OpenTaiko.SongMount.nChoosenSongDifficulty[0] == (int)Difficulty.Dan;
-		bool isAI    = OpenTaiko.ConfigIni.bAIBattleMode;
+		bool isDan = OpenTaiko.SongMount.nChoosenSongDifficulty[0] == (int)Difficulty.Dan;
+		bool isAI = OpenTaiko.ConfigIni.bAIBattleMode;
 
 		void drawPlate() {
 			if (OpenTaiko.Tx.SongLoading_Plate != null) {
@@ -328,6 +322,20 @@ internal class CStage曲読み込み : CStage {
 			drawPlate();
 		}
 
+		return ret;
+	}
+
+	public int Update() {
+		#region [ Cancel loading with esc ]
+		if (tキー入力()) {
+			if (this.sd読み込み音 != null) {
+				this.sd読み込み音.tStopSound();
+				this.sd読み込み音.tDispose();
+			}
+			return (int)ESongLoadingScreenReturnValue.LoadCanceled;
+		}
+		#endregion
+
 		switch (base.ePhaseID) {
 			case CStage.EPhase.Common_FADEIN:
 				//if( this.actFI.On進行描画() != 0 )			    // #27787 2012.3.10 yyagi 曲読み込み画面のフェードインの省略
@@ -338,9 +346,9 @@ internal class CStage曲読み込み : CStage {
 
 			case CStage.EPhase.SongLoading_LoadDTXFile: {
 					timeBeginLoad = DateTime.Now;
-					str = OpenTaiko.SongMount.rChosenScore.ファイル情報.ファイルの絶対パス;
+					string str = OpenTaiko.SongMount.rChosenScore.ファイル情報.ファイルの絶対パス;
 
-					if ((OpenTaiko.TJA != null) && OpenTaiko.TJA.IsActivated)
+					if (!this.IsReloadInPlace && (OpenTaiko.TJA?.IsActivated ?? false))
 						OpenTaiko.TJA.DeActivate();
 
 					int playerCount = OpenTaiko.ConfigIni.nPlayerCount;
@@ -348,9 +356,9 @@ internal class CStage曲読み込み : CStage {
 					for (int i = 0; i < playerCount; i++)
 						chosenDiffs[i] = OpenTaiko.SongMount.nChoosenSongDifficulty[i];
 
-					_loadCts     = new CancellationTokenSource();
-					_loadedTjas  = new CTja[playerCount];
-					var cts      = _loadCts;
+					_loadCts = new CancellationTokenSource();
+					_loadedTjas = new CTja[playerCount];
+					var cts = _loadCts;
 					var captured = _loadedTjas;
 					_dtxLoadTask = Task.Run(() => {
 						for (int i = 0; i < playerCount; i++) {
@@ -374,6 +382,8 @@ internal class CStage曲読み込み : CStage {
 						return (int)ESongLoadingScreenReturnValue.LoadCanceled;
 					}
 
+					if (this.IsReloadInPlace && (OpenTaiko.TJA?.IsActivated ?? false))
+						OpenTaiko.TJA.DeActivate();
 					for (int i = 0; i < _loadedTjas!.Length; i++)
 						OpenTaiko.SetTJA(i, _loadedTjas[i]);
 
@@ -419,9 +429,9 @@ internal class CStage曲読み込み : CStage {
 				}
 
 			case CStage.EPhase.SongLoading_WaitToLoadWAVFile: {
-					if (this.ct待機.CurrentValue > 260) {
+					if (this.IsReloadInPlace || this.ct待機.CurrentValue > 260) {
 						// Start loading all WAVs on a background thread (BASS is thread-safe).
-						var tja  = OpenTaiko.TJA;
+						var tja = OpenTaiko.TJA;
 						var wcts = _loadCts!;
 						_wavLoadTask = Task.Run(() => {
 							foreach (var cwav in tja.listWAV.Values) {
@@ -466,7 +476,8 @@ internal class CStage曲読み込み : CStage {
 
 					// Game screen activation (loads background scripts, character anims, etc.)
 					// This still runs on the main thread as it involves GPU texture uploads.
-					OpenTaiko.stageGameScreen.Activate();
+					if (!this.IsReloadInPlace)
+						OpenTaiko.stageGameScreen.Activate();
 
 					base.ePhaseID = CStage.EPhase.SongLoading_LoadBMPFile;
 					return (int)ESongLoadingScreenReturnValue.Continue;
@@ -496,6 +507,10 @@ internal class CStage曲読み込み : CStage {
 
 					OpenTaiko.Timer.Update();
 					//CSound管理.rc演奏用タイマ.t更新();
+					if (this.IsReloadInPlace) {
+						base.ePhaseID = CStage.EPhase.Common_FADEOUT;
+						return (int)ESongLoadingScreenReturnValue.LoadComplete;
+					}
 					base.ePhaseID = CStage.EPhase.SongLoading_WaitForSoundSystemBGM;
 					return (int)ESongLoadingScreenReturnValue.Continue;
 				}
@@ -507,14 +522,15 @@ internal class CStage曲読み込み : CStage {
 
 					//						if ( ( nCurrentTime - this.nBGM再生開始時刻 ) > ( this.nBGMの総再生時間ms - 1000 ) )
 					if ((nCurrentTime - this.nBGM再生開始時刻) >= (this.nBGMの総再生時間ms)    // #27787 2012.3.10 yyagi 1000ms == フェードイン分の時間
-						&& (DateTime.Now - _activateTime).TotalSeconds >= 2.0)
-					{
+						&& (DateTime.Now - _activateTime).TotalSeconds >= 2.0) {
 						base.ePhaseID = CStage.EPhase.Common_FADEOUT;
 					}
 					return (int)ESongLoadingScreenReturnValue.Continue;
 				}
 
 			case CStage.EPhase.Common_FADEOUT:
+				if (this.IsReloadInPlace)
+					return (int)ESongLoadingScreenReturnValue.LoadComplete;
 				if (this.ct待機.IsUnEnded)        // DTXVモード時は、フェードアウト省略
 					return (int)ESongLoadingScreenReturnValue.Continue;
 
@@ -540,6 +556,11 @@ internal class CStage曲読み込み : CStage {
 	}
 
 	// その他
+	public void ActivateReloadInPlace() {
+		IsReloadInPlace = true;
+		this.ePhaseID = CStage.EPhase.SongLoading_LoadDTXFile;
+	}
+	public bool IsReloadInPlace { get; private set; } = false;
 
 	#region [ private ]
 	//-----------------

@@ -67,6 +67,7 @@ public class CStage : CActivity {
 		Game_EndStage, //2016.07.15 kairera0467
 		Game_EndStage_FadeOut,
 		Game_EndStage_Quit_FadeOut,
-		Game_Reload
+		Game_Reload,
+		Game_Reload_InPlace,
 	}
 }

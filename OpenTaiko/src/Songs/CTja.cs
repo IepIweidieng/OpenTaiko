@@ -4342,18 +4342,33 @@ internal class CTja : CActivity {
 	public static double TjaBeatSpeedToGameBeatSpeed(double beatSpeed)
 		=> beatSpeed * OpenTaiko.ConfigIni.SongPlaybackSpeed;
 
-	public int GetListChipIndexOfMeasure(int iMeasure1to, ECourse? branch = null) {
+	// iMeasure1to: Negative to search measure by time, 0 for search any chip by time, positive for search measure by index
+	public int GetListChipIndexOfMeasure(int iMeasure1to = -1, ECourse? branch = null, long msTjaTime = 0) {
+		int lastMeasure = -1;
+		int lastMeasureBranch = -1;
+		int lastChip = -1;
 		for (int i = 0; i < this.listChip.Count; i++) {
 			CChip pChip = this.listChip[i];
-			if (((iMeasure1to == 0) ? // initial song position
-				pChip.n発声時刻ms >= 0
-				: (pChip.nChannelNo == 0x50 && pChip.n整数値_内部番号 == iMeasure1to)
-				&& (branch == null || pChip.IsForBranch(branch.Value)))
-				) {
-				return i;
+			if (iMeasure1to <= 0 && pChip.n発声時刻ms > msTjaTime)
+				break;
+			lastChip = i;
+			if (pChip.nChannelNo == 0x50) {
+				bool correctBranch = false;
+				if (iMeasure1to > 0 && pChip.n整数値_内部番号 > iMeasure1to
+					&& (correctBranch = (branch == null || pChip.IsForBranch(branch.Value)))
+					) {
+					break;
+				}
+				lastMeasure = i;
+				if (correctBranch)
+					lastMeasureBranch = i;
 			}
 		}
-		return 0; // 対象小節が存在しないなら、最初から再生
+		// Play from the last existing measure if not found
+		return (iMeasure1to != 0 && lastMeasureBranch >= 0) ? lastMeasureBranch
+			: (iMeasure1to != 0 && lastMeasure >= 0) ? lastMeasure
+			: (lastChip >= 0) ? lastChip
+			: 0;
 	}
 
 	public void UpdateScrolledChipPosition(CChip chip, CBPM nowBpmPoint, double msTjaNowTime, double th16NowBeat, double scrollRate) {

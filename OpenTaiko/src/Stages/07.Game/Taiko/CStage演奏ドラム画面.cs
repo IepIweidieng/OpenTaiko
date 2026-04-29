@@ -347,20 +347,26 @@ internal class CStage演奏ドラム画面 : CStage演奏画面共通 {
 	public override int Draw() {
 		base.sw.Start();
 		if (!base.IsDeActivated) {
+			this.UpdateReloadInPlace();
+
 			#region [ 初めての進行描画 ]
 			if (base.IsFirstDraw) {
-				SoundManager.PlayTimer.Reset();
-				OpenTaiko.Timer.Reset();
-				this.ctチップ模様アニメ.Drums = new CCounter(0, 1, 500, OpenTaiko.Timer);
+				if (this.tja1PBeforeReload == null) {
+					SoundManager.PlayTimer.Reset();
+					OpenTaiko.Timer.Reset();
+					this.ctチップ模様アニメ.Drums = new CCounter(0, 1, 500, OpenTaiko.Timer);
 
-				// this.actChipFireD.Start( Eレーン.HH );	// #31554 2013.6.12 yyagi
-				// 初チップヒット時のもたつき回避。最初にactChipFireD.Start()するときにJITが掛かって？
-				// ものすごく待たされる(2回目以降と比べると2,3桁tick違う)。そこで最初の画面フェードインの間に
-				// 一発Start()を掛けてJITの結果を生成させておく。
+					// this.actChipFireD.Start( Eレーン.HH );	// #31554 2013.6.12 yyagi
+					// 初チップヒット時のもたつき回避。最初にactChipFireD.Start()するときにJITが掛かって？
+					// ものすごく待たされる(2回目以降と比べると2,3桁tick違う)。そこで最初の画面フェードインの間に
+					// 一発Start()を掛けてJITの結果を生成させておく。
 
-				base.ePhaseID = CStage.EPhase.Common_FADEIN;
+					base.ePhaseID = CStage.EPhase.Common_FADEIN;
+					this.actFI.tフェードイン開始();
 
-				this.actFI.tフェードイン開始();
+					this.tja1PBeforeReload = null;
+				};
+
 				for (int i = 0; i < OpenTaiko.ConfigIni.nPlayerCount; ++i) {
 					this.actLaneTaiko.BranchText_FadeIn(null, i);
 				}
@@ -536,7 +542,8 @@ internal class CStage演奏ドラム画面 : CStage演奏画面共通 {
 
 			if (OpenTaiko.ConfigIni.bTokkunMode) {
 				this.actTokkun.On進行描画_小節_速度();
-				actTokkun.Draw();
+				if (actTokkun.Draw() == (int)ESongLoadingScreenReturnValue.LoadComplete)
+					return (int)EReturnValue.Continuation;
 			}
 
 			// LYRIC[S/FILE]: & #LYRIC

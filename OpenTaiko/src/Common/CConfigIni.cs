@@ -138,6 +138,7 @@ internal class CConfigIni : INotifyPropertyChanged {
 			public STKEYASSIGN[] TrainingJumpToFirstMeasure => pads[(int)EKeyConfigPad.TrainingJumpToFirstMeasure];
 
 			public STKEYASSIGN[] TrainingJumpToLastMeasure => pads[(int)EKeyConfigPad.TrainingJumpToLastMeasure];
+			public STKEYASSIGN[] TrainingReloadInPlace => pads[(int)EKeyConfigPad.TrainingReloadInPlace];
 		}
 
 		public bool KeyIsPressed(STKEYASSIGN[] pads) => pads.IsPressed();
@@ -1848,6 +1849,9 @@ internal class CConfigIni : INotifyPropertyChanged {
 		sw.Write("TrainingJumpToLastMeasure=");
 		this.WriteKeyAssignment(sw, this.KeyAssign.Drums.TrainingJumpToLastMeasure);
 		sw.WriteLine();
+		sw.Write("TrainingReloadInPlace=");
+		this.WriteKeyAssignment(sw, this.KeyAssign.Drums.TrainingReloadInPlace);
+		sw.WriteLine();
 		sw.WriteLine();
 
 		#endregion
@@ -2787,6 +2791,10 @@ internal class CConfigIni : INotifyPropertyChanged {
 					this.ReadAndSetKey(value, this.KeyAssign.Drums.TrainingJumpToLastMeasure);
 					break;
 				}
+			case "TrainingReloadInPlace": {
+					this.ReadAndSetKey(value, this.KeyAssign.Drums.TrainingReloadInPlace);
+					break;
+				}
 		}
 	}
 
@@ -3000,6 +3008,7 @@ TrainingSkipForwardMeasure=K0109
 TrainingSkipBackMeasure=K0108
 TrainingJumpToFirstMeasure=K070
 TrainingJumpToLastMeasure=K051
+TrainingReloadInPlace=K058
 ";
 		LoadFromString(strDefaultKeyAssign);
 	}

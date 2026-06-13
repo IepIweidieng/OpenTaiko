@@ -38,7 +38,7 @@ namespace FDK;
 /// <summary>
 /// Presents an easy to use wrapper for making games and samples.
 /// </summary>
-public abstract class Game : IDisposable {
+public abstract partial class Game : IDisposable {
 	public static GL Gl { get; private set; }
 	public static Silk.NET.Core.Contexts.IGLContext Context { get; private set; }
 	

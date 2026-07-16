@@ -182,6 +182,7 @@
 		"SETTINGS_SYSTEM_TOUCHDRUMOPACITY_DESC": "Dekking van de trommelweergave op het scherm in procenten. 100 is dekkend, 0 verbergt hem.",
 		"SETTINGS_SYSTEM_TOUCHDRUMSHAPE": "Vorm Touch-Trommel",
 		"SETTINGS_SYSTEM_TOUCHDRUMSHAPE_DESC": "Teken eigen Don-gebieden voor de touch-trommel. Alles daarbuiten is Ka.",
+		"EXTERNALDISPLAY_NOTICE": "Het spel wordt op het externe scherm weergegeven.",
 		"SETTINGS_SYSTEM_DEBUGHUD": "Debug HUD",
 		"SETTINGS_SYSTEM_DEBUGHUD_DESC": "Toont een overlay met FPS, geheugen en stage op het scherm. Standaard uit.",
 		"TOUCHDRUMEDITOR_HINT": "Teken Don-gebieden (al het andere is Ka). De gestippelde rechthoek is het scherm; lijnen mogen erbuiten komen. Opslaan zonder iets te tekenen herstelt de cirkel.",

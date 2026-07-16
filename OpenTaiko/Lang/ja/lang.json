@@ -183,6 +183,7 @@
 		"SETTINGS_SYSTEM_TOUCHDRUMOPACITY_DESC": "画面上の太鼓表示の不透明度を%で指定します。100で完全な不透明、0で非表示になります。",
 		"SETTINGS_SYSTEM_TOUCHDRUMSHAPE": "タッチ太鼓の形",
 		"SETTINGS_SYSTEM_TOUCHDRUMSHAPE_DESC": "ドン領域を自由に描いて設定します。領域の外はすべてカッになります。",
+		"EXTERNALDISPLAY_NOTICE": "ゲームは外部ディスプレイに表示されています。",
 		"SETTINGS_SYSTEM_DEBUGHUD": "デバッグHUD",
 		"SETTINGS_SYSTEM_DEBUGHUD_DESC": "FPS・メモリ・ステージ情報を画面に重ねて表示します。初期設定はオフです。",
 		"TOUCHDRUMEDITOR_HINT": "ドン領域を描いてください（それ以外はカッになります）。破線の枠が画面で、枠の外にはみ出して描くこともできます。何も描かずに保存すると円形に戻ります。",

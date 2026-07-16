@@ -183,6 +183,7 @@
 		"SETTINGS_SYSTEM_TOUCHDRUMOPACITY_DESC": "Opacité de l'affichage du tambour à l'écran en pourcentage. 100 est opaque, 0 le masque.",
 		"SETTINGS_SYSTEM_TOUCHDRUMSHAPE": "Forme du tambour tactile",
 		"SETTINGS_SYSTEM_TOUCHDRUMSHAPE_DESC": "Dessinez des zones Don personnalisées pour le tambour tactile. Tout le reste est Ka.",
+		"EXTERNALDISPLAY_NOTICE": "Le jeu est affiché sur l'écran externe.",
 		"SETTINGS_SYSTEM_DEBUGHUD": "HUD de débogage",
 		"SETTINGS_SYSTEM_DEBUGHUD_DESC": "Affiche un overlay FPS / mémoire / étape à l'écran. Désactivé par défaut.",
 		"TOUCHDRUMEDITOR_HINT": "Dessinez les zones Don (tout le reste est Ka). Le rectangle en pointillés représente l'écran ; les tracés peuvent le dépasser. Enregistrez sans rien dessiner pour revenir au cercle.",

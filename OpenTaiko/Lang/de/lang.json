@@ -182,6 +182,7 @@
 		"SETTINGS_SYSTEM_TOUCHDRUMOPACITY_DESC": "Deckkraft der Trommel-Anzeige auf dem Bildschirm in Prozent. 100 ist deckend, 0 blendet sie aus.",
 		"SETTINGS_SYSTEM_TOUCHDRUMSHAPE": "Touch-Trommel-Form",
 		"SETTINGS_SYSTEM_TOUCHDRUMSHAPE_DESC": "Zeichne eigene Don-Bereiche für die Touch-Trommel. Alles außerhalb ist Ka.",
+		"EXTERNALDISPLAY_NOTICE": "Das Spiel wird auf dem externen Bildschirm angezeigt.",
 		"SETTINGS_SYSTEM_DEBUGHUD": "Debug-HUD",
 		"SETTINGS_SYSTEM_DEBUGHUD_DESC": "Zeigt ein Overlay mit FPS, Speicher und Stage auf dem Bildschirm. Standardmäßig aus.",
 		"TOUCHDRUMEDITOR_HINT": "Zeichne Don-Bereiche (alles andere ist Ka). Das gestrichelte Rechteck ist der Bildschirm; Striche dürfen darüber hinausgehen. Ohne Zeichnung speichern setzt auf den Kreis zurück.",

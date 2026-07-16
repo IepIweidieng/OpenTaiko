@@ -182,6 +182,7 @@
 		"SETTINGS_SYSTEM_TOUCHDRUMOPACITY_DESC": "Opacity of the on-screen drum overlay as a percentage. 100 is solid, 0 hides it.",
 		"SETTINGS_SYSTEM_TOUCHDRUMSHAPE": "Touch Drum Shape",
 		"SETTINGS_SYSTEM_TOUCHDRUMSHAPE_DESC": "Draw custom Don areas for the touch drum. Everything outside them is Ka.",
+		"EXTERNALDISPLAY_NOTICE": "The game is displayed on the external screen.",
 		"SETTINGS_SYSTEM_DEBUGHUD": "Debug HUD",
 		"SETTINGS_SYSTEM_DEBUGHUD_DESC": "Show an on-screen FPS / memory / stage overlay. Off by default.",
 		"TOUCHDRUMEDITOR_HINT": "Draw Don areas (everything else is Ka). The dashed rectangle is the screen; strokes may extend past it. Save with none drawn to reset to the circle.",

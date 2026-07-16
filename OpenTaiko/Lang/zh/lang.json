@@ -182,6 +182,7 @@
 		"SETTINGS_SYSTEM_TOUCHDRUMOPACITY_DESC": "屏幕上太鼓图案的不透明度（百分比）。100为完全不透明，设为0则隐藏。",
 		"SETTINGS_SYSTEM_TOUCHDRUMSHAPE": "触摸太鼓形状",
 		"SETTINGS_SYSTEM_TOUCHDRUMSHAPE_DESC": "为触摸太鼓自由绘制咚区域。区域以外均为咔。",
+		"EXTERNALDISPLAY_NOTICE": "游戏画面正在外接显示器上显示。",
 		"SETTINGS_SYSTEM_DEBUGHUD": "调试HUD",
 		"SETTINGS_SYSTEM_DEBUGHUD_DESC": "在屏幕上显示FPS、内存、场景等信息。默认关闭。",
 		"TOUCHDRUMEDITOR_HINT": "请绘制咚区域（其余部分均为咔）。虚线矩形代表屏幕，笔画可以超出屏幕范围。不绘制任何区域直接保存即可恢复为圆形。",

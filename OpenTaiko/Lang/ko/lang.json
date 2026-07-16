@@ -183,6 +183,7 @@
 		"SETTINGS_SYSTEM_TOUCHDRUMOPACITY_DESC": "화면에 표시되는 북의 불투명도를 %로 지정합니다. 100이면 완전 불투명, 0이면 숨겨집니다.",
 		"SETTINGS_SYSTEM_TOUCHDRUMSHAPE": "터치 북 모양",
 		"SETTINGS_SYSTEM_TOUCHDRUMSHAPE_DESC": "터치 북의 Don 영역을 직접 그려서 설정합니다. 영역 밖은 모두 Ka입니다.",
+		"EXTERNALDISPLAY_NOTICE": "게임 화면이 외부 디스플레이에 표시되고 있습니다.",
 		"SETTINGS_SYSTEM_DEBUGHUD": "디버그 HUD",
 		"SETTINGS_SYSTEM_DEBUGHUD_DESC": "FPS / 메모리 / 스테이지 정보를 화면에 표시합니다. 기본값은 꺼짐입니다.",
 		"TOUCHDRUMEDITOR_HINT": "Don 영역을 그려 주세요(그 외는 모두 Ka입니다). 점선 사각형이 화면이며, 화면 밖까지 그려도 됩니다. 아무것도 그리지 않고 저장하면 원형으로 돌아갑니다.",

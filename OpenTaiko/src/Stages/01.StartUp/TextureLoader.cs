@@ -67,6 +67,13 @@ class TextureLoader {
 
 	public Dictionary<string, CTexture> trackedTextures = new Dictionary<string, CTexture>();
 
+	// Gameplay-screen textures (the "5_演奏画面" region below), collected so they can be warmed
+	// (decoded + uploaded) during the song-load screen instead of lazily on first draw during play,
+	// which otherwise causes an in-frame decode hitch the first time each effect appears.
+	public readonly List<CTexture> gameplayTextures = new();
+	private bool _collectGameplay;
+	private int _warmIndex;
+
 	public TextureLoader() {
 		// Constructor
 	}
@@ -77,6 +84,7 @@ class TextureLoader {
 		var tex = OpenTaiko.tTextureCreate(texpath, false);
 
 		listTexture.Add(tex);
+		if (_collectGameplay) gameplayTextures.Add(tex);
 		return tex;
 	}
 
@@ -98,7 +106,24 @@ class TextureLoader {
 		tTickTextureProgress();
 		var tex = OpenTaiko.tTextureCreateAf(CSkin.Path(BASE + FileName));
 		listTexture.Add(tex);
+		if (_collectGameplay) gameplayTextures.Add(tex);
 		return tex;
+	}
+
+	/// <summary>Reset the gameplay-texture warm cursor. Call at the start of each song load.</summary>
+	public void BeginWarmGameplay() => _warmIndex = 0;
+
+	/// <summary>Force-realize deferred gameplay textures (decode + GL upload) within a time budget so
+	/// their first in-game draw hits a resident texture instead of an inline decode hitch. Returns true
+	/// when the whole set has been warmed. Render thread; call each frame during the song-load screen.</summary>
+	public bool WarmGameplayBatch(double budgetMs) {
+		long start = System.Diagnostics.Stopwatch.GetTimestamp();
+		while (_warmIndex < gameplayTextures.Count) {
+			gameplayTextures[_warmIndex++]?.RealizeIfDeferred();
+			if (System.Diagnostics.Stopwatch.GetElapsedTime(start).TotalMilliseconds >= budgetMs)
+				break;
+		}
+		return _warmIndex >= gameplayTextures.Count;
 	}
 	internal CTexture TxCGen(string FileName) {
 		tTickTextureProgress();
@@ -202,6 +227,7 @@ class TextureLoader {
 		#endregion
 
 		#region 5_演奏画面
+		_collectGameplay = true;
 
 		#region General
 
@@ -632,6 +658,7 @@ class TextureLoader {
 
 		#endregion
 
+		_collectGameplay = false;
 		#endregion
 
 		#region 6_結果発表

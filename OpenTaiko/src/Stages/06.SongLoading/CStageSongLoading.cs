@@ -480,6 +480,7 @@ internal class CStageSongLoading : CStage {
 					_gsActivate = null;
 					CTexture.StreamingLoad = false;     // activation done queueing; later loads go synchronous
 					CTexture.StartStreamDecode();       // (no-op now — decode auto-starts per queued texture)
+					OpenTaiko.Tx.BeginWarmGameplay();   // warm the gameplay skin textures over the next frames
 					System.Diagnostics.Trace.AutoFlush = _gsPrevAutoFlush;
 					System.Diagnostics.Trace.Flush();
 					base.ePhaseID = CStage.EPhase.SongLoading_StreamTextures;
@@ -490,8 +491,11 @@ internal class CStageSongLoading : CStage {
 					// Drain decoded bitmaps to the GPU within a per-frame time budget; keep rendering (smooth bar
 					// + responsive ESC) until every queued texture is uploaded. AVI + FastRender below both touch
 					// the freshly-loaded textures, so they MUST run only after the stream completes.
+					// Also warm the deferred gameplay skin textures here (a batch per frame) so they upload during
+					// this load screen instead of decoding inline on first draw during play.
 					CTexture.PumpUploads(8.0);
-					if (!CTexture.StreamComplete)
+					bool warmDone = OpenTaiko.Tx.WarmGameplayBatch(4.0);
+					if (!CTexture.StreamComplete || !warmDone)
 						return (int)ESongLoadingScreenReturnValue.Continue;
 
 					CTexture.EndStreaming();

@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.6.0.601] - 2026-07-18 (Beta)
+
+
 ## [0.6.0.107] - 2026-05-23 (Beta)
 
 - [Chore] Add Unlockables for Chapter 7 (and few more)

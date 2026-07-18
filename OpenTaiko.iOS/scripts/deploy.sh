@@ -7,9 +7,11 @@
 #   sim         Build, install, and launch on a booted simulator (with console/screenshot)
 #   device      Build, install, and launch on a connected physical device
 #   ipa         Build Release and package a distributable .ipa (+ dSYM zip)
+#   clean       Remove generated files for the selected configuration only
 #
 # Common options:
-#   --clean            Wipe obj/+bin/ (true clean rebuild) and uninstall the app before installing
+#   --clean-and-uninstall  Wipe obj/+bin/, then uninstall the app before installing
+#   --clean-build          Wipe obj/+bin/ before building without uninstalling the app
 #   --no-build         Skip the build step (reuse an existing .app)
 #   --release          Build Release instead of Debug (sim/device; ipa is always Release)
 #   --bundle-id ID     Override the bundle identifier (default: from .csproj)
@@ -53,8 +55,8 @@ if [[ $# -gt 0 && "$1" != --* ]]; then
   TARGET="$1"; shift
 fi
 case "$TARGET" in
-  sim|device|ipa) ;;
-  *) echo "Unknown target: $TARGET (expected sim|device|ipa)"; exit 1 ;;
+  sim|device|ipa|clean) ;;
+  *) echo "Unknown target: $TARGET (expected sim|device|ipa|clean)"; exit 1 ;;
 esac
 
 # ---- options -----------------------------------------------------------------------------
@@ -63,7 +65,8 @@ IDENTITY=""
 DEVICE=""
 UDID=""
 IMOBILE=false
-CLEAN=false
+CLEAN_AND_UNINSTALL=false
+CLEAN_BUILD=false
 BUILD=true
 VERBOSE=false
 CONFIG="Debug"
@@ -83,7 +86,8 @@ DRY_RUN=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --clean)      CLEAN=true; shift ;;
+    --clean-and-uninstall) CLEAN_AND_UNINSTALL=true; shift ;;
+    --clean-build)         CLEAN_BUILD=true; shift ;;
     --no-build)   BUILD=false; shift ;;
     --release)    CONFIG="Release"; shift ;;
     --bundle-id)  BUNDLE_ID="$2"; shift 2 ;;
@@ -109,6 +113,11 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+if ! $BUILD && { $CLEAN_BUILD || $CLEAN_AND_UNINSTALL; }; then
+  echo "Clean options cannot be combined with --no-build."
+  exit 1
+fi
+
 # Resolve bundle ID and the matching dotnet -p:ApplicationId override (if any).
 DEFAULT_BUNDLE_ID=$(grep '<ApplicationId' "$CSPROJ" | sed 's/.*>\(.*\)<.*/\1/')
 APP_ID="${BUNDLE_ID:-$DEFAULT_BUNDLE_ID}"
@@ -129,6 +138,36 @@ bootstrap_ios_deps() {
   [[ -f "third_party/FFmpeg.AutoGen/upstream/FFmpeg.cs" ]] || bash OpenTaiko.iOS/scripts/fetch-ffmpeg-autogen.sh
 }
 
+BUILD_STATE_DIR="OpenTaiko.iOS/.build-state"
+BUILD_LOCKDIR=""
+
+# Referenced projects share obj/bin by configuration even when the iOS RID differs.
+acquire_build_lock() {
+  local config="$1" now owner=""
+  BUILD_LOCKDIR="${TMPDIR:-/tmp}/opentaiko-build-${config}.lock"
+  while ! mkdir "$BUILD_LOCKDIR" 2>/dev/null; do
+    [[ -f "$BUILD_LOCKDIR/pid" ]] && read -r owner < "$BUILD_LOCKDIR/pid" || owner=""
+    now=$(date +%s)
+    if [[ "$owner" =~ ^[0-9]+$ ]] && ! kill -0 "$owner" 2>/dev/null; then
+      rm -rf "$BUILD_LOCKDIR"
+    elif [[ ! "$owner" =~ ^[0-9]+$ && -d "$BUILD_LOCKDIR" \
+            && $(( now - $(stat -f %m "$BUILD_LOCKDIR" 2>/dev/null || echo "$now") )) -gt 1800 ]]; then
+      rm -rf "$BUILD_LOCKDIR"
+    else
+      echo "==> Another build using ${config} project outputs is in progress; waiting..."
+      sleep 2
+    fi
+  done
+  printf '%s\n' "$$" > "$BUILD_LOCKDIR/pid"
+}
+
+clean_build_outputs() {
+  local config="$1"
+  rm -rf "OpenTaiko.iOS/obj/${config}" "OpenTaiko.iOS/bin/${config}" \
+         "FDK/obj/${config}" "FDK/bin/${config}" \
+         "OpenTaiko/obj/${config}" "OpenTaiko/bin/${config}"
+}
+
 # ios_build <config> <rid> [extra dotnet args...]
 # Builds the app, prints a filtered summary, and verifies it succeeded.
 # Sets the global APP_PATH. Returns non-zero on any build failure (a stale .app from a
@@ -136,32 +175,25 @@ bootstrap_ios_deps() {
 ios_build() {
   local config="$1" rid="$2"; shift 2
   APP_PATH="OpenTaiko.iOS/bin/${config}/net10.0-ios/${rid}/OpenTaiko.iOS.app"
-  bootstrap_ios_deps
-
-  # Serialize builds that share this obj/bin output (<config>/<rid>). iOS AOT writes many
-  # intermediate files (per-assembly *.llvm.o, linked/, aot-output/); two builds of the same
-  # output at once (e.g. a broker `ipa` build + a manual `deploy.sh github`) corrupt each other ->
-  # "file is empty in *.llvm.o" / Mono.Cecil ReadModule failures that otherwise need a manual obj
-  # wipe. A per-output lock prevents that; different outputs (Debug sim vs Release device) still
-  # build concurrently. A lock older than 30 min is assumed orphaned and stolen.
-  local lockdir="${TMPDIR:-/tmp}/opentaiko-build-${config}-${rid}.lock"
-  while ! mkdir "$lockdir" 2>/dev/null; do
-    if [[ -d "$lockdir" && $(( $(date +%s) - $(stat -f %m "$lockdir" 2>/dev/null || date +%s) )) -gt 1800 ]]; then
-      rm -rf "$lockdir" 2>/dev/null || true
-    else
-      echo "==> Another build of ${config}/${rid} is in progress; waiting..."; sleep 2
-    fi
-  done
+  acquire_build_lock "$config"
+  local lockdir="$BUILD_LOCKDIR"
   # ${lockdir:-} guard: bash RETURN traps are not auto-cleared, so this also fires when the
   # caller (do_sim/do_device) returns, where lockdir is out of scope -> unbound under `set -u`.
-  trap 'rmdir "${lockdir:-}" 2>/dev/null || true' RETURN
+  trap '[[ -z "${lockdir:-}" ]] || rm -rf "$lockdir"' RETURN
 
-  # A clean build must wipe obj/+bin/ of all three projects: incremental AOT rebuilds pollute
-  # obj/ and produce a load_aot_module / mono_runtime_init_checked abort at startup. (--clean
-  # also uninstalls the installed app below; this handles the build artifacts.)
-  if $CLEAN; then
-    echo "==> Clean: wiping obj/ and bin/ (OpenTaiko.iOS, FDK, OpenTaiko)..."
-    rm -rf OpenTaiko.iOS/obj OpenTaiko.iOS/bin FDK/obj FDK/bin OpenTaiko/obj OpenTaiko/bin
+  mkdir -p "$BUILD_STATE_DIR"
+  local marker="$BUILD_STATE_DIR/${config}.in-progress" stale_build=false
+  [[ -f "$marker" ]] && stale_build=true
+  printf '%s %s\n' "$$" "$(date +%s)" > "$marker"
+
+  bootstrap_ios_deps
+
+  if $stale_build; then
+    echo "==> An earlier ${config} build did not finish; wiping its generated output..."
+    clean_build_outputs "$config"
+  elif $CLEAN_AND_UNINSTALL || $CLEAN_BUILD; then
+    echo "==> Clean build: wiping ${config} obj/bin (OpenTaiko.iOS, FDK, OpenTaiko)..."
+    clean_build_outputs "$config"
   fi
   local log rc attempt
   log=$(mktemp)
@@ -177,7 +209,7 @@ ios_build() {
       { grep -E "(error CS|error MT|error MSB|Error\(s\)|Build succeeded)" "$log" || true; } | tail -10
     fi
     if [[ $rc -eq 0 && -d "$APP_PATH" ]]; then
-      rm -f "$log"; return 0
+      rm -f "$marker" "$log"; return 0
     fi
     # The MSBuild build server occasionally holds a lock on a dependency project's
     # deps.json ("being used by another process" / GenerateDepsFile). Shut it down and
@@ -194,8 +226,7 @@ ios_build() {
     if [[ $attempt -eq 1 ]] && grep -qiE "file is empty in|Mono\.Cecil|AOTCompile|aot-instances\.dll" "$log"; then
       echo "==> Corrupt/partial AOT artifacts detected; wiping ${config} obj/bin and rebuilding clean (one retry)..."
       dotnet build-server shutdown >/dev/null 2>&1 || true
-      rm -rf "OpenTaiko.iOS/obj/${config}" "OpenTaiko.iOS/bin/${config}" \
-             "FDK/obj/${config}" "FDK/bin/${config}" "OpenTaiko/obj/${config}" "OpenTaiko/bin/${config}"
+      clean_build_outputs "$config"
       sleep 1
       continue
     fi
@@ -203,6 +234,7 @@ ios_build() {
   done
   echo "Build failed (dotnet exit ${rc:-?}). Full build output:"
   echo "----------------------------------------"; cat "$log"; echo "----------------------------------------"
+  echo "==> ${config} build state remains marked incomplete; the next build will clean it."
   rm -f "$log"; return 1
 }
 
@@ -321,7 +353,7 @@ do_sim() {
 
   echo "==> Terminating existing app..."
   xcrun simctl terminate "$dev" "$APP_ID" 2>/dev/null || true
-  if $CLEAN; then
+  if $CLEAN_AND_UNINSTALL; then
     echo "==> Uninstalling previous app..."
     xcrun simctl uninstall "$dev" "$APP_ID" 2>/dev/null || true
   fi
@@ -354,8 +386,7 @@ do_sim() {
       echo "==> App built but ABORTED at startup with a Mono AOT-load failure (stale incremental AOT)."
       echo "==> Auto-recovering: wiping ${CONFIG} obj/bin + clean rebuild + reinstall (one attempt)..."
       dotnet build-server shutdown >/dev/null 2>&1 || true
-      rm -rf "OpenTaiko.iOS/obj/${CONFIG}" "OpenTaiko.iOS/bin/${CONFIG}" \
-             "FDK/obj/${CONFIG}" "FDK/bin/${CONFIG}" "OpenTaiko/obj/${CONFIG}" "OpenTaiko/bin/${CONFIG}"
+      local CLEAN_BUILD=true
       ios_build "$CONFIG" iossimulator-arm64 "${BUNDLE_ID_ARG[@]}"
       echo "==> Reinstalling rebuilt app..."
       xcrun simctl install "$dev" "$APP_PATH"
@@ -408,7 +439,7 @@ do_device() {
 
   if $IMOBILE; then
     local udid_flag=(); [[ -n "$UDID" ]] && udid_flag=(-u "$UDID")
-    if $CLEAN; then
+    if $CLEAN_AND_UNINSTALL; then
       echo "==> Uninstalling previous app..."
       ideviceinstaller "${udid_flag[@]}" uninstall "$APP_ID" 2>/dev/null || true
     fi
@@ -419,7 +450,7 @@ do_device() {
     echo "==> Installed. Launch the app manually on the device."
     echo "    (ideviceinstaller does not support remote launch)"
   else
-    if $CLEAN; then
+    if $CLEAN_AND_UNINSTALL; then
       echo "==> Uninstalling previous app..."
       xcrun devicectl device uninstall app --device "$DEVICE" "$APP_ID" 2>/dev/null || true
     fi
@@ -443,8 +474,7 @@ do_device() {
       echo "==> App built but ABORTED at startup with a Mono AOT-load failure (stale incremental AOT)."
       echo "==> Auto-recovering: wiping ${CONFIG} obj/bin + clean rebuild + reinstall (one attempt)..."
       dotnet build-server shutdown >/dev/null 2>&1 || true
-      rm -rf "OpenTaiko.iOS/obj/${CONFIG}" "OpenTaiko.iOS/bin/${CONFIG}" \
-             "FDK/obj/${CONFIG}" "FDK/bin/${CONFIG}" "OpenTaiko/obj/${CONFIG}" "OpenTaiko/bin/${CONFIG}"
+      local CLEAN_BUILD=true
       ios_build "$CONFIG" ios-arm64 -p:RuntimeIdentifier=ios-arm64 -p:CodesignKey="$IDENTITY" -p:CodesignProvision="" "${BUNDLE_ID_ARG[@]}"
       echo "==> Reinstalling rebuilt app..."
       xcrun devicectl device install app --device "$DEVICE" "$APP_PATH" 2>&1 | tail -3
@@ -489,8 +519,25 @@ do_ipa() {
   : "${OUTPUT:=OpenTaiko.iOS/dist/OpenTaiko_unsigned.ipa}"
   build_and_package_ipa
 }
+
+# ==========================================================================================
+#  Target: clean  (build cache only, never touches an installed app)
+# ==========================================================================================
+do_clean() {
+  acquire_build_lock "$CONFIG"
+  local lockdir="$BUILD_LOCKDIR" marker="$BUILD_STATE_DIR/${CONFIG}.in-progress"
+  trap '[[ -z "${lockdir:-}" ]] || rm -rf "$lockdir"' RETURN
+
+  mkdir -p "$BUILD_STATE_DIR"
+  printf '%s %s\n' "$$" "$(date +%s)" > "$marker"
+  echo "==> Wiping ${CONFIG} obj/bin (OpenTaiko.iOS, FDK, OpenTaiko)..."
+  clean_build_outputs "$CONFIG"
+  rm -f "$marker"
+  echo "==> Build cache clean. Installed apps and their data were not touched."
+}
 case "$TARGET" in
   sim)        do_sim ;;
   device)     do_device ;;
   ipa)        do_ipa ;;
+  clean)      do_clean ;;
 esac

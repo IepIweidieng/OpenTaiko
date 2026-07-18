@@ -95,6 +95,11 @@ public static class CConfigOptionBuilder {
 		O.Add(CLuaConfigOption.Action_(SYS, secSongs,L("SETTINGS_SYSTEM_RELOADSONG"), L("SETTINGS_SYSTEM_RELOADSONG_DESC"), hooks.ReloadSongs));
 		O.Add(CLuaConfigOption.Action_(SYS, secSongs,L("SETTINGS_SYSTEM_RELOADSONGCACHE"), L("SETTINGS_SYSTEM_RELOADSONGCACHE_DESC"), hooks.HardReloadSongs));
 		O.Add(CLuaConfigOption.Action_(SYS, secSongs,L("SETTINGS_SYSTEM_IMPORTSCOREINI"), L("SETTINGS_SYSTEM_IMPORTSCOREINI_DESC"), hooks.ImportScore));
+		if (OperatingSystem.IsIOS() || OperatingSystem.IsAndroid())
+			O.Add(CLuaConfigOption.Action_(SYS, secSongs,
+				L("SETTINGS_SYSTEM_RESETSOUNDTRACK", "Reset Soundtrack Download Choice"),
+				L("SETTINGS_SYSTEM_RESETSOUNDTRACK_DESC", "Clear the saved \"Never\" choice. The soundtrack prompt will return on the next launch."),
+				() => SoundtrackDownloader.ClearDeclinedState(OpenTaiko.strEXEFolder)));
 
 		// Language (player count moved to Game; random-subfolder + dan/tower-hide are handled by the Lua song list now)
 		O.Add(CLuaConfigOption.Choice_(SYS, secLang,L("SETTINGS_SYSTEM_LANGUAGE"), L("SETTINGS_SYSTEM_LANGUAGE_DESC"),

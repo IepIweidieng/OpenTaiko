@@ -79,6 +79,9 @@
 		// {5}: Name of the current player being processed.
 		"SETTINGS_SYSTEM_IMPORTSCOREINI_STATUS3": "Обновление результатов {0} игрока/ов...\n<c.#0bb000>{1} из {2} обновлено/c> (<c.#b00000>{3} не удалось</c>)\n\n{4}: {5}",
 
+		"SETTINGS_SYSTEM_RESETSOUNDTRACK": "Сбросить выбор загрузки саундтрека",
+		"SETTINGS_SYSTEM_RESETSOUNDTRACK_DESC": "Очищает сохранённый выбор «Никогда». Запрос о загрузке саундтрека появится снова при следующем запуске.",
+
 		"SETTINGS_SYSTEM_HIDEDANTOWER": "Спрятать Дан и Башни",
 		"SETTINGS_SYSTEM_HIDEDANTOWER_DESC": "Скрыт партитуры Дан и Башен в меню Режима Тайко.\nПримечание: Перезагрузите песни, чтобы настройки вступили в силу.",
 

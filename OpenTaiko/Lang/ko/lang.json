@@ -79,6 +79,9 @@
 		// {5}: Name of the current player being processed.
 		"SETTINGS_SYSTEM_IMPORTSCOREINI_STATUS3": "Refreshing {0} players' scores...\n<c.#0bb000>{1} of {2} refreshed/c> (<c.#b00000>{3} failed</c>)\n\n{4}: {5}",
 
+		"SETTINGS_SYSTEM_RESETSOUNDTRACK": "사운드트랙 다운로드 선택 초기화",
+		"SETTINGS_SYSTEM_RESETSOUNDTRACK_DESC": "저장된 \"안 함\" 선택을 지웁니다. 다음 실행 시 사운드트랙 안내가 다시 표시됩니다.",
+
 		"SETTINGS_SYSTEM_HIDEDANTOWER": "단위도장/타워모드 숨기기",
 		"SETTINGS_SYSTEM_HIDEDANTOWER_DESC": "태고 모드에서 단위도장/타워모드를 숨깁니다. 곡을 다시 불러와야 적용됩니다.",
 

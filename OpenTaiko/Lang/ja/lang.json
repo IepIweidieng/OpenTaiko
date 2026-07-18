@@ -79,6 +79,9 @@
 		// {5}: Name of the current player being processed.
 		"SETTINGS_SYSTEM_IMPORTSCOREINI_STATUS3": "Refreshing {0} players' scores...\n<c.#0bb000>{1} of {2} refreshed/c> (<c.#b00000>{3} failed</c>)\n\n{4}: {5}",
 
+		"SETTINGS_SYSTEM_RESETSOUNDTRACK": "サウンドトラックのダウンロード選択をリセット",
+		"SETTINGS_SYSTEM_RESETSOUNDTRACK_DESC": "保存された「今後表示しない」の選択を消去します。次回起動時にサウンドトラックの確認が再び表示されます。",
+
 		"SETTINGS_SYSTEM_HIDEDANTOWER": "段・タワー譜面省略",
 		"SETTINGS_SYSTEM_HIDEDANTOWER_DESC": "演奏選曲画面にタワー及び段の譜面を省略設定です。ONに設けると別々の画面にしか表示されていません。\n※ 設定は譜面の再読み込み時に有効になります。",
 

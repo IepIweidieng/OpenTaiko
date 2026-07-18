@@ -79,6 +79,9 @@
 		// {5}: Name of the current player being processed.
 		"SETTINGS_SYSTEM_IMPORTSCOREINI_STATUS3": "Refreshing {0} players' scores...\n<c.#0bb000>{1} of {2} refreshed/c> (<c.#b00000>{3} failed</c>)\n\n{4}: {5}",
 
+		"SETTINGS_SYSTEM_RESETSOUNDTRACK": "Reset Soundtrack Download Choice",
+		"SETTINGS_SYSTEM_RESETSOUNDTRACK_DESC": "Clear the saved \"Never\" choice. The soundtrack prompt will return on the next launch.",
+
 		"SETTINGS_SYSTEM_HIDEDANTOWER": "Hide Dan/Tower",
 		"SETTINGS_SYSTEM_HIDEDANTOWER_DESC": "Hide Dan and Tower charts in the Taiko Mode menu.\nNote: Reload songs to make this setting take effect.",
 

@@ -79,6 +79,9 @@
 		// {5}: Name of the current player being processed.
 		"SETTINGS_SYSTEM_IMPORTSCOREINI_STATUS3": "Scores van {0} spelers worden vernieuwd...\n<c.#0bb000>{1} van {2} vernieuwd/c> (<c.#b00000>{3} mislukt</c>)\n\n{4}: {5}",
 
+		"SETTINGS_SYSTEM_RESETSOUNDTRACK": "Keuze voor soundtrackdownload opnieuw instellen",
+		"SETTINGS_SYSTEM_RESETSOUNDTRACK_DESC": "Wist de opgeslagen keuze \"Nooit\". De soundtrackvraag verschijnt bij de volgende start opnieuw.",
+
 		"SETTINGS_SYSTEM_HIDEDANTOWER": "Dan/Toren Verbergen",
 		"SETTINGS_SYSTEM_HIDEDANTOWER_DESC": "Verberg de Dan en Toren nummers in de Taiko Modus.\nOpmerking: Herlaad de nummers om dit te activeren.",
 

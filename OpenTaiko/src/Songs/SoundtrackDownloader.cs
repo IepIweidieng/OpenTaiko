@@ -26,11 +26,12 @@ internal static class SoundtrackDownloader {
 	private const string Owner = "OpenTaiko";
 	private const string Repo = "OpenTaiko-Soundtrack";
 	private const string Branch = "main";
+	private const string DeclinedMarker = ".soundtrack_declined";
 	private const int Workers = 4;
 
 	internal static void EnsureSoundtrack(ISoundtrackDownloadHost host, string dataRoot, Action<string> status) {
 		string doneMarker = Path.Combine(dataRoot, ".soundtrack_done");
-		string neverMarker = Path.Combine(dataRoot, ".soundtrack_declined");
+		string neverMarker = Path.Combine(dataRoot, DeclinedMarker);
 		if (File.Exists(neverMarker))
 			return;
 		bool silent = File.Exists(doneMarker);
@@ -85,6 +86,9 @@ internal static class SoundtrackDownloader {
 			}
 		}
 	}
+
+	internal static void ClearDeclinedState(string dataRoot) =>
+		File.Delete(Path.Combine(dataRoot, DeclinedMarker));
 
 	private sealed record Song(string Folder, string[] Files, string? TjaPath, string? TjaMd5, double SizeMb);
 	private sealed record Job(string RepoPath, bool Overwrite);

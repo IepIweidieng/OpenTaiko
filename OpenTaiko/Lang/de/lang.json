@@ -79,6 +79,9 @@
 		// {5}: Name of the current player being processed.
 		"SETTINGS_SYSTEM_IMPORTSCOREINI_STATUS3": "Aktualisiere die Ergebnisse von {0} Spielern...\n<c.#0bb000>{1} von {2} aktualisiert/c> (<c.#b00000>{3} fehlgeschlagen</c>)\n\n{4}: {5}",
 
+		"SETTINGS_SYSTEM_RESETSOUNDTRACK": "Soundtrack-Download-Auswahl zurücksetzen",
+		"SETTINGS_SYSTEM_RESETSOUNDTRACK_DESC": "Löscht die gespeicherte Auswahl \"Nie\". Die Soundtrack-Abfrage erscheint beim nächsten Start erneut.",
+
 		"SETTINGS_SYSTEM_HIDEDANTOWER": "Dan/Turm ausblenden",
 		"SETTINGS_SYSTEM_HIDEDANTOWER_DESC": "Blendet Dan and Tower-Charts aus im Taiko-Modus Menü.\nHinweis: Leider neu laden, um diese Einstellung wirksam zu machen.",
 

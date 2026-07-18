@@ -12,9 +12,6 @@ internal class CActImplRoll : CActivity {
 	}
 
 	public override void Activate() {
-		this.ctRollFrameCounter = new CCounter[5];
-		this.ctRollAnime = new CCounter[5];
-		FadeOut = new Animations.FadeOut[5];
 		for (int i = 0; i < 5; i++) {
 			this.ctRollFrameCounter[i] = new CCounter();
 			this.ctRollAnime[i] = new CCounter();
@@ -106,9 +103,9 @@ internal class CActImplRoll : CActivity {
 	public int bNowRollAnime;
 	public bool[] bDisplay;
 	public int[] nConsecutiveHitCount;
-	public CCounter[] ctRollFrameCounter;
+	public CCounter[] ctRollFrameCounter = new CCounter[OpenTaiko.MAX_PLAYERS];
 
-	public CCounter[] ctRollAnime;
+	public CCounter[] ctRollAnime = new CCounter[OpenTaiko.MAX_PLAYERS];
 	private float[] RollScale = new float[]
 	{
 		0.000f,
@@ -122,7 +119,7 @@ internal class CActImplRoll : CActivity {
 		0.055f,
 		0.000f
 	};
-	private Animations.FadeOut[] FadeOut;
+	private Animations.FadeOut[] FadeOut = new Animations.FadeOut[OpenTaiko.MAX_PLAYERS];
 
 	[StructLayout(LayoutKind.Sequential)]
 	private struct STTextPosition {

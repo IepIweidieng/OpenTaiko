@@ -1273,10 +1273,10 @@ internal class OpenTaiko : Game {
 			return null;
 		}
 	}
-	public static void tTextureRelease(ref CTexture tx) {
+	public static void tTextureRelease(ref CTexture? tx) {
 		OpenTaiko.tDisposeSafely(ref tx);
 	}
-	public static void tTextureRelease(ref CTextureAf tx) {
+	public static void tTextureRelease(ref CTextureAf? tx) {
 		OpenTaiko.tDisposeSafely(ref tx);
 	}
 	public static CTexture tTextureCreate(SKBitmap bitmap) {

@@ -67,7 +67,6 @@ internal abstract class CStagePlayScreenCommon : CStage {
 		int towerLife = OpenTaiko.SongMount.rChosenScore?.ChartInfo.nLife ?? 5;
 		FloorManagement = new CFloorManagement(towerLife);
 
-		listChip = new List<CChip>[5];
 		for (int i = 0; i < OpenTaiko.ConfigIni.nPlayerCount; i++) {
 			listChip[i] = OpenTaiko.GetTJA(i)!.listChip;
 		}
@@ -145,8 +144,6 @@ internal abstract class CStagePlayScreenCommon : CStage {
 			}
 		}
 
-		ctChipAnime = new CCounter[5];
-		ctChipAnimeLag = new CCounter[5];
 		for (int i = 0; i < 5; i++) {
 			ctChipAnime[i] = new CCounter();
 			ctChipAnimeLag[i] = new CCounter();
@@ -154,9 +151,6 @@ internal abstract class CStagePlayScreenCommon : CStage {
 
 		listWAV = OpenTaiko.TJA.listWAV;
 
-
-		this.nHitCount_ExclAuto = new CHITCOUNTOFRANK();
-		this.nHitCount_InclAuto = new CHITCOUNTOFRANK();
 		this.rCurrentCheerChip = null;
 		this.bReverse = OpenTaiko.ConfigIni.bReverse;
 
@@ -177,12 +171,12 @@ internal abstract class CStagePlayScreenCommon : CStage {
 		this.tPanelStringSettings();
 		//this.演奏判定ライン座標();
 		this.bIsGOGOTIME_Branch = new bool[5, 3];
-		this.bIsGOGOTIME = new bool[] { false, false, false, false, false };
-		this.bWasGOGOTIME = new bool[] { false, false, false, false, false };
-		this.bIsMiss = new bool[] { false, false, false, false, false };
-		this.bUseBranch = new bool[] { false, false, false, false, false };
-		this.nCurrentBranch = new CTja.ECourse[5];
-		this.nTargetBranch = new CTja.ECourse[5];
+		Array.Fill(this.bIsGOGOTIME, false);
+		Array.Fill(this.bWasGOGOTIME, false);
+		Array.Fill(this.bIsMiss, false);
+		Array.Fill(this.bUseBranch, false);
+		Array.Fill(this.nCurrentBranch, CTja.ECourse.eNormal);
+		Array.Fill(this.nTargetBranch,  CTja.ECourse.eNormal);
 
 		for (int i = 0; i < 5; i++) {
 			OpenTaiko.stageGameScreen.ChangeBranch(CTja.ECourse.eNormal, i, stopAnime: true);
@@ -192,9 +186,9 @@ internal abstract class CStagePlayScreenCommon : CStage {
 			this.CBranchScore[i] = new CBRANCHSCORE();
 
 
-		this.nCurrentRollCount = new int[] { 0, 0, 0, 0, 0 };
-		this.idxLastBranchSection = new int[5];
-		this.Chara_MissCount = new int[5];
+		Array.Fill(this.nCurrentRollCount, 0);
+		Array.Fill(this.idxLastBranchSection, 0);
+		Array.Fill(this.Chara_MissCount, 0);
 		dbDynamicBeatFactor   = 1.0;
 		dbDynBeatTjaOffset    = 0.0;
 		msDynBeatRawGameTime  = 0;
@@ -223,12 +217,12 @@ internal abstract class CStagePlayScreenCommon : CStage {
 					OpenTaiko.ConfigIni.nFunMods[i] = EFunMods.DynamicBeat;
 			}
 		}
-		this.bLEVELHOLD = new bool[] { false, false, false, false, false };
-		this.JPOSCROLLX = new double[5];
-		this.JPOSCROLLY = new double[5];
-		this.timingZones = new CConfigIni.CTimingZones[5];
-		eGameType = new EGameType[5];
-		bSplitLane = new bool[5];
+		Array.Fill(this.bLEVELHOLD, false);
+		Array.Fill(this.JPOSCROLLX, 0);
+		Array.Fill(this.JPOSCROLLY, 0);
+		Array.Fill(this.timingZones, null);
+		Array.Fill(eGameType, EGameType.Taiko);
+		Array.Fill(bSplitLane, false);
 
 
 		// Double play set here
@@ -243,7 +237,7 @@ internal abstract class CStagePlayScreenCommon : CStage {
 
 		OpenTaiko.Skin.tRemoveMixerAll();  // 効果音のストリームをミキサーから解除しておく
 
-		queueMixerSound = new Queue<stmixer>(64);
+		queueMixerSound.Clear();
 		bIsDirectSound = (OpenTaiko.SoundManager.GetCurrentSoundDeviceType() == "DirectSound");
 		bUseOSTimer = OpenTaiko.ConfigIni.bUseOSTimer;
 		bValidScore = true;
@@ -278,7 +272,7 @@ internal abstract class CStagePlayScreenCommon : CStage {
 		}
 
 
-		this.sw = new Stopwatch();
+		this.sw.Reset();
 		//          this.sw2 = new Stopwatch();
 		// Reduce .NET GC hitches during the song: ask the GC to avoid blocking gen-2 collections while
 		// playing. Restored to the previous mode in DeActivate. (SustainedLowLatency, not Batch — Batch
@@ -286,18 +280,18 @@ internal abstract class CStagePlayScreenCommon : CStage {
 		this.gclatencymode = System.Runtime.GCSettings.LatencyMode;
 		// GCSettings.LatencyMode is unsupported on iOS (throws PlatformNotSupportedException); it's only a GC-pause tweak.
 		if (!(OperatingSystem.IsIOS() || OperatingSystem.IsAndroid())) System.Runtime.GCSettings.LatencyMode = System.Runtime.GCLatencyMode.SustainedLowLatency;
-		this.bIsAlreadyCleared = new bool[5];
-		this.bIsAlreadyMaxed = new bool[5];
+		Array.Fill(this.bIsAlreadyCleared, false);
+		Array.Fill(this.bIsAlreadyMaxed, false);
 
 		this.ListDan_Number = 0;
 		this.IsDanFailed = false;
 
-		this.objHandlers = new();
-		this.bCustomDoron = new bool[5];
+		this.objHandlers.Clear();
+		Array.Fill(this.bCustomDoron, false);
 
 		this.tBackgroundTextureCreate();
 
-		this.nCurrentTopChip = new int[] { -1, -1, -1, -1, -1 }; // reset for new chart
+		Array.Fill(this.nCurrentTopChip, -1); // reset for new chart
 		yield return 0.9f;   // children up; build the note state
 		this.tValueInitialize(true, true);
 
@@ -501,10 +495,8 @@ internal abstract class CStagePlayScreenCommon : CStage {
 			this.chipNowProcessingMultiHitNotes[i].Clear();
 
 		listWAV.Clear();
-		listWAV = null;
-		listChip = null;
+		Array.Fill(listChip, []);
 		queueMixerSound.Clear();
-		queueMixerSound = null;
 		if (!(OperatingSystem.IsIOS() || OperatingSystem.IsAndroid())) System.Runtime.GCSettings.LatencyMode = this.gclatencymode;   // restore pre-gameplay GC mode (unsupported on mobile)
 
 		this.actAVI.rVD = null; // Will be disposed by TJA.DeActivate() later
@@ -733,15 +725,15 @@ internal abstract class CStagePlayScreenCommon : CStage {
 	// Tracks time since last Resume() to enforce a 1-second anti-buffering cooldown on pause re-open.
 	// Initialized with a high elapsed value so the first pause is never blocked.
 	private System.Diagnostics.Stopwatch _pauseCooldown = System.Diagnostics.Stopwatch.StartNew();
-	public bool[] bIsAlreadyCleared;
-	public bool[] bIsAlreadyMaxed;
+	public bool[] bIsAlreadyCleared = new bool[OpenTaiko.MAX_PLAYERS];
+	public bool[] bIsAlreadyMaxed = new bool[OpenTaiko.MAX_PLAYERS];
 	protected bool bUsedMidiInputInPlay;
 	protected bool bUsedKeyboardInPlay;
 	protected bool bUsedJoypadInPlay;
 	protected bool bUsedMouseInPlay;
-	protected CCounter ctChipPatternAnime;
-	public CCounter[] ctChipAnime;
-	public CCounter[] ctChipAnimeLag;
+	protected CCounter? ctChipPatternAnime;
+	public CCounter?[] ctChipAnime = new CCounter[OpenTaiko.MAX_PLAYERS];
+	public CCounter?[] ctChipAnimeLag = new CCounter[OpenTaiko.MAX_PLAYERS];
 	private int bgmlength = 1;
 
 	protected EGameplayScreenReturnValue eFadeOutCompleteWhenReturnValue;
@@ -752,8 +744,8 @@ internal abstract class CStagePlayScreenCommon : CStage {
 	protected readonly int[] nPad0AtoPad08 = new int[] { 1, 2, 3, 4, 5, 6, 7, 1, 8, 0, 9, 9 };// パッド画像のヒット処理用
 																							  //   HH SD BD HT LT FT CY HHO RD LC LP LBD
 	protected readonly int[] nPad0AtoLane07 = new int[] { 1, 2, 3, 4, 5, 6, 7, 1, 9, 0, 8, 8 };
-	public CHITCOUNTOFRANK nHitCount_ExclAuto;
-	public CHITCOUNTOFRANK nHitCount_InclAuto;
+	public CHITCOUNTOFRANK nHitCount_ExclAuto = new();
+	public CHITCOUNTOFRANK nHitCount_InclAuto = new();
 	public bool ShowVideo;
 	public CBRANCHSCORE[] DanSongScore = [];
 
@@ -767,21 +759,21 @@ internal abstract class CStagePlayScreenCommon : CStage {
 	public bool hasChipBeenPlayed(int chipListIndex, int iPlayer)
 		=> hasChipBeenPlayedAt(chipListIndex, nCurrentTopChip[iPlayer]);
 
-	protected volatile Queue<stmixer> queueMixerSound;      // #24820 2013.1.21 yyagi まずは単純にAdd/Removeを1個のキューでまとめて管理するやり方で設計する
+	protected volatile Queue<stmixer> queueMixerSound = new(64); // #24820 2013.1.21 yyagi まずは単純にAdd/Removeを1個のキューでまとめて管理するやり方で設計する
 	protected DateTime dtLastQueueOperation;                //
 	protected bool bIsDirectSound;                          //
 	protected bool bValidScore;
 	//		protected bool bDTXVmode;
 	protected bool bReverse;
 
-	protected CChip rCurrentCheerChip;
+	protected CChip? rCurrentCheerChip;
 
-	protected CTexture txBgImage;
+	protected CTexture? txBgImage;
 
 	//		protected int nRisky_InitialVar, nRiskyTime;		// #23559 2011.7.28 yyagi → CAct演奏ゲージ共通クラスに隠蔽
 	protected int nPolyphonicSounds;
-	protected List<CChip>[] listChip = new List<CChip>[5];
-	protected Dictionary<int, CTja.CWAV> listWAV;
+	protected List<CChip>[] listChip = Enumerable.Repeat(new List<CChip> { }, OpenTaiko.MAX_PLAYERS).ToArray();
+	protected Dictionary<int, CTja.CWAV> listWAV = [];
 	protected bool bUseOSTimer;
 
 	public CBRANCHSCORE[] CBranchScore = new CBRANCHSCORE[6];
@@ -805,7 +797,7 @@ internal abstract class CStagePlayScreenCommon : CStage {
 	protected int nListCount;
 
 	protected int[] nCurrentRollCount = new int[5];
-	public int[] Chara_MissCount;
+	public int[] Chara_MissCount = new int[OpenTaiko.MAX_PLAYERS];
 
 	// Dynamic Beat mode state (shared across all players)
 	protected double dbDynamicBeatFactor    = 1.0;
@@ -846,9 +838,10 @@ internal abstract class CStagePlayScreenCommon : CStage {
 
 	protected int nWaitButton;
 
-	protected CConfigIni.CTimingZones[] timingZones;
-	public EGameType[] eGameType;
-	protected bool[] bSplitLane;
+	protected CConfigIni.CTimingZones[] timingZones = Enumerable.Repeat(OpenTaiko.ConfigIni.tzLevels.Last(), OpenTaiko.MAX_PLAYERS)
+		.ToArray();
+	public EGameType[] eGameType = new EGameType[OpenTaiko.MAX_PLAYERS];
+	protected bool[] bSplitLane = new bool[OpenTaiko.MAX_PLAYERS];
 
 	public List<CChip>[] chipNowProcessingMultiHitNotes = [[], [], [], [], []]; // [iPlayer][idxNowProcessingMultiHitNotes]
 	public List<CChip>[] chipCurrentProcessingRollChip = [[], [], [], [], []]; // [iPlayer][idxNowProcessingRoll]
@@ -863,13 +856,13 @@ internal abstract class CStagePlayScreenCommon : CStage {
 	protected CSound[] soundAdlib = new CSound[5];
 	protected CSound[] soundClap = new CSound[5];
 	public bool isMultiPlay; // 2016.08.21 kairera0467 表示だけ。
-	protected Stopwatch sw;     // 2011.6.13 最適化検討用のストップウォッチ
+	protected Stopwatch sw = new();     // 2011.6.13 最適化検討用のストップウォッチ
 	protected System.Runtime.GCLatencyMode gclatencymode;   // saved GC latency mode, restored on DeActivate
 	public int ListDan_Number;
 	private bool IsDanFailed;
 
 	private float _AIBattleState;
-	private Queue<float>[] _AIBattleStateBatch;
+	private Queue<float>[] _AIBattleStateBatch = [new(), new()];
 	public int AIBattleState {
 		get {
 			return (int)_AIBattleState;
@@ -4014,7 +4007,8 @@ internal abstract class CStagePlayScreenCommon : CStage {
 			}
 		}
 		if (bPlayState) {
-			_AIBattleStateBatch = new Queue<float>[] { new Queue<float>(), new Queue<float>() };
+			foreach (var batch in _AIBattleStateBatch)
+				batch.Clear();
 			bIsAIBattleWin = false;
 			this.dbDynamicBeatFactor   = 1.0;
 			this.dbDynBeatTjaOffset    = 0.0;
@@ -4450,9 +4444,9 @@ internal abstract class CStagePlayScreenCommon : CStage {
 
 
 	#region [EXTENDED COMMANDS]
-	private Dictionary<string, (CChip chip, CCounter counter, Action<float> setter)> objHandlers;
+	private Dictionary<string, (CChip chip, CCounter counter, Action<float> setter)> objHandlers = new();
 
-	public bool[] bCustomDoron;
+	public bool[] bCustomDoron = new bool[OpenTaiko.MAX_PLAYERS];
 	private bool bConfigUpdated = false;
 	#endregion
 }

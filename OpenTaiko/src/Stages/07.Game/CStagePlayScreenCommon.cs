@@ -1059,12 +1059,12 @@ internal abstract class CStagePlayScreenCommon : CStage {
 			int actual = player;
 
 			if (msDelta <= tz.nOkZone) {
-				if (OpenTaiko.ConfigIni.bJust[actual] == 1 && NotesManager.IsMissableNote(pChip)) // Just
+				if (OpenTaiko.ConfigIni.bJust[actual] == 1 && NotesManager.IsMissableNote(nt)) // Just
 					return ENoteJudge.Poor;
 				return ENoteJudge.Good;
 			}
 
-			if (OpenTaiko.ConfigIni.bJust[actual] == 2 || !NotesManager.IsMissableNote(pChip)) // Safe
+			if (OpenTaiko.ConfigIni.bJust[actual] == 2 || NotesManager.IsJudgedFromNearest(nt)) // Safe
 				return ENoteJudge.Good;
 			return ENoteJudge.Poor;
 		}
@@ -2060,24 +2060,28 @@ internal abstract class CStagePlayScreenCommon : CStage {
 		if (count <= 0)         // 演奏データとして1個もチップがない場合は
 			return (null, ENoteJudge.Miss);
 
-		#region [ search for the first future note chips ]
-		// search backward for the top chip at given time
-		int iTop = Math.Max(0, Math.Min(count, this.nCurrentTopChip[nPlayer]));
-		if ((iTop < count) && (msTjaTime < this.listChip[nPlayer][iTop].nSoundTimems)) {
-			CChip searchChip = new() { nSoundTimems = (int)msTjaTime, dbSoundTimems = double.PositiveInfinity }; // chip is played until this
-			iTop = this.listChip[nPlayer].BinarySearch(0, iTop, searchChip, Comparer<CChip>.Default);
+		int getIdxChip(long msTjaTime, double direction) {
+			CChip searchChip = new() { nSoundTimems = (int)msTjaTime, dbSoundTimems = direction };
+			int iTop = this.listChip[nPlayer].BinarySearch(0, count, searchChip, Comparer<CChip>.Default);
 			if (iTop < 0)
 				iTop = ~iTop;
+			return iTop;
 		}
 
+		int getIdxChipAfter(long msTjaTime) => getIdxChip(msTjaTime, double.PositiveInfinity);
+		int getIdxChipAtOrBefore(long msTjaTime) => getIdxChip(msTjaTime, double.NegativeInfinity);
+
+		#region [ search for the first future note chips ]
+		// search for the correct top chip at given time; `this.nCurrentTopChip[nPlayer]` could incorrect due to input or audio resyncs)
+		int iTop = getIdxChipAfter(msTjaTime);
+
+		int badZone = this.timingZones[nPlayer].nBadZone;
+		int idxFutureFirstMissZone = getIdxChipAfter(msTjaTime + badZone);
 		(CChip? chip, ENoteJudge judge) futureFirstUnhit = (null, ENoteJudge.Miss);
-		int iFutureFirst = count; // regardless of hit or unhit
-		for (int i = iTop; i < count; ++i) {
+		for (int i = iTop; i < idxFutureFirstMissZone; ++i) {
 			CChip chip = listChip[nPlayer][i];
-			if (!(chip.bVisible && chip.nSoundTimems > msTjaTime && NotesManager.IsHittableNote(chip) && !NotesManager.IsRollEnd(chip)))
+			if (!(chip.bVisible && NotesManager.IsHittableNote(chip) && !NotesManager.IsRollEnd(chip)))
 				continue;
-			if (iFutureFirst >= count)
-				iFutureFirst = i;
 			var judge = this.eGetChipJudgeAtTime(msTjaTime, chip, nPlayer);
 			if (judge is ENoteJudge.Miss) // not in judgement window or before a roll
 				break;
@@ -2089,16 +2093,17 @@ internal abstract class CStagePlayScreenCommon : CStage {
 		#endregion
 
 		#region [ search for the first past note chips (ignore rolls) ]
+		var firstWaitingTime = this.chipNowProcessingMultiHitNotes[nPlayer].FirstOrDefault()?.nSoundTimems ?? msTjaTime;
+		int idxPastFirstNonMissZone = getIdxChipAtOrBefore(Math.Min(firstWaitingTime, msTjaTime - badZone));
 		(CChip? chip, ENoteJudge judge) pastFirstUnhit = (null, ENoteJudge.Miss);
 		(CChip? chip, ENoteJudge judge) pastFirstUnhitNotBad = (null, ENoteJudge.Miss);
 		(CChip? chip, ENoteJudge judge) pastFirstUnhitRoll = (null, ENoteJudge.Miss);
-		var firstWaitingChip = this.chipNowProcessingMultiHitNotes[nPlayer].FirstOrDefault();
-		for (int i = iFutureFirst; i-- > 0;) { // exclude past from future
+		for (int i = iTop; i-- > idxPastFirstNonMissZone;) {
 			CChip chip = listChip[nPlayer][i];
-			if (!chip.bVisible || !NotesManager.IsHittableNote(chip) || NotesManager.IsRollEnd(chip))
+			if (!(chip.bVisible && NotesManager.IsHittableNote(chip) && !NotesManager.IsRollEnd(chip)))
 				continue;
 			var judge = (chip.eNoteState is ENoteState.Wait) ? ENoteJudge.Perfect : this.eGetChipJudgeAtTime(msTjaTime, chip, nPlayer);
-			if (judge is ENoteJudge.Miss && (firstWaitingChip == null || chip.nSoundTimems < firstWaitingChip.nSoundTimems)) // search over waiting notes
+			if (judge is ENoteJudge.Miss && (chip.nSoundTimems < firstWaitingTime)) // search over waiting notes
 				break; // not in judgement window or after a roll
 			if (!chip.IsMissed && !chip.bHit && this.IsInputPadConsumedByChip(nPlayer, chip, pad, msTjaTime, judge)) {
 				if (NotesManager.IsGenericRoll(chip)) {

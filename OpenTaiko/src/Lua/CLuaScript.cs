@@ -529,7 +529,11 @@ end
 		bCrashed = true;
 		// iOS: surface Lua errors to the device console (os_log), which is easier to read than the on-screen overlay.
 
-		LogNotification.PopError($"{this.GetType().Name} Error{(string.IsNullOrWhiteSpace(at) ? "" : $" at {at}")}: {exception.ToString()}");
+		LogNotification.PopError($"{this.GetType().Name} Error{(string.IsNullOrWhiteSpace(at) ? "" : $" at {at}")}: {exception.ToString()}{
+			((exception.InnerException != null) ? $"\nCause: {exception.InnerException.Message}" : "")
+		}");
+		if (exception.InnerException != null)
+			Trace.TraceError(exception.InnerException.StackTrace);
 		Trace.TraceError($"Full script path: {this.strScriptPath}");
 		Trace.TraceError(exception.StackTrace);
 	}

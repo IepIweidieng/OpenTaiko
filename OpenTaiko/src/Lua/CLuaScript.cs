@@ -129,7 +129,7 @@ class CLuaScript : IDisposable {
 			LuaScript?.State?.GarbageCollector(KeraLua.LuaGC.Step, 0);
 			return ret;
 		} catch (Exception exception) {
-			var argsAsReprStrings = args.Select(v => JsonConvert.ToString(v));
+			var argsAsReprStrings = args.Select(v => JsonConvert.SerializeObject(v));
 			Crash(exception, $"RunLuaCode - {luaFunction.Name}({string.Join(", ", argsAsReprStrings)})");
 		}
 		return null;

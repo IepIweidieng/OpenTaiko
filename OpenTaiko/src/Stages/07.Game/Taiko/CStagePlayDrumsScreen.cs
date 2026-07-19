@@ -943,14 +943,14 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 		}
 	}
 
-	protected override void ProcessPadInput(int nUsePlayer, EPad nPad, long msHitTjaTime) {
+	protected override void ProcessPadInput(int nUsePlayer, EPad nPad, long msHitTjaTime, CChip? chipNoHit, ENoteJudge? eJudge) {
 		// test judgement
-		var (chipNoHit, eJudge) = GetChipToJudge(msHitTjaTime, nUsePlayer, nPad);
+		eJudge ??= (chipNoHit == null) ? ENoteJudge.Miss : this.eGetChipJudgeAtTime(msHitTjaTime, chipNoHit, nUsePlayer);
 		var gameType = this.eGameType[nUsePlayer];
 		if (eJudge != ENoteJudge.Miss) {
-			eJudge = this.JudgePadInput(nUsePlayer, chipNoHit, nPad, msHitTjaTime, eJudge);
+			eJudge = this.JudgePadInput(nUsePlayer, chipNoHit, nPad, msHitTjaTime, eJudge.Value);
 			if (eJudge is not (ENoteJudge.Miss or ENoteJudge.Auto or ENoteJudge.ADLIB)) // ADLIB here for "empty hit but not a miss"
-				gameType = NotesManager.GetChipGameType(chipNoHit, nUsePlayer);
+				gameType = NotesManager.GetChipGameType(chipNoHit!, nUsePlayer);
 		}
 
 		// Visual and sound effects
@@ -965,7 +965,7 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 
 			// BAD or TIGHT 時の処理。
 			if (eJudge is ENoteJudge.Miss && OpenTaiko.ConfigIni.bTight)
-				this.tChipHitProcess_BadAndTightWhenMiss(EKeyConfigPart.Taiko, eJudge, nUsePlayer, null);
+				this.tChipHitProcess_BadAndTightWhenMiss(EKeyConfigPart.Taiko, eJudge.Value, nUsePlayer, null);
 		}
 		#endregion
 	}

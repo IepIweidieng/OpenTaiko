@@ -1077,7 +1077,12 @@ internal abstract class CStagePlayScreenCommon : CStage {
 		);
 	}
 
-	protected abstract void ProcessPadInput(int nUsePlayer, EPad nPad, long msHitTjaTime);
+	protected void ProcessPadInput(int nUsePlayer, EPad nPad, long msHitTjaTime) {
+		var (chipNoHit, eJudge) = GetChipToJudge(msHitTjaTime, nUsePlayer, nPad);
+		ProcessPadInput(nUsePlayer, nPad, msHitTjaTime, chipNoHit, eJudge);
+	}
+
+	protected abstract void ProcessPadInput(int nUsePlayer, EPad nPad, long msHitTjaTime, CChip? chip, ENoteJudge? judge);
 	protected abstract ENoteJudge JudgePadInput(int iPlayer, CChip? chip, EPad pad, long msHitTjaTime, ENoteJudge rawJudge, bool skipHit = false);
 
 	public static EPad[] GetAutoInput(NotesManager.ENoteType noteType, EGameType gameType, int nHand, bool isBigInput = false) {
@@ -1101,62 +1106,80 @@ internal abstract class CStagePlayScreenCommon : CStage {
 		return [];
 	}
 
-	private bool CanAutoplayHit(CChip chip, long msTjaTime, int iPlayer, EGameType gt) {
+	private ENoteJudge GetJudgeIfAutoplayHit(CChip chip, long msTjaTime, int iPlayer, EGameType gt) {
 		if (this.isDeniedPlaying[iPlayer] || this.IsStageFailed_Fast())
-			return false;
+			return ENoteJudge.Miss;
 		if (this.eGetChipJudgeAtTime(msTjaTime, chip, iPlayer) is ENoteJudge.Miss) // less costly check
-			return false;
+			return ENoteJudge.Miss;
 		var pads = GetAutoInput(chip, gt, this.nHand[iPlayer], isBigInput: OpenTaiko.ConfigIni.bJudgeBigNotes);
 		if (pads.Length == 0)
-			return false;
+			return ENoteJudge.Miss;
 		var (chipToJudge, judge) = this.GetChipToJudge(msTjaTime, iPlayer, pads[0]);
-		return (chipToJudge == chip && judge is not ENoteJudge.Miss);
+		return (chipToJudge != chip) ? ENoteJudge.Miss : judge;
 	}
 
-	private void AutoplayDoHit(CChip chip, long msTjaTime, int iPlayer, EGameType gt) {
+	private void AutoplayDoHit(CChip chip, long msTjaTime, int iPlayer, EGameType gt, ENoteJudge? judge = null) {
 		if (!NotesManager.IsMine(chip) || this.CanAutoplayHitMine(iPlayer, true)) {
 			this.AutoplaySwitchHand(iPlayer);
 			foreach (var pad in GetAutoInput(chip, gt, this.nHand[iPlayer], isBigInput: OpenTaiko.ConfigIni.bJudgeBigNotes))
-				this.ProcessPadInput(iPlayer, pad, msTjaTime);
+				this.ProcessPadInput(iPlayer, pad, msTjaTime, chip, judge);
 		}
 		// prevent further hit attempt (unless overridden)
 		chip.msAutoLastHit = double.PositiveInfinity;
 	}
 
 	private bool AutoplayTryHit(CChip chip, long msTjaTime, int iPlayer, EGameType gt) {
-		if (!this.CanAutoplayHit(chip, msTjaTime, iPlayer, gt))
+		ENoteJudge judge = this.GetJudgeIfAutoplayHit(chip, msTjaTime, iPlayer, gt);
+		if (judge is ENoteJudge.Miss)
 			return false;
-		this.AutoplayDoHit(chip, msTjaTime, iPlayer, gt);
+		this.AutoplayDoHit(chip, msTjaTime, iPlayer, gt, judge);
 		return true;
 	}
 
-	protected void AutoplayHit(CChip chip, long msTjaTime, int iPlayer, EGameType gt) {
-		if (!chip.bVisible || chip.IsMissed || chip.bHit || this.bPAUSE || chip.msAutoLastHit > msTjaTime) {
+	protected void AutoplayHitCritical(CChip chip, int iPlayer, EGameType gt) {
+		if (!chip.bVisible || chip.IsMissed || chip.bHit || this.bPAUSE || chip.msAutoLastHit > chip.nSoundTimems) {
 			return;
 		}
 		bool bAutoPlay = OpenTaiko.ConfigIni.bAutoPlay[iPlayer] || (iPlayer == 1 && OpenTaiko.ConfigIni.bAIBattleMode);
 		if (!bAutoPlay)
 			return;
+		this.AutoplayTryHit(chip, chip.nSoundTimems, iPlayer, gt);
+	}
 
-		bool canHitNow = this.CanAutoplayHit(chip, msTjaTime, iPlayer, gt);
-		if (chip.nSoundTimems > msTjaTime) {
-			if (chip.eNoteState == ENoteState.None && canHitNow)
-				chip.msAutoLastHit = msTjaTime;
-			return;
-		}
-		if (chip.eNoteState == ENoteState.None && chip.msAutoLastHit < chip.nSoundTimems) {
-			if (this.AutoplayTryHit(chip, chip.nSoundTimems, iPlayer, gt)) // critical hit
-				return;
-			bool canHitEarly = this.CanAutoplayHit(chip, (long)chip.msAutoLastHit, iPlayer, gt);
-			if (canHitEarly && (!canHitNow || Math.Abs(chip.msAutoLastHit - chip.nSoundTimems) < Math.Abs(msTjaTime - chip.nSoundTimems))) {
-				this.AutoplayDoHit(chip, (long)chip.msAutoLastHit, iPlayer, gt); // early hit
-				return;
+	protected void AutoplayHitNonCriticalCanHit(long msTjaTime, int iPlayer) {
+	retry:
+		foreach (var pad in new[] { EPad.LRed, EPad.RRed, EPad.LBlue, EPad.RBlue, EPad.Clap }) {
+			var (chipToJudge, judge) = this.GetChipToJudge(msTjaTime, iPlayer, pad);
+			if (chipToJudge != null && !NotesManager.IsGenericRoll(chipToJudge) && judge is not ENoteJudge.Miss) {
+				if (this.AutoplayHitNonCriticalCanHit(chipToJudge, msTjaTime, iPlayer, NotesManager.GetChipGameType(chipToJudge, iPlayer)))
+					goto retry;
 			}
-			// mark as attempted
-			chip.msAutoLastHit = msTjaTime;
 		}
-		if (canHitNow) // late hit
+	}
+
+	// returns whether the note is actually hit
+	protected bool AutoplayHitNonCriticalCanHit(CChip chip, long msTjaTime, int iPlayer, EGameType gt) {
+		if (chip.msAutoLastHit > msTjaTime) {
+			return false;
+		}
+		bool bAutoPlay = OpenTaiko.ConfigIni.bAutoPlay[iPlayer] || (iPlayer == 1 && OpenTaiko.ConfigIni.bAIBattleMode);
+		if (!bAutoPlay)
+			return false;
+
+		if (chip.nSoundTimems > msTjaTime) {
+			if (chip.eNoteState == ENoteState.None)
+				chip.msAutoLastHit = msTjaTime;
+			return false;
+		}
+		if (chip.eNoteState == ENoteState.None) {
+			if (Math.Abs(chip.msAutoLastHit - chip.nSoundTimems) < Math.Abs(msTjaTime - chip.nSoundTimems)) {
+				this.AutoplayDoHit(chip, (long)chip.msAutoLastHit, iPlayer, gt); // early hit
+				return true;
+			}
+		}
+		// waiting multi-inputs or late hit
 			this.AutoplayDoHit(chip, msTjaTime, iPlayer, gt);
+		return true;
 	}
 
 	protected void Autoroll(CChip chip, long msTjaTime, int iPlayer, EGameType gt) {
@@ -2528,6 +2551,10 @@ internal abstract class CStagePlayScreenCommon : CStage {
 				}
 			}
 
+			// accurate auto hit
+			if (NotesManager.IsHittableNote(pChip) && !NotesManager.IsGenericRoll(pChip))
+				this.AutoplayHitCritical(pChip, nPlayer, NotesManager.GetChipGameType(pChip, nPlayer));
+
 			switch (pChip.nChannelNo) {
 				#region [ 01: BGM ]
 				case 0x01:  // BGM
@@ -3315,10 +3342,13 @@ internal abstract class CStagePlayScreenCommon : CStage {
 
 			tja.UpdateScrolledChipPosition(pChip, play_bpm_points[(int)pChip.nBranch], nCurrentTimems, th16NowBeats[(int)pChip.nBranch], scrollRate);
 
-			if (!this.bPAUSE && !this.isRewinding) {
+			if (!this.bPAUSE && !this.isRewinding)
 				this.AutoJudge(nPlayer, nCurrentTimems, pChip, msMaxPlayedTjaTime: this.msMaxPlayedTjaTime(nPlayer));
-			}
 		}
+
+		// attempt inaccurate hit
+		if (!this.bPAUSE && !this.isRewinding)
+			this.AutoplayHitNonCriticalCanHit(nCurrentTimems, nPlayer);
 		#endregion
 
 		#region [draw phase (bar line), backward for correct stack order]
@@ -3382,8 +3412,7 @@ internal abstract class CStagePlayScreenCommon : CStage {
 				}
 			} else if (NotesManager.IsHittableNote(pChip) && pChip.eNoteState != ENoteState.Wait) {
 				//こっちのほうが適格と考えたためフラグを変更.2020.04.20 Akasoko26
-				if (doAutoInput && !NotesManager.IsMine(pChip))
-					this.AutoplayHit(pChip, msTjaHitTime, nPlayer, NotesManager.GetChipGameType(pChip, nPlayer));
+				// auto hit handled separately
 				if (pChip.nSoundTimems <= msTjaHitTime) {
 					var msJudgeTjaTime = (long)Math.Max(pChip.nSoundTimems, Math.Min(msTjaHitTime, msMaxPlayedTjaTime));
 					if (!this.IsNoteIfMet(pChip, nPlayer)) {

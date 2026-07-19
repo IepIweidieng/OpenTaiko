@@ -1035,14 +1035,17 @@ internal abstract class CStagePlayScreenCommon : CStage {
 			return ENoteJudge.Miss;
 		} else {
 			//Debug.WriteLine("nAbsTime=" + (nTime - pChip.n発声時刻ms) + ", nDeltaTime=" + (nTime - pChip.n発声時刻ms));
+			if (msDelta < 0) // too large and overflowed
+				return ENoteJudge.Miss;
+			if (msDelta == 0) // fast judge for autoplay
+				return ENoteJudge.Perfect;
+
 			var nt = NotesManager.GetNoteType(pChip);
 			if (NotesManager.IsRoll(nt)) {
 				return (msTjaTime >= pChip.nSoundTimems && msTjaTime < pChip.end.nSoundTimems) ? ENoteJudge.Perfect : ENoteJudge.Miss;
 			} else if (NotesManager.IsGenericBalloon(nt)) {
 				return (msTjaTime >= pChip.nSoundTimems - 17 && msTjaTime < pChip.end.nSoundTimems) ? ENoteJudge.Perfect : ENoteJudge.Miss;
 			}
-			if (msDelta <= 0) // fast judge for autoplay
-				return ENoteJudge.Perfect;
 
 			CConfigIni.CTimingZones tz = this.timingZones[player];
 

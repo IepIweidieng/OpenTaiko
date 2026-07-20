@@ -376,13 +376,14 @@ local function handleDecideSongSelect(Sort)
             G.unlocks.onDecideLocked(G.highlightedPlayer, ssn)
             return nil
         end
-        G.sounds.SongDecide:Play()
+        -- play decide sfx by caller
         return ssn
     elseif ssn.IsRandom == true then
         local rdNd = G.songList:GetRandomNodeInFolder(ssn, true, function(node)
             return G.unlocks == nil or not G.unlocks.isVaultLocked(node)
         end)
-        if rdNd ~= nil then G.sounds.SongDecide:Play(); return rdNd end
+        -- play decide sfx by caller
+        if rdNd ~= nil then return rdNd end
     end
     return nil
 end
@@ -540,10 +541,12 @@ function M.handleSongSelectInput(Sort, Diff)
             -- Online lobby: pick the SONG only — NO difficulty prompt. Set it as the chosen song globally
             -- (difficulty is chosen per-player back in the lobby) and signal the parent to return.
             stopHold()
+            G.sounds.SongDecide:Play()
             pcall(function() G.selectedSongNode:Mount(0, 0, 0, 0, 0) end)
             G.lastSignal = "play"
             return "play"
         end
+        G.sounds.Decide:Play()
         Diff.loadDiffBars(G.selectedSongNode)
         require("replaylist").prefetchForSong(G.selectedSongNode)   -- async; lists land while the panel opens
         stopHold()

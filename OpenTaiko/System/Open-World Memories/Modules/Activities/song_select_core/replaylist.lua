@@ -382,7 +382,7 @@ function M.handleUpdate(ts)
             G.replayConfirm = nil
             if REPLAY:Watch(c.filepath, c.chartPath) then
                 G.selectedSongNode:Mount(c.diff, 0, 0, 0, 0)
-                G.sounds.Decide:Play()
+                G.sounds.SongDecide:Play()
                 G.lastSignal = "play"
                 return "play"
             end

@@ -408,6 +408,7 @@ function M.handleUpdate(ts)
 
     local allDiffsSelected = true
     local canceled         = false
+    local decided          = false
 
     for i = 1, CONFIG.PlayerCount do
         if G.activeConfig.mountAISlotToP2 and i == 2 then
@@ -433,7 +434,7 @@ function M.handleUpdate(ts)
                     elseif G.diffIndex[i] == 2 then
                         G.act_inner["customize_dialog"]:Activate(i - 1); return nil
                     else
-                        G.sounds.Decide:Play(); G.diffSelected[i] = true
+                        decided = true; G.diffSelected[i] = true
                     end
                 elseif (inpset.cancel ~= nil and INPUT:Pressed(inpset.cancel))
                         or (i == 1 and INPUT:KeyboardPressed("Escape")) then
@@ -469,10 +470,13 @@ function M.handleUpdate(ts)
             (G.diffIndex[5] >= 3) and G.diffBars[G.diffIndex[5] - 2].difficulty or 0
         )
         if success then
+            G.sounds.SongDecide:Play()
             G.lastSignal = "play"; return "play"
         else
             G.diffSelected = {false, false, false, false, false}
         end
+    elseif decided then
+        G.sounds.Decide:Play()
     end
 
     -- AI level slider (AI battle only)

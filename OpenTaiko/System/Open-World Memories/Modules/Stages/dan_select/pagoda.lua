@@ -630,6 +630,7 @@ function M.update(dt)
 
     if INPUT:KeyboardPressed("F3") then
         CONFIG:SetAutoStatus(0, not CONFIG:GetAutoStatus(0))
+        SHARED:GetSharedSound("Move"):Play()
     end
 
     if _btn_timer > 0 then return nil end
@@ -641,21 +642,36 @@ function M.update(dt)
 
     -- ── MISSING SONGS ──────────────────────────────────────────────────────────
     if _pagoda_state == "missing_songs" then
-        if ok_p or back_p then return "back" end
+        if ok_p or back_p then
+            SHARED:GetSharedSound("Cancel"):Play()
+            return "back"
+        end
         return nil
     end
 
     -- ── MAIN MENU ──────────────────────────────────────────────────────────────
     if _pagoda_state == "main_menu" then
-        if up_p   then _menu_sel = math.max(1, _menu_sel - 1) end
-        if down_p then _menu_sel = math.min(3, _menu_sel + 1) end
-        if back_p then return "back" end
+        if up_p   then
+            _menu_sel = math.max(1, _menu_sel - 1)
+            SHARED:GetSharedSound("Move"):Play()
+        end
+        if down_p then
+            _menu_sel = math.min(3, _menu_sel + 1)
+            SHARED:GetSharedSound("Move"):Play()
+        end
+        if back_p then
+            SHARED:GetSharedSound("Cancel"):Play()
+            return "back"
+        end
         if ok_p then
             if _menu_sel == 1 then
                 _pagoda_state = "start_choice" ; _menu_sel = 1
+                SHARED:GetSharedSound("Decide"):Play()
             elseif _menu_sel == 2 then
                 _practice_sel = 1 ; _pagoda_state = "practice_select"
+                SHARED:GetSharedSound("Decide"):Play()
             elseif _menu_sel == 3 then
+                SHARED:GetSharedSound("Cancel"):Play()
                 return "back"
             end
         end
@@ -666,16 +682,28 @@ function M.update(dt)
     if _pagoda_state == "start_choice" then
         local opts = _start_options()
         local n    = #opts + 1  -- +1 for Cancel
-        if up_p   then _menu_sel = math.max(1, _menu_sel - 1) end
-        if down_p then _menu_sel = math.min(n, _menu_sel + 1) end
-        if back_p then _pagoda_state = "main_menu" ; _menu_sel = 1 ; return nil end
+        if up_p   then
+            _menu_sel = math.max(1, _menu_sel - 1)
+            SHARED:GetSharedSound("Move"):Play()
+        end
+        if down_p then
+            _menu_sel = math.min(n, _menu_sel + 1)
+            SHARED:GetSharedSound("Move"):Play()
+        end
+        if back_p then
+            _pagoda_state = "main_menu"; _menu_sel = 1
+            SHARED:GetSharedSound("Cancel"):Play()
+            return nil
+        end
         if ok_p then
             if _menu_sel <= #opts then
                 _challenge_level = opts[_menu_sel]
                 _build_preview(_challenge_level)
                 _pagoda_state = "level_preview"
+                SHARED:GetSharedSound("Decide"):Play()
             else
                 _pagoda_state = "main_menu" ; _menu_sel = 1
+                SHARED:GetSharedSound("Cancel"):Play()
             end
         end
         return nil
@@ -691,15 +719,18 @@ function M.update(dt)
         if is_past then
             if INPUT:KeyboardPressed("LeftArrow")  or INPUT:Pressed("LeftChange")  then
                 _preview_speed = math.max(spd_min, _preview_speed - 1)
+                SHARED:GetSharedSound("Move"):Play()
             end
             if INPUT:KeyboardPressed("RightArrow") or INPUT:Pressed("RightChange") then
                 _preview_speed = math.min(spd_max, _preview_speed + 1)
+                SHARED:GetSharedSound("Move"):Play()
             end
         end
 
         if back_p then
             _clear_preview()
             _pagoda_state = "main_menu" ; _menu_sel = 1
+            SHARED:GetSharedSound("Cancel"):Play()
             return nil
         end
         if ok_p then
@@ -707,8 +738,10 @@ function M.update(dt)
             if ok then
                 _in_challenge = true
                 if _callbacks ~= nil then _callbacks.stopBGM() end
+                SHARED:GetSharedSound("SongDecide"):Play()
                 return "play"
             else
+                SHARED:GetSharedSound("Error"):Play()
                 _set_status("Failed to load songs!", 3.0)
             end
         end
@@ -719,16 +752,20 @@ function M.update(dt)
     if _pagoda_state == "level_clear" then
         if up_p or INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("LeftArrow") then
             _menu_sel = math.max(1, _menu_sel - 1)
+            SHARED:GetSharedSound("Move"):Play()
         end
         if down_p or INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow") then
             _menu_sel = math.min(2, _menu_sel + 1)
+            SHARED:GetSharedSound("Move"):Play()
         end
         if ok_p or back_p then
             if _menu_sel == 1 and not back_p then
                 _build_preview(_challenge_level)
                 _pagoda_state = "level_preview"
+                SHARED:GetSharedSound("Decide"):Play()
             else
                 _pagoda_state = "main_menu" ; _menu_sel = 1
+                SHARED:GetSharedSound("Cancel"):Play()
                 if _callbacks ~= nil then _callbacks.startBGM() end
             end
         end
@@ -739,9 +776,11 @@ function M.update(dt)
     if _pagoda_state == "game_over" then
         if up_p or INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("LeftArrow") then
             _menu_sel = math.max(1, _menu_sel - 1)
+            SHARED:GetSharedSound("Move"):Play()
         end
         if down_p or INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow") then
             _menu_sel = math.min(2, _menu_sel + 1)
+            SHARED:GetSharedSound("Move"):Play()
         end
         if ok_p or back_p then
             if _menu_sel == 1 and not back_p then
@@ -749,8 +788,10 @@ function M.update(dt)
                 _challenge_level = cp
                 _build_preview(cp)
                 _pagoda_state = "level_preview"
+                SHARED:GetSharedSound("Decide"):Play()
             else
                 _pagoda_state = "main_menu" ; _menu_sel = 1
+                SHARED:GetSharedSound("Cancel"):Play()
                 if _callbacks ~= nil then _callbacks.startBGM() end
             end
         end
@@ -760,10 +801,23 @@ function M.update(dt)
     -- ── PRACTICE SELECT ────────────────────────────────────────────────────────
     if _pagoda_state == "practice_select" then
         local highest = math.max(_highest_level(), 6)
-        if up_p   then _practice_sel = math.max(1,       _practice_sel - 1) end
-        if down_p then _practice_sel = math.min(highest, _practice_sel + 1) end
-        if back_p then _pagoda_state = "main_menu" ; _menu_sel = 1 ; return nil end
-        if ok_p   then _practice_level = _practice_sel ; _pagoda_state = "practice_preview" ; _menu_sel = 1 end
+        if up_p   then
+            _practice_sel = math.max(1,       _practice_sel - 1)
+            SHARED:GetSharedSound("Move"):Play()
+        end
+        if down_p then
+            _practice_sel = math.min(highest, _practice_sel + 1)
+            SHARED:GetSharedSound("Move"):Play()
+        end
+        if back_p then
+            _pagoda_state = "main_menu" ; _menu_sel = 1
+            SHARED:GetSharedSound("Cancel"):Play()
+            return nil
+        end
+        if ok_p   then
+            _practice_level = _practice_sel ; _pagoda_state = "practice_preview" ; _menu_sel = 1
+            SHARED:GetSharedSound("Decide"):Play()
+        end
         return nil
     end
 
@@ -771,23 +825,31 @@ function M.update(dt)
     if _pagoda_state == "practice_preview" then
         if up_p or INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("LeftArrow") then
             _menu_sel = math.max(1, _menu_sel - 1)
+            SHARED:GetSharedSound("Move"):Play()
         end
         if down_p or INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow") then
             _menu_sel = math.min(2, _menu_sel + 1)
+            SHARED:GetSharedSound("Move"):Play()
         end
-        if back_p then _pagoda_state = "practice_select" ; return nil end
+        if back_p then
+            SHARED:GetSharedSound("Cancel"):Play()
+            _pagoda_state = "practice_select" ; return nil
+        end
         if ok_p then
             if _menu_sel == 1 then
                 local ok = _build_dan(_practice_level)
                 if ok then
                     _in_practice = true
                     if _callbacks ~= nil then _callbacks.stopBGM() end
+                    SHARED:GetSharedSound("SongDecide"):Play()
                     return "play"
                 else
+                    SHARED:GetSharedSound("Error"):Play()
                     _set_status("Failed to load songs!", 3.0)
                 end
             else
                 _pagoda_state = "practice_select"
+                SHARED:GetSharedSound("Cancel"):Play()
             end
         end
         return nil
@@ -797,6 +859,7 @@ function M.update(dt)
     if _pagoda_state == "practice_result" then
         if ok_p or back_p then
             _pagoda_state = "practice_select"
+            SHARED:GetSharedSound("Cancel"):Play()
             if _callbacks ~= nil then _callbacks.startBGM() end
         end
         return nil

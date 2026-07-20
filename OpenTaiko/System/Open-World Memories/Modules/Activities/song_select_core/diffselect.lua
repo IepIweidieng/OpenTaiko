@@ -473,6 +473,7 @@ function M.handleUpdate(ts)
             G.sounds.SongDecide:Play()
             G.lastSignal = "play"; return "play"
         else
+            G.sounds.Error:Play()
             G.diffSelected = {false, false, false, false, false}
         end
     elseif decided then

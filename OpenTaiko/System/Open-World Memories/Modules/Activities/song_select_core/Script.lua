@@ -329,6 +329,7 @@ function activate(allowPlayerCount, lockedPlayerCount, mountAISlotToP2, songOnly
     G.sounds.Cancel    = SHARED:GetSharedSound("Cancel")
     G.sounds.Decide    = SHARED:GetSharedSound("Decide")
     G.sounds.SongDecide = SHARED:GetSharedSound("SongDecide")
+    G.sounds.Error     = SHARED:GetSharedSound("Error")
 
     Diff.resetToSongSelect()
     Unlocks.invalidateCondCache()

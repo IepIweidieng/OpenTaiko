@@ -94,6 +94,7 @@ local function refresh()
     end
 end
 
+-- returns success, song_decide
 local function handleDecide()
     if songlist == nil then return false end
     local node = songlist:GetSelectedSongNode()
@@ -102,14 +103,14 @@ local function handleDecide()
     if node.IsFolder then
         local success = songlist:OpenFolder()
         refresh()
+        return success
     elseif node.IsReturn then
         local success = songlist:CloseFolder()
         refresh()
+        return success
     elseif node.IsSong then
         local success = node:Mount(5)
-        if success then
-            return true
-        end
+        return success, true
     end
 
     return false
@@ -232,10 +233,16 @@ function update()
             move(-1)
             SHARED:GetSharedSound("Move"):Play()
         elseif INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return") then
-            if handleDecide() then
+            local success, song_decide = handleDecide()
+            if song_decide and success then
+                SHARED:GetSharedSound("SongDecide"):Play()
                 return Exit("play", nil)
             end
-            SHARED:GetSharedSound("Decide"):Play()
+            if success then
+                SHARED:GetSharedSound("Decide"):Play()
+            else
+                SHARED:GetSharedSound("Error"):Play()
+            end
         elseif INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
             if closeFolder() then
                 SHARED:GetSharedSound("Decide"):Play()

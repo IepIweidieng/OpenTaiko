@@ -178,6 +178,7 @@ end
 
 -- Returns "back" if we should return to the 3-way menu, nil otherwise
 local function _handle_cancel()
+    SHARED:GetSharedSound("Cancel"):Play()
     if _song_list == nil then return "back" end
     local ssn = _song_list:GetSelectedSongNode()
     if ssn ~= nil and not ssn.IsRoot then
@@ -451,6 +452,7 @@ function M.update(dt)
 
     if INPUT:KeyboardPressed("F3") then
         CONFIG:SetAutoStatus(0, not CONFIG:GetAutoStatus(0))
+        SHARED:GetSharedSound("Move"):Play()
     end
 
     -- ── SONG SELECT SETUP ─────────────────────────────────────────────────────
@@ -494,8 +496,10 @@ function M.update(dt)
             if ssn ~= nil then
                 if ssn.IsSong then
                     _state = "confirm" ; confirm_sel = 0
+                    SHARED:GetSharedSound("Decide"):Play()
                 elseif ssn.IsFolder then
                     _song_list:OpenFolder() ; _refresh_page() ; _start_setup_anim(false)
+                    SHARED:GetSharedSound("Decide"):Play()
                 elseif ssn.IsReturn then
                     local r = _handle_cancel()
                     if r == "back" then return "back" end
@@ -514,29 +518,37 @@ function M.update(dt)
     if _state == "confirm" then
         if INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow") then
             confirm_sel = (confirm_sel + 1) % 4
+            SHARED:GetSharedSound("Move"):Play()
         elseif INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("LeftArrow") then
             confirm_sel = (confirm_sel + 3) % 4
+            SHARED:GetSharedSound("Move"):Play()
         end
 
         if INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return") then
             if confirm_sel == 0 then
+                SHARED:GetSharedSound("Cancel"):Play()
                 _state = "song_select"
             elseif confirm_sel == 1 then
                 if act["customize_dialog"] ~= nil then act["customize_dialog"]:Activate(0) end
+                SHARED:GetSharedSound("Select"):Play()
             elseif confirm_sel == 2 then
                 if act["mod_select_dialog"] ~= nil then act["mod_select_dialog"]:Activate(0) end
+                SHARED:GetSharedSound("Select"):Play()
             elseif confirm_sel == 3 then
                 local ssn = _song_list ~= nil and _song_list:GetSelectedSongNode() or nil
                 if ssn ~= nil and ssn.IsSong then
                     ssn:Mount(DIFF_DAN)
                     _in_play = true
                     if _callbacks ~= nil then _callbacks.stopBGM() end
+                    SHARED:GetSharedSound("SongDecide"):Play()
                     return "play"
                 end
+                SHARED:GetSharedSound("Error"):Play()
             end
         end
 
         if INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+            SHARED:GetSharedSound("Cancel"):Play()
             _state = "song_select"
         end
         return nil

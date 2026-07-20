@@ -232,6 +232,7 @@ function update()
     -- F3 auto toggle (always available)
     if INPUT:KeyboardPressed("F3") then
         CONFIG:SetAutoStatus(0, not CONFIG:GetAutoStatus(0))
+        SHARED:GetSharedSound("Move"):Play()
     end
 
     -- ── Sub-module states ──────────────────────────────────────────────────────
@@ -302,6 +303,7 @@ function update()
         end
 
         if INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+            SHARED:GetSharedSound("Cancel"):Play()
             return Exit("title", nil, "dan_doors")   -- close the doors over dan_select, open onto the title
         end
         return
@@ -312,17 +314,21 @@ function update()
         if bg_zoom_counter ~= nil then bg_zoom_counter:Tick() end
 
         if INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+            SHARED:GetSharedSound("Cancel"):Play()
             return Exit("title", nil, "dan_doors")   -- close the doors over dan_select, open onto the title
         end
 
         if INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("UpArrow") then
             menu_sel = math.max(1, menu_sel - 1)
+            SHARED:GetSharedSound("Move"):Play()
         elseif INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("DownArrow") then
             menu_sel = math.min(3, menu_sel + 1)
+            SHARED:GetSharedSound("Move"):Play()
         end
 
         if INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return") then
             if menu_sel == 1 then
+                SHARED:GetSharedSound("Decide"):Play()
                 menu_exit_target  = "standard_dan"
                 state             = "menu_3way_exit"
                 menu_exit_y       = 0.0
@@ -330,14 +336,17 @@ function update()
                 menu_exit_counter:SetEasing("IN", "QUAD")
                 menu_exit_counter:Start()
             elseif menu_sel == 2 then
+                SHARED:GetSharedSound("Decide"):Play()
                 menu_exit_target  = "pagoda"
                 state             = "menu_3way_exit"
                 menu_exit_y       = 0.0
                 menu_exit_counter = COUNTER:CreateCounterDuration(0.0, 1080.0, 0.4)
                 menu_exit_counter:SetEasing("IN", "QUAD")
                 menu_exit_counter:Start()
+            else
+                -- Option 3 (Forest of Strata): not yet implemented
+                SHARED:GetSharedSound("Error"):Play()
             end
-            -- Option 3 (Forest of Strata): not yet implemented
         end
         return
     end

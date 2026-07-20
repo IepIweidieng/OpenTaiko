@@ -293,6 +293,7 @@ function onStart()
 	SHARED:SetSharedSFX("Cancel", "Sounds/Cancel.ogg")
 	SHARED:SetSharedSFX("Skip", "Sounds/Skip.ogg")
 	SHARED:SetSharedSFX("SongDecide", "Sounds/SongDecide.ogg")
+	SHARED:SetSharedSFX("Error", "../../../Sounds/Error.ogg")
 
 	database = DATABASE:OpenGlobalDatabase("GameStatus")
 	if database:Read("new_user") == nil or CONFIG.ConfigIsNew then
@@ -315,6 +316,7 @@ function onDestroy()
 	SHARED:ClearSharedSound("Cancel")
 	SHARED:ClearSharedSound("Skip")
 	SHARED:ClearSharedSound("SongDecide")
+	SHARED:ClearSharedSound("Error")
 
 	if database ~= nil then database:Dispose() end
 end

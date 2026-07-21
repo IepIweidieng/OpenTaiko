@@ -2338,7 +2338,7 @@ internal abstract class CStagePlayScreenCommon : CStage {
 				long expected = now - wc.nPlaybackStartTime[i] + wc.nInitialSeekMs;
 				long timelineLength = (long)(snd.TotalPlayTime / Math.Max(0.01, snd.Frequency * snd.PlaySpeed));
 				if (expected < 1000 || expected > timelineLength - 1000) continue;   // start settle-in / near end
-				long actual = snd.tGetPositionOnTimelineMs();
+				long actual = snd.tGetPositionWallTimeMs();
 				if (actual < 0) continue;
 				long drift = actual - expected;
 				if (Math.Abs(drift) > Math.Abs(worst)) worst = drift;
@@ -4287,7 +4287,7 @@ internal abstract class CStagePlayScreenCommon : CStage {
 							int j = wc.nCurrentPlaybackSoundNumber;
 							if (wc.rSound[j] != null) {
 								wc.rSound[j].Pause();
-								wc.rSound[j].tSetPositonToBegin(nStartTime - nSoundTimems);
+								wc.rSound[j].tSetPosition(nStartTime - nSoundTimems);
 								pausedCSound.Add(wc.rSound[j]);
 							}
 							#endregion
@@ -4301,7 +4301,7 @@ internal abstract class CStagePlayScreenCommon : CStage {
 
 		if (!(OpenTaiko.ConfigIni.bNoAudioIfNot1xSpeed && OpenTaiko.ConfigIni.nSongSpeed != 20))
 			foreach (CSound cs in pausedCSound) {
-				cs.tPlaySound();
+				cs.tPlay();
 			}
 		#endregion
 		pausedCSound.Clear();

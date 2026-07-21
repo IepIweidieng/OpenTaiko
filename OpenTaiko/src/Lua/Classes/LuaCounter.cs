@@ -1,7 +1,20 @@
 using NLua;
 
 namespace OpenTaiko {
-	public class LuaCounter {
+	public interface ILuaSeekable {
+		public void Start();
+		public void Stop();
+		public void Resume();
+		public void Pause();
+		public void Reset();
+	}
+
+	public interface ILuaLoopable {
+		void SetLoop(bool loop);
+		bool GetLoop();
+	}
+
+	public class LuaCounter : ILuaSeekable, ILuaLoopable {
 		public double Begin;
 		public double End;
 		public double Interval;
@@ -87,6 +100,9 @@ namespace OpenTaiko {
 			Loop = false;
 		}
 
+		public bool GetLoop() => Loop;
+		public bool GetBounce() => Bounce;
+
 		public void Start() {
 			Reset();
 			Ticking = true;
@@ -99,6 +115,8 @@ namespace OpenTaiko {
 		public void Stop() {
 			Ticking = false;
 		}
+
+		public void Pause() => Stop();
 
 		public void Reset() {
 			Value = Begin;

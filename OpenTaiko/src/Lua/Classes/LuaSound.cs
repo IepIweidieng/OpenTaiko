@@ -2,16 +2,25 @@
 using FDK;
 
 namespace OpenTaiko {
-	public class LuaSound : IDisposable {
+	public interface ILuaSeekableInMs : ILuaSeekable {
+		bool IsFinished();
+		double DurationMs { get; }
+		double GetTimestampMs();
+		double GetSpeed();
+		void SetTimestampMs(double ms);
+		void SetSpeed(double speed);
+	}
+
+	public class LuaSound : IDisposable, ILuaSeekableInMs, ILuaLoopable {
 		internal CSkin.CSystemSound? _sound;
 		internal HashSet<LuaSound>? _disposeList = null;
 
 		// State set on the stub before the deferred sound is built (async-load path) — applied on LoadDeferred,
 		// so e.g. SetLoop(true)/Play() called in onStart aren't lost while the BASS stream is still being created.
 		private bool? _pendingLoop;
-		private int? _pendingVolume;
+		private double? _pendingVolume;
 		private int? _pendingPan;
-		private int? _pendingTimestamp;
+		private long? _pendingTimestamp;
 		private double? _pendingSpeed;
 		private bool _pendingPlay;
 
@@ -38,7 +47,7 @@ namespace OpenTaiko {
 			// the same Play-then-SetTimestamp discipline live callers follow (song-select preview, the
 			// myroom jukebox starting mid-track for late-joining guests).
 			if (_pendingLoop.HasValue) s.bLoop = _pendingLoop.Value;
-			if (_pendingVolume.HasValue) s.SetVolume(_pendingVolume.Value);
+			if (_pendingVolume.HasValue) s.SetVolume((int)_pendingVolume.Value);
 			if (_pendingPan.HasValue) s.SetPanning(_pendingPan.Value);
 			if (_pendingSpeed.HasValue) s.SetSpeed(_pendingSpeed.Value);
 			if (_pendingPlay) s.tPlay();
@@ -48,7 +57,12 @@ namespace OpenTaiko {
 
 		#region Sound
 		public void Play() { if (_sound != null) _sound.tPlay(); else _pendingPlay = true; }
+		public void Start() => Play();
+		public void Resume() { if (_sound != null) _sound.tResume(); else _pendingPlay = true; }
+		public void Pause() { if (_sound != null) _sound.tPause(); else _pendingPlay = false; }
 		public void Stop() { if (_sound != null) _sound.tStop(); else _pendingPlay = false; }
+		public void Reset() => SetTimestamp(0);
+
 		#endregion
 		#region Gets
 		public bool Loaded => _sound != null;
@@ -56,9 +70,16 @@ namespace OpenTaiko {
 		public bool GetLoop() => _sound?.bLoop ?? false;
 		public int GetPan() => _sound?.nPosition_CurrentlyPlayingSound ?? 0;
 		/// <summary>Returns the total duration of the sound in milliseconds, or 0 if not loaded.</summary>
-		public int GetDurationMs() => (int)(_sound?.nLength_CurrentSound ?? 0);
+		public double DurationMs => _sound?.nLength ?? 0;
+		public double GetDurationMs() => DurationMs; // older API
 		/// <summary>Returns the current playback position in milliseconds.</summary>
-		public int GetTimestampMs() => (int)(_sound?.msTimeStamp_nowSound ?? 0);
+		public double GetTimestampMs() => _sound?.msTimeStamp_nowSound ?? 0;
+
+		public double GetVolumePercent() => _sound?.VolumePercent ?? 100;
+
+		public double GetSpeed() => _sound?.Speed ?? 1;
+
+		public bool IsFinished() => _sound?.bIsFinishedPlaying ?? false;
 		#endregion
 		#region Sets
 		public void SetLoop(bool loop) {
@@ -68,13 +89,15 @@ namespace OpenTaiko {
 			if (_sound != null) _sound.SetPanning(panning); else _pendingPan = panning;
 		}
 
-		public void SetTimestamp(int ms) {
-			if (_sound != null) _sound.SetTimestamp(ms); else _pendingTimestamp = ms;
+		public void SetTimestampMs(double ms) {
+			if (_sound != null) _sound.SetTimestamp((long)ms); else _pendingTimestamp = (long)ms;
 		}
+		public void SetTimestamp(double ms) => SetTimestampMs(ms); // older API
 
-		public void SetVolume(int vol) {
-			if (_sound != null) _sound.SetVolume(vol); else _pendingVolume = vol;
+		public void SetVolumePercent(double vol) {
+			if (_sound != null) _sound.SetVolume((int)vol); else _pendingVolume = vol;
 		}
+		public void SetVolume(int vol) => SetVolumePercent(vol); // older API
 
 		/// <summary>Sets the playback speed multiplier (1.0 = normal).</summary>
 		public void SetSpeed(double speed) {

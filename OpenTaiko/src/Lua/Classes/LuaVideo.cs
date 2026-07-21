@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using FDK;
 
 namespace OpenTaiko {
-	public class LuaVideo : IDisposable {
+	public class LuaVideo : IDisposable, ILuaSeekableInMs {
 		private CVideoDecoder? _video = null;
 		internal CTexture? _tmpTex = null;
 		internal HashSet<LuaVideo>? _disposeList = null;
@@ -31,7 +31,7 @@ namespace OpenTaiko {
 			if (_disposedValue) { System.Diagnostics.Trace.TraceInformation("[vopen] attached after dispose; dropping"); video.Dispose(); return; }   // disposed before the open finished → don't leak
 			System.Diagnostics.Trace.TraceInformation("[vopen] attached"); // DEBUG probe
 			_video = video;
-			if (_pendingSeek.HasValue) video.Seek((long)(_pendingSeek.Value * 1000.0));
+			if (_pendingSeek.HasValue) video.Seek((long)_pendingSeek.Value);
 			if (_pendingSpeed.HasValue) video.dbPlaySpeed = _pendingSpeed.Value;
 			if (_pendingStart) video.Start();
 			_pendingStart = false; _pendingSeek = null; _pendingSpeed = null;
@@ -46,7 +46,7 @@ namespace OpenTaiko {
 		}
 
 		public void Pause() {
-			_video?.Pause();
+			if (_video != null) _video.Pause(); else _pendingStart = false;
 		}
 
 		public void Stop() {
@@ -61,7 +61,8 @@ namespace OpenTaiko {
 		#region Gets
 		public int Width => _video?.FrameSize.Width ?? -1;
 		public int Height => _video?.FrameSize.Height ?? -1;
-		public double Duration => _video?.Duration ?? 1;
+		public double DurationMs => Duration * 1000.0;
+		public double Duration => _video?.Duration ?? 1; // older API
 		public LuaTexture Texture {
 			get {
 				if (_video != null) {
@@ -76,13 +77,11 @@ namespace OpenTaiko {
 			}
 		}
 
-		public double GetPlayPosition() {
-			return (_video?.msPlayPosition ?? 0) / 1000.0;
-		}
+		public double GetTimestampMs() => _video?.msPlayPosition ?? 0;
+		public double GetPlayPosition() => GetTimestampMs() / 1000.0; // older API
 
-		public double GetPlaySpeed() {
-			return _video?.dbPlaySpeed ?? 1;
-		}
+		public double GetSpeed() => _video?.dbPlaySpeed ?? 1;
+		public double GetPlaySpeed() => GetSpeed(); // older API
 
 		// End-of-video signal that does not depend on the play-position timer.
 		public bool IsFinished() {
@@ -90,13 +89,15 @@ namespace OpenTaiko {
 		}
 		#endregion
 		#region Sets
-		public void SetPlayPosition(double position) {
-			if (_video != null) _video.Seek((long)(position * 1000.0)); else _pendingSeek = position;
+		public void SetTimestampMs(double ms) {
+			if (_video != null) _video.Seek((long)ms); else _pendingSeek = ms;
 		}
+		public void SetPlayPosition(double position) => SetTimestampMs(position * 1000.0); // older API
 
-		public void SetPlaySpeed(double playSpeed) {
-			if (_video != null) _video.dbPlaySpeed = playSpeed; else _pendingSpeed = playSpeed;
+		public void SetSpeed(double speed) {
+			if (_video != null) _video.dbPlaySpeed = speed; else _pendingSpeed = speed;
 		}
+		public void SetPlaySpeed(double playSpeed) => SetSpeed(playSpeed); // older API
 
 		#endregion
 

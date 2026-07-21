@@ -302,7 +302,7 @@ class CStageCutScene : CStage {
 
 	public void StopSound() {
 		if (this.sound != null) {
-			this.sound.Stop();
+			this.sound.StopReset();
 			OpenTaiko.SoundManager.tDisposeSound(this.sound);
 			this.sound = null;
 		}

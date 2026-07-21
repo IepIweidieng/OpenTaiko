@@ -72,6 +72,7 @@ public abstract class CLuaScript : IDisposable {
 
 	protected Lua LuaScript { get; private set; }
 
+	private NamedLuaFunction lfBindload = new("__otk_bindload");
 	private NamedLuaFunction lfLoadAssets = new("loadAssets");
 	private NamedLuaFunction lfReloadLanguage = new("reloadLanguage");
 
@@ -154,48 +155,57 @@ public abstract class CLuaScript : IDisposable {
 	// The skinner LOADING API + the wrapper that runs onStart/activate so queued blocks load + yield around it.
 	// LOADING:Add(label?, weight?, fn) records a block; LOADING:Tick(sub) yields a frame inside a heavy loop.
 	// All yielding is Lua-side (coroutine.yield) — never from a C# frame (that would cross a C-call boundary).
-	private const string LoadingApiLua = @"
-LOADING = { _queue = {}, _base = 0, _w = 0, _total = 1 }
-function LOADING:Add(a, b, c)
-  local label, weight, fn
-  if type(a) == 'function' then fn = a
-  elseif type(b) == 'function' then label = a; fn = b
-  else label = a; weight = b; fn = c end
-  self._queue[#self._queue + 1] = { label = label, weight = weight or 1, fn = fn }
+	private const string LoadingApiLua = """
+do
+	-- defined in bounded local variables
+	local _private = { _queue = {}, _base = 0, _w = 0, _total = 1 }
+	local _loading = {}
+	function _loading:Add(a, b, c)
+	  local label, weight, fn
+	  if type(a) == 'function' then fn = a
+	  elseif type(b) == 'function' then label = a; fn = b
+	  else label = a; weight = b; fn = c end
+	  _private._queue[#_private._queue + 1] = { label = label, weight = weight or 1, fn = fn }
+	end
+	function _loading:Tick(sub)
+	  sub = tonumber(sub) or 0
+	  if sub < 0 then sub = 0 elseif sub > 1 then sub = 1 end
+	  coroutine.yield((_private._base + sub * _private._w) / _private._total)
+	end
+
+	function _private.__begin()
+	  _private._queue = {}; _private._base = 0; _private._w = 0; _private._total = 1
+	end
+	function _private.__run()
+	  local q = _private._queue
+	  local total = 0
+	  for i = 1, #q do total = total + (q[i].weight or 1) end
+	  if total <= 0 then total = 1 end
+	  _private._total = total
+	  local done = 0
+	  for i = 1, #q do
+		local item = q[i]
+		_private._base = done; _private._w = item.weight or 1
+		if type(item.fn) == 'function' then item.fn() end
+		done = done + (item.weight or 1)
+		coroutine.yield(done / total)
+	  end
+	  _private._queue = {}
+	end
+
+	function __otk_bindload(func)
+	  return function()
+		_private.__begin()
+		local f = func
+		if type(f) == 'function' then f() end
+		_private.__run()
+	  end
+	end
+
+	-- export the API table
+	_G.LOADING = _loading
 end
-function LOADING:Tick(sub)
-  sub = tonumber(sub) or 0
-  if sub < 0 then sub = 0 elseif sub > 1 then sub = 1 end
-  coroutine.yield((self._base + sub * self._w) / self._total)
-end
-function LOADING.__begin()
-  LOADING._queue = {}; LOADING._base = 0; LOADING._w = 0; LOADING._total = 1
-end
-function LOADING.__run()
-  local q = LOADING._queue
-  local total = 0
-  for i = 1, #q do total = total + (q[i].weight or 1) end
-  if total <= 0 then total = 1 end
-  LOADING._total = total
-  local done = 0
-  for i = 1, #q do
-    local item = q[i]
-    LOADING._base = done; LOADING._w = item.weight or 1
-    if type(item.fn) == 'function' then item.fn() end
-    done = done + (item.weight or 1)
-    coroutine.yield(done / total)
-  end
-  LOADING._queue = {}
-end
-function __otk_bindload(name)
-  return function()
-    LOADING.__begin()
-    local f = _G[name]
-    if type(f) == 'function' then f() end
-    LOADING.__run()
-  end
-end
-";
+""";
 
 	// Static so the native callback isn't GC-collected. The count-event yield defers to hook-return (no longjmp
 	// through this managed frame); the IsYieldable guard avoids "yield across a C-call boundary"; exceptions are
@@ -213,39 +223,39 @@ end
 
 	// The coroutine thread we own + drive for the current hook (onStart). One at a time per script instance.
 	private KeraLua.Lua? _hookCo;
-	private int _hookThreadRef = -1;
+	private LuaThread? _hookThread = null;
 
 	/// <summary>Begin running a hook function (e.g. onStart) as a coroutine on a dedicated, engine-owned Lua
 	/// thread. Call tStepYieldable() repeatedly until it returns false.</summary>
 	protected void tBeginYieldable(NamedLuaFunction luaFunction) {
 		tEndYieldable();
 		var L = LuaScript?.State;
-		if (L == null || luaFunction.Func == null) return;   // undefined hook ⇒ no-op (treated as done)
+		if (LuaScript == null || L == null || luaFunction.Func == null)
+			return;   // undefined hook ⇒ no-op (treated as done)
 		try {
-			var co = L.NewThread();                              // new thread pushed on L's stack + wrapper
-			_hookThreadRef = L.Ref(KeraLua.LuaRegistry.Index);   // anchor it (pops it off L) so Lua won't GC it
-			// Wrap the target in the LOADING runner: __otk_bindload(name) → fn that runs LOADING.__begin();
-			// _G[name](); LOADING.__run(), so any LOADING:Add blocks load + yield around it.
-			if (L.GetGlobal("__otk_bindload") == KeraLua.LuaType.Function) {
-				L.PushString(luaFunction.Name);
-				if (L.PCall(1, 1, 0) != KeraLua.LuaStatus.OK) {
-					Trace.TraceError($"{strScriptShort} loader wrap failed: {L.ToString(-1)}");
-					L.Pop(1);
+			var L2 = LuaScript.NewThread(out var thread2);       // new thread pushed on L's stack + wrapper
+			_hookThread = thread2;                               // anchor it (pops it off L) so Lua won't GC it
+			// Wrap the target in the LOADING runner: __otk_bindload(func) → fn that runs _private.__begin();
+			// func(); _private.__run(), so any LOADING:Add blocks load + yield around it.
+			if (lfBindload.Func != null) {
+				LuaFunction? func;
+				try {
+					func = lfBindload.Func.Call(luaFunction.Func)[0] as LuaFunction;
+				} catch (Exception ex) {
+					Trace.TraceError($"{strScriptShort} loader wrap failed: {ex.ToString()}");
 					tEndYieldable();
 					return;
 				}
-				L.XMove(co, 1);                                  // wrapped closure onto co's stack
-			} else {
-				L.Pop(1);                                        // helper missing — run the function directly
-				if (L.GetGlobal(luaFunction.Name) != KeraLua.LuaType.Function) {
-					L.Pop(1);
+				LuaScript.XMove(thread2, func);                  // wrapped closure onto co's stack
+			} else {                                             // helper missing — run the function directly
+				if (luaFunction.Func == null) {
 					tEndYieldable();
 					return;
 				}
-				L.XMove(co, 1);
+				LuaScript.XMove(thread2, luaFunction.Func);
 			}
-			co.SetHook(_yieldHook, KeraLua.LuaHookMask.Count, Math.Max(1, YieldCheckInstructions));
-			_hookCo = co;
+			L2.SetHook(_yieldHook, KeraLua.LuaHookMask.Count, Math.Max(1, YieldCheckInstructions));
+			_hookCo = L2;
 		} catch (Exception exception) {
 			Crash(exception, $"tBeginYieldable({luaFunction.Name})");
 			tEndYieldable();
@@ -284,10 +294,8 @@ end
 	}
 
 	private void tEndYieldable() {
-		if (_hookThreadRef != -1) {
-			try { LuaScript?.State?.Unref(KeraLua.LuaRegistry.Index, _hookThreadRef); } catch { /* ignore */ }
-			_hookThreadRef = -1;
-		}
+		try { _hookThread?.Reset(); } catch { /* ignore */ }
+		_hookThread = null;
 		_hookCo = null;
 	}
 
@@ -387,7 +395,6 @@ end
 		IsAvailable = true;
 
 		LuaScript = new Lua();
-		LuaScript.LoadCLRPackage();
 		LuaScript.State.Encoding = Encoding.UTF8;
 		LuaSecurity.Secure(LuaScript, dir);
 
@@ -482,6 +489,8 @@ end
 			LuaScript["IsSongsEnumDone"] = (Func<bool>)(() => OpenTaiko.EnumSongs?.IsSongListEnumCompletelyDone ?? false);
 
 			LuaScript.DoString(LoadingApiLua, "LOADING");   // skinner loading-bar API (LOADING:Add/Tick), see tBeginYieldable
+			lfBindload.Load(LuaScript);
+			LuaScript["__otk_bindload"] = null; // remove from global
 
 			if (File.Exists(this.strScriptPath)) {
 				LuaScript.DoString(File.ReadAllText(this.strScriptPath), this.strScriptShort);

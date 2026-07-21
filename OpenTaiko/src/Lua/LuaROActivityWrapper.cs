@@ -2,6 +2,7 @@ namespace OpenTaiko {
 	/// <summary>
 	/// Lua-facing accessor for looking up ROActivities by name.
 	/// Exposed as the <c>ROACTIVITY</c> global in all Lua scripts.
+	/// These methods are also accessible in the <c>ACTIVITY</c> global in writable Lua scripts.
 	/// </summary>
 	public class LuaROActivityFunc {
 		public LuaROActivityWrapper? GetROActivity(string name) =>
@@ -9,7 +10,7 @@ namespace OpenTaiko {
 	}
 
 	/// <summary>
-	/// Wraps a <see cref="CLuaROActivityScript"/> loaded from <c>Modules/ROActivities/{name}/Script.lua</c>.
+	/// The public constructor wraps a <see cref="CLuaROActivityScript"/> loaded from <c>Modules/ROActivities/{name}/Script.lua</c>.
 	/// Scripts in ROActivities receive read-only views of CONFIG and GetSaveFile — any attempt
 	/// to write through those globals produces an error rather than modifying game state.
 	/// </summary>
@@ -42,7 +43,7 @@ namespace OpenTaiko {
 
 		#endregion
 
-		private CLuaROActivityScript lcActScript;
+		protected CLuaActivityScriptBase lcActScript;
 
 		public void DisposeActivity() {
 			lcActScript?.Dispose();
@@ -52,6 +53,8 @@ namespace OpenTaiko {
 			lcActScript = new CLuaROActivityScript(CSkin.Path($"Modules/ROActivities/{name}"), name);
 			_allROActivities[name] = this;
 		}
+
+		protected LuaROActivityWrapper() { } // initialized by derived class
 
 		#region [Standard lifecycle events]
 
@@ -67,21 +70,26 @@ namespace OpenTaiko {
 		#region [Generic Lua function call]
 
 		/// <summary>
-		/// Calls a named Lua function defined in this ROActivity's script.
+		/// Calls a named Lua function defined in this (RO)Activity's script.
 		/// </summary>
 		public object[]? Call(string functionName, params object[] args) => lcActScript?.CallFunction(functionName, args);
 
 		#endregion
 
-		#region [Extra skin events]
+		#region [Events not present on CStage/CActivity]
 
+		// Incremental onStart (see LuaStageWrapper) — drives a yielding onStart across frames with the bar.
 		internal void BeginOnStart() => lcActScript?.BeginOnStart();
 		internal bool StepOnStart(out float progress) {
 			if (lcActScript == null) { progress = 0f; return false; }
 			return lcActScript.StepOnStart(out progress);
 		}
-		private void AfterSongsEnum() => lcActScript?.AfterSongsEnum();
-		private void OnDestroy() => lcActScript?.OnDestroy();
+
+		// Executes everytime songs enum is done, including soft/hard reload and at start
+		protected void AfterSongsEnum() => lcActScript?.AfterSongsEnum();
+
+		// Executes before skin change, in order to deallocate any ressources carried by the skin's Lua modules
+		protected void OnDestroy() => lcActScript?.OnDestroy();
 
 		#endregion
 

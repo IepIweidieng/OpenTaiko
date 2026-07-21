@@ -17,7 +17,7 @@ public record struct NamedLuaFunction(string Name, LuaFunction? Func = null) : I
 	}
 }
 
-class CLuaScript : IDisposable {
+public abstract class CLuaScript : IDisposable {
 
 	#region [For the new Lua module methods]
 
@@ -32,15 +32,20 @@ class CLuaScript : IDisposable {
 	//public Dictionary<string, LuaSharedResource<LuaTexture>> SharedTextures = new();
 	//public Dictionary<string, LuaSharedResource<LuaSound>> SharedSounds = new();
 
-	public LuaSaveFile? GetLuaSaveFile(int player) {
+	private static bool CheckPlayerOrError(int player) {
 		if (player < 0 || player > OpenTaiko.MAX_PLAYERS) {
 			LogNotification.PopError($"Invalid player index in lua module, expected [0,{OpenTaiko.MAX_PLAYERS}]");
-			return null;
+			return false;
 		}
-		return new LuaSaveFile(OpenTaiko.SaveFileInstances[player], player);
+		return true;
 	}
 
-	public LuaSongList RequestSongList(LuaSongListSettings lsls) {
+	internal LuaROSaveFile? GetLuaROSaveFile(int player)
+		=> !CheckPlayerOrError(player) ? null : new LuaROSaveFile(OpenTaiko.SaveFileInstances[player], player);
+	internal LuaSaveFile? GetLuaSaveFile(int player)
+		=> !CheckPlayerOrError(player) ? null : new LuaSaveFile(OpenTaiko.SaveFileInstances[player], player);
+
+	internal LuaSongList RequestSongList(LuaSongListSettings lsls) {
 		return new LuaSongList(lsls);
 	}
 
@@ -372,7 +377,7 @@ end
 
 	public bool IsAvailable { get; private set; }
 
-	public CLuaScript(string dir, string? texturesDir = null, string? soundsDir = null, bool loadAssets = true, string fallbackScript = "") {
+	public CLuaScript(string dir, string? texturesDir = null, string? soundsDir = null, bool loadAssets = true, string fallbackScript = "", bool writable = true) {
 		strDir = dir;
 		strScriptPath = Path.Join(strDir, "Script.lua");
 		strScriptShort = Path.Join(Path.GetFileName(Path.GetDirectoryName(this.strScriptPath)), Path.GetFileName(this.strScriptPath));
@@ -438,11 +443,17 @@ end
 			LuaScript["COUNTER"] = new LuaCounterFunc();
 			LuaScript["NAMEPLATE"] = new LuaNameplateFunc();
 			LuaScript["NAMEPLATESLIST"] = new LuaNameplatesDatabase();
-			LuaScript["CONFIG"] = new LuaConfigIniFunc();
+			if (writable)
+				LuaScript["CONFIG"] = new LuaConfigIniFunc();
+			else
+				LuaScript["CONFIG"] = new LuaROConfigIniFunc();
 			LuaScript["SONGMOUNT"] = new LuaSongMountFunc();   // read the song the host just confirmed (for online sync)
 			LuaScript["THEME"] = new LuaThemeFunc();
 			LuaScript["SHARED"] = new LuaSharedResourceFunc(OpenTaiko.GlobalStores.SharedTextures, OpenTaiko.GlobalStores.SharedSounds, OpenTaiko.GlobalStores.SharedStrings, ltf, lsf, dir);
-			LuaScript["DATABASE"] = new LuaDataStorageFunc(dir);
+			if (writable)
+				LuaScript["DATABASE"] = new LuaDataStorageFunc(dir);
+			else
+				LuaScript["DATABASE"] = new LuaRODataStorageFunc(dir);
 			LuaScript["HEIGHTMAP"] = new LuaHeightmapFunc(dir);
 			LuaScript["CHARACTER"] = new LuaCharacterFunc();
 			LuaScript["PUCHICHARALIST"] = OpenTaiko.Tx?.LuaPuchicharaDb;
@@ -451,7 +462,8 @@ end
 			LuaScript["PLAYSTATE"] = new LuaPlayStateFunc();
 			LuaScript["SQL"] = new LuaSQLFunc(dir);
 			LuaScript["LANG"] = new LuaLangFunc();
-			LuaScript["ACTIVITY"] = new LuaActivityFunc();
+			// ROActivity scripts may not use ACTIVITY (use ROACTIVITY instead) or write to DATABASE
+			LuaScript["ACTIVITY"] = writable ? new LuaActivityFunc() : null;
 			LuaScript["ROACTIVITY"] = new LuaROActivityFunc();
 			LuaScript["MODICONS"] = new LuaModIconsFunc();
 			LuaScript["HITSOUNDSLIST"] = new LuaHitsoundsDatabase();
@@ -459,7 +471,10 @@ end
 			LuaScript["DANBUILDER"] = new LuaDanBuildFunc();
 			LuaScript["GRADIENT"] = new LuaGradientMapFunc(GradientList);
 
-			LuaScript["GetSaveFile"] = GetLuaSaveFile;
+			if (writable)
+				LuaScript["GetSaveFile"] = (Func<int, LuaSaveFile?>)GetLuaSaveFile;
+			else
+				LuaScript["GetSaveFile"] = (Func<int, LuaROSaveFile?>)GetLuaROSaveFile;
 			LuaScript["RequestSongList"] = RequestSongList;
 			LuaScript["GenerateSongListSettings"] = LuaSongListSettings.Generate;
 			LuaScript["IsSongsEnumerating"] = (Func<bool>)(() => OpenTaiko.EnumSongs?.IsEnumerating ?? false);

@@ -490,8 +490,6 @@ internal class CSkin : IDisposable {
 		LuaStageWrapper.ResetLuaStagesDictionary();
 		LuaActivityWrapper.PropagateOnDestroy();
 		LuaActivityWrapper.ResetLuaActivityDictionary();
-		LuaROActivityWrapper.PropagateOnDestroy();
-		LuaROActivityWrapper.ResetROActivityDictionary();
 		// Transitions LAST — onDestroy runs after Stages/Activities (mirror of the load order).
 		LuaTransitionWrapper.PropagateOnDestroy();
 		LuaTransitionWrapper.ResetTransitionsDictionary();

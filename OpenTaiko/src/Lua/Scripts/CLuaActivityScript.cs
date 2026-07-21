@@ -1,7 +1,8 @@
 ﻿using NLua;
 
 namespace OpenTaiko {
-	internal class CLuaActivityScript : CLuaScript {
+	public abstract class CLuaActivityScriptBase : CLuaScript {
+
 		// Very similar to a LuaStage, but with more limited features, meant to be used in a lua stage
 
 		// Used to identify the lua activity, 
@@ -67,7 +68,8 @@ namespace OpenTaiko {
 		#endregion
 
 		// Handle resources independently in Lua stages, ultimately nameplate script and modal script no longer needing the old hardcoded lua script methods would be a good longer term goal
-		public CLuaActivityScript(string dir, string name, string? texturesDir = null, string? soundsDir = null, bool loadAssets = false) : base(dir, texturesDir, soundsDir, loadAssets) {
+		public CLuaActivityScriptBase(string dir, string name, string? texturesDir = null, string? soundsDir = null, bool loadAssets = false, bool writable = true)
+			: base(dir, texturesDir, soundsDir, loadAssets, writable: writable) {
 			_activityName = name;
 
 			try {
@@ -87,5 +89,23 @@ namespace OpenTaiko {
 
 		}
 
+		/// <summary>
+		/// Calls a named Lua function in this script with the given arguments.
+		/// Returns null if the function does not exist or the script has crashed.
+		/// </summary>
+		public object[]? CallFunction(string name, params object[] args) {
+			NamedLuaFunction func = new(name);
+			func.Load(LuaScript);
+			return RunLuaCode(func, args);
+		}
+	}
+
+	/// <summary>
+	/// Like <see cref="CLuaROActivityScript"/> but loads the writable <c>CONFIG</c> and <c>GetSaveFile</c> globals.
+	/// The loading happens in the base constructor so that all called Lua functions see the writable versions,
+	/// so it cannot be accessed as a CLuaROActivityScript.
+	/// </summary>
+	public class CLuaActivityScript : CLuaActivityScriptBase {
+		public CLuaActivityScript(string dir, string name) : base(dir, name, writable: true) { }
 	}
 }

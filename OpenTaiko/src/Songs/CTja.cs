@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Globalization;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using FDK;
 using FDK.ExtensionMethods;
@@ -176,8 +177,10 @@ internal class CTja : CActivity {
 	[Serializable]
 	public class DanSongs {
 		[NonSerialized]
+		[JsonIgnore]  // Runtime GL texture, rebuilt on demand. Not part of the mobile JSON cache.
 		public CTexture TitleTex;
 		[NonSerialized]
+		[JsonIgnore]
 		public CTexture SubTitleTex;
 		public string Title;
 		public string SubTitle;
@@ -192,6 +195,7 @@ internal class CTja : CActivity {
 		public Dan_C[] Dan_C = new Dan_C[CExamInfo.cMaxExam];
 
 		[NonSerialized]
+		[JsonIgnore]  // Runtime audio handle, reloaded on demand. Not part of the mobile JSON cache.
 		public CWAV Wave;
 	}
 

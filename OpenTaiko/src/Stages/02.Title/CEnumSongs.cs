@@ -6,7 +6,7 @@ using System.Text;
 
 namespace OpenTaiko;
 
-internal class CEnumSongs                           // #27060 2011.2.7 yyagi 曲リストを取得するクラス
+internal partial class CEnumSongs                   // #27060 2011.2.7 yyagi 曲リストを取得するクラス
 {                                                   // ファイルキャッシュ(songslist.db)からの取得と、ディスクからの取得を、この一つのクラスに集約。
 
 	public CSongManager SongManager                     // 曲の探索結果はこのSongs管理に読み込まれる
@@ -446,13 +446,25 @@ internal class CEnumSongs                           // #27060 2011.2.7 yyagi 曲
 
 
 #pragma warning disable SYSLIB0011
+	// BinaryFormatter is unsupported under mobile AOT, so mobile uses a System.Text.Json cache
+	// (source-generated, so it survives Release trimming) instead.
+	private static bool UseJsonCache => OperatingSystem.IsIOS() || OperatingSystem.IsAndroid();
+
 	/// <summary>
 	/// 曲リストのserialize
 	/// </summary>
 	private void SerializeSongList() {
-		if (OperatingSystem.IsIOS() || OperatingSystem.IsAndroid()) return; // mobile: skip the songlist.db cache (BinaryFormatter is unsupported there)
-		using Stream songlistdb = File.Create($"{OpenTaiko.strEXEFolder}songlist.db");
-		WriteSongListCache(songlistdb, SongManager.listSongsDB);
+		// The cache is an optimization. A serialization failure must never crash enumeration.
+		try {
+			using Stream songlistdb = File.Create($"{OpenTaiko.strEXEFolder}songlist.db");
+			if (UseJsonCache)
+				WriteSongListCacheJson(songlistdb, SongManager.listSongsDB);
+			else
+				WriteSongListCache(songlistdb, SongManager.listSongsDB);
+		} catch (Exception e) {
+			Trace.TraceWarning($"songlist.db write failed, continuing without cache: {e.Message}");
+			try { File.Delete($"{OpenTaiko.strEXEFolder}songlist.db"); } catch { }
+		}
 	}
 
 	/// <summary>
@@ -461,11 +473,12 @@ internal class CEnumSongs                           // #27060 2011.2.7 yyagi 曲
 	/// so the caller rebuilds the list from disk. Users never have to delete songlist.db by hand.
 	/// </summary>
 	public void Deserialize() {
-		if (OperatingSystem.IsIOS() || OperatingSystem.IsAndroid()) return; // BinaryFormatter not supported on mobile
 		try {
 			if (File.Exists($"{OpenTaiko.strEXEFolder}songlist.db")) {
 				using Stream songlistdb = File.OpenRead($"{OpenTaiko.strEXEFolder}songlist.db");
-				this.SongManager.listSongsDB = ReadSongListCache(songlistdb) ?? new();
+				this.SongManager.listSongsDB = (UseJsonCache
+					? ReadSongListCacheJson(songlistdb)
+					: ReadSongListCache(songlistdb)) ?? new();
 			}
 		} catch (Exception exception) {
 			this.SongManager.listSongsDB = new();
@@ -477,9 +490,12 @@ internal class CEnumSongs                           // #27060 2011.2.7 yyagi 曲
 	// so ANY change to the CSongListNode/CScore/… layout — including a rename — changes it and makes old
 	// caches load as empty and rebuild automatically. This prevents BinaryFormatter from silently loading
 	// a stale cache with mismatched field names (which leaves the renamed fields null).
+	// Bump this when a serialization change is not visible in the type graph signature.
+	// Old caches then rebuild once.
+	private const string CacheFormatVersion = "3";
 	private static string _cacheSchemaSignature;
 	internal static string SongListCacheSchemaSignature
-		=> _cacheSchemaSignature ??= ComputeSchemaSignature(typeof(Dictionary<string, CSongListNode>));
+		=> _cacheSchemaSignature ??= CacheFormatVersion + "-" + ComputeSchemaSignature(typeof(Dictionary<string, CSongListNode>));
 
 	internal static void WriteSongListCache(Stream stream, Dictionary<string, CSongListNode> listSongsDB) {
 		BinaryFormatter songlistdb_ = new BinaryFormatter();
@@ -493,6 +509,35 @@ internal class CEnumSongs                           // #27060 2011.2.7 yyagi 曲
 		if (songlistdb_.Deserialize(stream) is not string signature || signature != SongListCacheSchemaSignature)
 			return null;
 		return (Dictionary<string, CSongListNode>)songlistdb_.Deserialize(stream);
+	}
+
+	// Mobile song cache serialized by System.Text.Json source generation. Runtime state is marked
+	// [JsonIgnore] and rebuilt on load. The schema signature guards layout changes.
+	private sealed class SongListCacheFile {
+		public string Signature { get; set; }
+		public Dictionary<string, CSongListNode> Songs { get; set; }
+	}
+
+	// Source generation only, with no runtime options, reflection, or converters. Nothing runs
+	// when the class loads, and the generated code stays safe under AOT and trimming.
+	[System.Text.Json.Serialization.JsonSourceGenerationOptions(IncludeFields = true)]
+	[System.Text.Json.Serialization.JsonSerializable(typeof(SongListCacheFile))]
+	private partial class SongCacheJsonContext : System.Text.Json.Serialization.JsonSerializerContext { }
+
+	internal static void WriteSongListCacheJson(Stream stream, Dictionary<string, CSongListNode> listSongsDB) {
+		var file = new SongListCacheFile { Signature = SongListCacheSchemaSignature, Songs = listSongsDB };
+		System.Text.Json.JsonSerializer.Serialize(stream, file, SongCacheJsonContext.Default.SongListCacheFile);
+	}
+
+	internal static Dictionary<string, CSongListNode> ReadSongListCacheJson(Stream stream) {
+		var file = System.Text.Json.JsonSerializer.Deserialize(stream, SongCacheJsonContext.Default.SongListCacheFile);
+		// A cache with a different schema (renamed, added, or removed field) is discarded so the caller rebuilds.
+		if (file == null || file.Signature != SongListCacheSchemaSignature)
+			return null;
+		// Nodes with no dan or tower songs serialize DanSongs as null. Restore the empty list default.
+		foreach (var node in file.Songs.Values)
+			node.DanSongs ??= new();
+		return file.Songs;
 	}
 
 	/// <summary>Fingerprint of the serialized object graph reachable from <paramref name="root"/>

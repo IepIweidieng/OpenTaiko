@@ -15,6 +15,11 @@ internal class CSongUniqueID {
 		}
 	}
 
+	// For the mobile JSON song cache: the serializer creates the object and sets the fields directly.
+	// Must be at least internal so the source-generated (same-assembly) code can call it.
+	[System.Text.Json.Serialization.JsonConstructor]
+	internal CSongUniqueID() { }
+
 	public void tSongUniqueID() {
 		if (!File.Exists(filePath))
 			tSaveFile();

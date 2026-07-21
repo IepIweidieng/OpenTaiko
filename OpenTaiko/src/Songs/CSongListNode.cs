@@ -1,5 +1,6 @@
 ﻿using System.Drawing;
 using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 
 namespace OpenTaiko;
 
@@ -16,16 +17,18 @@ internal class CSongListNode {
 		RANDOM,
 		UNKNOWN
 	}
+	[JsonIgnore]  // runtime counter, reassigned by the constructor on load
 	public int nID { get; private set; }
 	public CScore[] score = new CScore[(int)Difficulty.Total];
 
 	public string[] difficultyLabel = new string[(int)Difficulty.Total];
 
-	public Color ForeColor = Color.White;
-	public Color BackColor = Color.Black;
-	public Color BoxColor = Color.White;
+	// Colors are re-derived from the parent node on load, so they are not JSON-cached.
+	[JsonIgnore] public Color ForeColor = Color.White;
+	[JsonIgnore] public Color BackColor = Color.Black;
+	[JsonIgnore] public Color BoxColor = Color.White;
 
-	public Color BgColor = Color.White;
+	[JsonIgnore] public Color BgColor = Color.White;
 	public bool isChangedBgColor;
 	public bool isChangedBgType;
 	public bool isChangedBoxType;
@@ -37,12 +40,12 @@ internal class CSongListNode {
 	public bool IsChangedForeColor;
 	public bool IsChangedBackColor;
 	public bool isChangedBoxColor;
-	public List<CSongListNode> randomList;
-	public List<CSongListNode> childrenList;
+	[JsonIgnore] public List<CSongListNode> randomList;     // tree links: rebuilt by enumeration, not cached
+	[JsonIgnore] public List<CSongListNode> childrenList;
 
 	public int difficultiesCount; // 4~5 if AD
 
-	public CSongListNode rParentNode;
+	[JsonIgnore] public CSongListNode rParentNode;     // re-established from the enumeration context on load
 
 	// Internal
 	public int Openindex;
@@ -85,7 +88,7 @@ internal class CSongListNode {
 	public bool shortcutIsParsed;
 
 	public int nDanTick = 0;
-	public Color cDanTickColor = Color.White;
+	[JsonIgnore] public Color cDanTickColor = Color.White;
 
 	public CLocalizationData[] strBoxText = new CLocalizationData[3] { new CLocalizationData(), new CLocalizationData(), new CLocalizationData() };
 

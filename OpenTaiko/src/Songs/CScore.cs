@@ -1,5 +1,6 @@
 ﻿using System.Drawing;
 using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
 using FDK;
 
 namespace OpenTaiko;
@@ -84,6 +85,7 @@ internal class CScore {
 		public string nTowerType;
 
 		public int nDanTick;
+		[JsonIgnore]  // keeps System.Drawing.Color out of the source generation graph
 		public Color cDanTickColor;
 
 		public List<int[]> nExamResult;

@@ -307,11 +307,17 @@ internal class CEnumSongs                           // #27060 2011.2.7 yyagi 曲
 					// can show a real "loaded / total" progress bar as the scan below parses them.
 					this.SongManager.nSearchFileCount = 0;
 					int totalSongFiles = 0;
+					var resolvedRoots = new List<string>();
 					foreach (string str in strArray) {
 						string cp = Path.IsPathRooted(str) ? str : OpenTaiko.strEXEFolder + str;
+						resolvedRoots.Add(cp);
 						totalSongFiles += CountSongFilesRecursive(cp);
 					}
 					this.SongManager.nTotalSongFilesToSearch = totalSongFiles;
+
+					// Parse all .tja charts across CPU cores up front so the tree build below reuses
+					// them instead of hashing/parsing one file at a time.
+					this.SongManager.PreparseTjaCharts(resolvedRoots);
 
 					if (strArray.Length > 0) {
 						// 全パスについて…
@@ -342,6 +348,7 @@ internal class CEnumSongs                           // #27060 2011.2.7 yyagi 曲
 					Trace.TraceWarning("曲データの検索パス(TJAPath)の指定がありません。");
 				}
 			} finally {
+				this.SongManager.ClearPreparse();   // no longer required once the tree is built
 				Trace.TraceInformation("曲データの検索を完了しました。[{0}曲{1}スコア]", this.SongManager.nSearchSongNodeCount, this.SongManager.nSearchScoreCount);
 				Trace.Unindent();
 			}

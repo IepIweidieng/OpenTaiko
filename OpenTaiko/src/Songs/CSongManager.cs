@@ -1,6 +1,8 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 using OpenTaiko.CSongListNodeComparers;
 
 namespace OpenTaiko;
@@ -36,6 +38,8 @@ internal class CSongManager {
 		set;
 	}
 	public Dictionary<string, CSongListNode> listSongsDB;                   // songs.dbから構築されるlist
+	[NonSerialized]
+	private ConcurrentDictionary<string, (string hash, CTja? tja)>? _preparsed;   // parallel pre-parse results, keyed by TJA full path
 	public CSongListNode? SongRootDownload = null;
 	public List<CSongListNode> listSongRoot;         // 起動時にフォルダ検索して構築されるlist
 	public HashSet<CSongListNode> SongRootsDan = [];
@@ -107,6 +111,44 @@ internal class CSongManager {
 		this.tSongSearchListCreate(strBaseFolder, bChildBOXRecurse, this.listSongRoot, null, deferredTcm);
 		this.ProcessDeferredTcm(deferredTcm);
 	}
+
+	// Uppercase-hex SHA1 of a chart file, used as the cache key alongside its path.
+	private static string TjaHash(string filePath) {
+		using SHA1 sha = SHA1.Create();
+		using var fs = File.OpenRead(filePath);
+		return Convert.ToHexString(sha.ComputeHash(fs));
+	}
+
+	/// <summary>
+	/// Parse every .tja under the given roots in parallel (header-only) so the serial tree build
+	/// reuses the results instead of hashing and parsing one file at a time. Cached entires (under
+	/// listSongsDB) are skipped.
+	/// </summary>
+	public void PreparseTjaCharts(IEnumerable<string> roots) {
+		var paths = new List<string>();
+		foreach (string root in roots) {
+			try { CollectTjaPaths(root, paths); } catch (Exception e) { Trace.TraceWarning(e.Message); }
+		}
+		var dict = new ConcurrentDictionary<string, (string, CTja?)>();
+		Parallel.ForEach(paths, p => {
+			try {
+				string hash = TjaHash(p);
+				CTja? tja = listSongsDB.ContainsKey(p + hash) ? null : new CTja(p);
+				dict[p] = (hash, tja);
+			} catch { }
+		});
+		_preparsed = dict;
+	}
+
+	public void ClearPreparse() => _preparsed = null;
+
+	private static void CollectTjaPaths(string dir, List<string> into) {
+		foreach (string f in Directory.EnumerateFiles(dir))
+			if (f.EndsWith(".tja", StringComparison.OrdinalIgnoreCase)) into.Add(Path.GetFullPath(f));
+		foreach (string d in Directory.EnumerateDirectories(dir))
+			CollectTjaPaths(d, into);
+	}
+
 	private void tSongSearchListCreate(string strBaseFolder, bool bChildBOXRecurse, List<CSongListNode> listNodeList, CSongListNode nodeParent, List<(string filePath, List<CSongListNode> nodeList, CSongListNode? parent)>? deferredTcm = null) {
 		if (!strBaseFolder.EndsWith(Path.DirectorySeparatorChar))
 			strBaseFolder = strBaseFolder + Path.DirectorySeparatorChar;
@@ -140,15 +182,13 @@ internal class CSongManager {
 
 					string filePath = strBaseFolder + fileinfo.Name;
 
-					using SHA1 hashProvider = SHA1.Create();
-					var fs = File.OpenRead(filePath);
-					byte[] rawhash = hashProvider.ComputeHash(fs);
-					string hash = "";
-					for (int i = 0; i < rawhash.Length; i++) {
-						hash += string.Format("{0:X2}", rawhash[i]);
+					// Use the pre-parse result if possible.
+					string hash; CTja? preTja;
+					if (_preparsed != null && _preparsed.TryGetValue(fileinfo.FullName, out var pp)) {
+						hash = pp.hash; preTja = pp.tja;
+					} else {
+						hash = TjaHash(filePath); preTja = null;
 					}
-
-					fs.Dispose();
 
 					if (listSongsDB.TryGetValue(filePath + hash, out CSongListNode value)) {
 						this.nSearchScoreCount++;
@@ -190,7 +230,7 @@ internal class CSongManager {
 
 						this.nSearchSongNodeCount++;
 					} else {
-						CTja dtx = new CTja(filePath);
+						CTja dtx = preTja ?? new CTja(filePath);
 						CSongListNode cSongListNode = new CSongListNode();
 						cSongListNode.nodeType = CSongListNode.ENodeType.SCORE;
 

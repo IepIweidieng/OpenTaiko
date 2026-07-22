@@ -130,26 +130,6 @@ internal partial class CEnumSongs                   // #27060 2011.2.7 yyagi 曲
 		}
 	}
 
-	// OpenTaiko song-file extensions the scan (CSongManager.tSongSearchListCreate) turns into song nodes;
-	// this must match the extensions that increment nSearchFileCount so the progress total lines up.
-	private static readonly HashSet<string> SongFileExtensions = new(StringComparer.OrdinalIgnoreCase) {
-		".tja", ".tci", ".optktci", ".tcm", ".optktcm"
-	};
-
-	// Count song files under a folder, recursing manually so an inaccessible subfolder is skipped
-	// rather than aborting the whole count (Directory.EnumerateFiles(AllDirectories) throws on the first).
-	private static int CountSongFilesRecursive(string dir) {
-		int n = 0;
-		try {
-			foreach (var f in Directory.EnumerateFiles(dir)) {
-				if (SongFileExtensions.Contains(Path.GetExtension(f))) n++;
-			}
-			foreach (var d in Directory.EnumerateDirectories(dir))
-				n += CountSongFilesRecursive(d);
-		} catch { /* skip unreadable folders */ }
-		return n;
-	}
-
 	private void HardReloadSongList() {
 		this.LoadSongListStructure(true);
 	}
@@ -303,20 +283,13 @@ internal partial class CEnumSongs                   // #27060 2011.2.7 yyagi 曲
 					CSongDict.tClearSongNodes();
 					string[] strArray = OpenTaiko.ConfigIni.strSongsPath.Split(new char[] { ';' });
 
-					// Pre-count all song files (.tja/.dtx) across the search roots so the enumeration display
-					// can show a real "loaded / total" progress bar as the scan below parses them.
-					this.SongManager.nSearchFileCount = 0;
-					int totalSongFiles = 0;
 					var resolvedRoots = new List<string>();
-					foreach (string str in strArray) {
-						string cp = Path.IsPathRooted(str) ? str : OpenTaiko.strEXEFolder + str;
-						resolvedRoots.Add(cp);
-						totalSongFiles += CountSongFilesRecursive(cp);
-					}
-					this.SongManager.nTotalSongFilesToSearch = totalSongFiles;
+					foreach (string str in strArray)
+						resolvedRoots.Add(Path.IsPathRooted(str) ? str : OpenTaiko.strEXEFolder + str);
 
-					// Parse all .tja charts across CPU cores up front so the tree build below reuses
-					// them instead of hashing/parsing one file at a time.
+					// One folder walk sets the "loaded / total" progress total and parses every .tja
+					// across CPU cores up front, so the tree build below reuses the results and the
+					// progress bar advances through the parse instead of sitting at 0%.
 					this.SongManager.PreparseTjaCharts(resolvedRoots);
 
 					if (strArray.Length > 0) {

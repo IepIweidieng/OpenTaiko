@@ -28,10 +28,12 @@ internal class CSongManager {
 		set;
 	}
 	// Enumeration progress (drives the song_enum ROActivity bar): OpenTaiko song files (.tja, .tci/.optktci,
-	// .tcm/.optktcm) parsed so far, and the total pre-counted before the scan (see CEnumSongs.LoadSongListStructure).
+	// .tcm/.optktcm) processed so far, and the total counted by the pre-parse walk. Backed by a field so the
+	// parallel pre-parse can bump it with Interlocked.
+	private int _nSearchFileCount;
 	public int nSearchFileCount {
-		get;
-		set;
+		get => _nSearchFileCount;
+		set => _nSearchFileCount = value;
 	}
 	public int nTotalSongFilesToSearch {
 		get;
@@ -119,16 +121,26 @@ internal class CSongManager {
 		return Convert.ToHexString(sha.ComputeHash(fs));
 	}
 
+	// Song file extensions counted toward the progress total (must match the ones tSongSearchListCreate
+	// turns into nodes and increments nSearchFileCount for).
+	private static readonly HashSet<string> SongFileExtensions = new(StringComparer.OrdinalIgnoreCase) {
+		".tja", ".tci", ".optktci", ".tcm", ".optktcm"
+	};
+
 	/// <summary>
-	/// Parse every .tja under the given roots in parallel (header-only) so the serial tree build
-	/// reuses the results instead of hashing and parsing one file at a time. Cached entires (under
-	/// listSongsDB) are skipped.
+	/// One folder walk that sets the enumeration progress total and parses every .tja across CPU cores
+	/// (header-only) so the serial tree build below reuses the results instead of hashing/parsing one
+	/// file at a time. nSearchFileCount advances during the parse, so the progress bar moves through
+	/// this phase instead of sitting at 0%.
 	/// </summary>
 	public void PreparseTjaCharts(IEnumerable<string> roots) {
 		var paths = new List<string>();
+		int nonTja = 0;
 		foreach (string root in roots) {
-			try { CollectTjaPaths(root, paths); } catch (Exception e) { Trace.TraceWarning(e.Message); }
+			try { nonTja += CollectCharts(root, paths); } catch (Exception e) { Trace.TraceWarning(e.Message); }
 		}
+		this.nTotalSongFilesToSearch = 2 * paths.Count + nonTja;
+		this.nSearchFileCount = 0;
 		var dict = new ConcurrentDictionary<string, (string, CTja?)>();
 		Parallel.ForEach(paths, p => {
 			try {
@@ -136,17 +148,28 @@ internal class CSongManager {
 				CTja? tja = listSongsDB.ContainsKey(p + hash) ? null : new CTja(p);
 				dict[p] = (hash, tja);
 			} catch { }
+			Interlocked.Increment(ref _nSearchFileCount);
 		});
 		_preparsed = dict;
 	}
 
 	public void ClearPreparse() => _preparsed = null;
 
-	private static void CollectTjaPaths(string dir, List<string> into) {
-		foreach (string f in Directory.EnumerateFiles(dir))
-			if (f.EndsWith(".tja", StringComparison.OrdinalIgnoreCase)) into.Add(Path.GetFullPath(f));
-		foreach (string d in Directory.EnumerateDirectories(dir))
-			CollectTjaPaths(d, into);
+	// Walk a search root once: collect .tja paths for the parallel parse and return the count of the
+	// other song files (.tci/.tcm). Skips unreadable folders rather than aborting the whole walk.
+	private static int CollectCharts(string dir, List<string> tjaInto) {
+		int nonTja = 0;
+		try {
+			foreach (string f in Directory.EnumerateFiles(dir)) {
+				string ext = Path.GetExtension(f);
+				if (!SongFileExtensions.Contains(ext)) continue;
+				if (ext.Equals(".tja", StringComparison.OrdinalIgnoreCase)) tjaInto.Add(Path.GetFullPath(f));
+				else nonTja++;
+			}
+			foreach (string d in Directory.EnumerateDirectories(dir))
+				nonTja += CollectCharts(d, tjaInto);
+		} catch { /* skip unreadable folders */ }
+		return nonTja;
 	}
 
 	private void tSongSearchListCreate(string strBaseFolder, bool bChildBOXRecurse, List<CSongListNode> listNodeList, CSongListNode nodeParent, List<(string filePath, List<CSongListNode> nodeList, CSongListNode? parent)>? deferredTcm = null) {

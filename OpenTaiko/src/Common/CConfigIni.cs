@@ -4,26 +4,60 @@ using System.Runtime.InteropServices;
 using System.Text;
 using FDK;
 using FDK.ExtensionMethods;
+using STKEYASSIGN = OpenTaiko.CConfigIni.CKeyAssign.STKEYASSIGN;
 
 namespace OpenTaiko;
 
 internal static class StKeyAssignExtension {
-	private static IInputDevice? GetDevice(this CConfigIni.CKeyAssign.STKEYASSIGN pad)
-		=> OpenTaiko.InputManager.FindDevice(pad.InputDevice, pad.ID);
-	public static IInputDevice? GetDevice(this CConfigIni.CKeyAssign.STKEYASSIGN[] pads, Func<IInputDevice?, int, bool> predicate)
-		=> (OpenTaiko.InputManager == null) ? null
-			: pads.Select(pad => (pad, device: pad.GetDevice()))
-				.FirstOrDefault(pd => predicate(pd.device, pd.pad.Code)).device;
-	public static IInputDevice? GetDevice(this CConfigIni.CKeyAssign.STKEYASSIGN[] pads) => pads.GetDevice((device, keyCode) => true);
+	public static IEnumerable<(IInputDevice? device, int code)> GetAllInputs(this STKEYASSIGN[] pads)
+		=> (OpenTaiko.InputManager == null) ? []
+			: pads.Select(pad => (device: pad.GetDevice(), code: pad.Code));
+	public static IEnumerable<(IInputDevice? device, int code)> GetAllInputs(this STKEYASSIGN[] pads, Func<IInputDevice?, int, bool> predicate)
+		=> pads.GetAllInputs().Where(dc => predicate(dc.device, dc.code));
 
-	private static bool IsPressed(this CConfigIni.CKeyAssign.STKEYASSIGN pad)
-		=> pad.GetDevice()?.KeyPressed(pad.Code) ?? false;
-	public static bool IsPressed(this CConfigIni.CKeyAssign.STKEYASSIGN[] pads)
-		=> (OpenTaiko.InputManager != null)
-			&& pads.Any(pad => pad.IsPressed());
-	public static bool IsPressedExcludePlayer(this CConfigIni.CKeyAssign.STKEYASSIGN[] pads, int? iPlayer)
-		=> (OpenTaiko.InputManager != null)
-			&& pads.Any(pad => ((iPlayer == null) || !OpenTaiko.Pad.IsUsedByPlayer(ref pad, iPlayer.Value)) && pad.IsPressed());
+	private static IInputDevice? GetDevice(this STKEYASSIGN pad)
+		=> OpenTaiko.InputManager.FindDevice(pad.InputDevice, pad.ID);
+	public static IInputDevice? GetDevice(this STKEYASSIGN[] pads, Func<IInputDevice?, int, bool> predicate)
+		=> pads.GetAllInputs(predicate).FirstOrDefault().device;
+	public static IInputDevice? GetDevice(this STKEYASSIGN[] pads)
+		=> pads.GetAllInputs().FirstOrDefault().device;
+
+	private static bool IsInput(this STKEYASSIGN pad, Func<IInputDevice?, int, bool> predicate)
+		=> predicate(pad.GetDevice(), pad.Code);
+	public static bool IsInput(this STKEYASSIGN[] pads, Func<IInputDevice?, int, bool> predicate)
+		=> pads.GetAllInputs(predicate).Any();
+	public static bool IsInputExcludePlayer(this STKEYASSIGN[] pads, int? iPlayer, Func<IInputDevice?, int, bool> predicate)
+		=> pads.GetAllInputs((device, code)
+			=> !((iPlayer != null) && OpenTaiko.Pad.IsUsedByPlayer(device, code, iPlayer.Value))
+				&& predicate(device, code))
+			.Any();
+
+	private static readonly Func<IInputDevice?, int, bool> deviceKeyPressed = (device, code) => device?.KeyPressed(code) ?? false;
+	private static bool IsPressed(this STKEYASSIGN pad) => IsInput(pad, deviceKeyPressed);
+	public static bool IsPressed(this STKEYASSIGN[] pads) => IsInput(pads, deviceKeyPressed);
+	public static bool IsPressedExcludePlayer(this STKEYASSIGN[] pads, int? iPlayer) => IsInputExcludePlayer(pads, iPlayer, deviceKeyPressed);
+
+	private static readonly Func<IInputDevice?, int, bool> deviceKeyPressing = (device, code) => device?.KeyPressing(code) ?? false;
+	private static bool IsPressing(this STKEYASSIGN pad) => IsInput(pad, deviceKeyPressing);
+	public static bool IsPressing(this STKEYASSIGN[] pads) => IsInput(pads, deviceKeyPressing);
+	public static bool IsPressingExcludePlayer(this STKEYASSIGN[] pads, int? iPlayer) => IsInputExcludePlayer(pads, iPlayer, deviceKeyPressing);
+
+	private static readonly Func<IInputDevice?, int, bool> deviceKeyReleased = (device, code) => device?.KeyReleased(code) ?? false;
+	private static bool IsReleased(this STKEYASSIGN pad) => IsInput(pad, deviceKeyReleased);
+	public static bool IsReleased(this STKEYASSIGN[] pads) => IsInput(pads, deviceKeyReleased);
+	public static bool IsReleasedExcludePlayer(this STKEYASSIGN[] pads, int? iPlayer) => IsInputExcludePlayer(pads, iPlayer, deviceKeyReleased);
+
+	private static bool IsReleasing(this STKEYASSIGN pad) => IsInput(pad, (device, code) => device?.KeyReleasing(code) ?? false);
+	public static bool IsReleasing(this STKEYASSIGN[] pads) {
+		var available = pads.GetAllInputs((device, code) => device?.KeyAvailable(code) ?? false);
+		return available.Any() && available.All(dc => !dc.device!.KeyPressing(dc.code));
+	}
+	public static bool IsReleasingExcludePlayer(this STKEYASSIGN[] pads, int? iPlayer) {
+		var available = pads.GetAllInputs((device, code)
+			=> !((iPlayer != null) && OpenTaiko.Pad.IsUsedByPlayer(device, code, iPlayer.Value))
+				&& (device?.KeyAvailable(code) ?? false));
+		return available.Any() && available.All(dc => !dc.device!.KeyPressing(dc.code));
+	}
 }
 
 internal class CConfigIni : INotifyPropertyChanged {
@@ -2896,15 +2930,15 @@ internal class CConfigIni : INotifyPropertyChanged {
 		this.KeyAssign = new CKeyAssign();
 		for (int i = 0; i <= (int)EKeyConfigPart.System; i++) {
 			for (int j = 0; j < (int)EKeyConfigPad.Max; j++) {
-				this.KeyAssign[i][j] = new CKeyAssign.STKEYASSIGN[16];
+				this.KeyAssign[i][j] = new STKEYASSIGN[16];
 				for (int k = 0; k < 16; k++) {
-					this.KeyAssign[i][j][k] = new CKeyAssign.STKEYASSIGN(InputDeviceType.Unknown, 0, 0);
+					this.KeyAssign[i][j][k] = new STKEYASSIGN(InputDeviceType.Unknown, 0, 0);
 				}
 			}
 		}
 	}
 
-	private void WriteKeyAssignment(StreamWriter sw, CKeyAssign.STKEYASSIGN[] assign) {
+	private void WriteKeyAssignment(StreamWriter sw, STKEYASSIGN[] assign) {
 		bool flag = true;
 		for (int i = 0; i < 0x10; i++) {
 			if (assign[i].InputDevice == InputDeviceType.Unknown) {
@@ -2944,7 +2978,7 @@ internal class CConfigIni : INotifyPropertyChanged {
 		}
 	}
 
-	private void ReadAndSetKey(string keyDescription, CKeyAssign.STKEYASSIGN[] assign) {
+	private void ReadAndSetKey(string keyDescription, STKEYASSIGN[] assign) {
 		string[] strArray = keyDescription.Split(new char[] { ',' });
 		for (int i = 0; (i < strArray.Length) && (i < 0x10); i++) {
 			InputDeviceType eInputDevice;

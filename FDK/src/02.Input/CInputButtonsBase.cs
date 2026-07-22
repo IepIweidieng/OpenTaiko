@@ -106,6 +106,9 @@ public abstract class CInputButtonsBase : IInputDevice, IDisposable {
 			this.AddReleasedEvent(idxBtn, SoundManager.PlayTimer.msGetPreciseNowSoundTimerTime());
 	}
 
+	public bool KeyAvailable(int nButton) {
+		return Volatile.Read(ref ButtonStates[nButton].state) is not 0;
+	}
 	public bool KeyPressed(int nButton) {
 		return Volatile.Read(ref ButtonStates[nButton].state) is 1 or -3;
 	}

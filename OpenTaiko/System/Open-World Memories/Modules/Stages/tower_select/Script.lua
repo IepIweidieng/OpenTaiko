@@ -1,4 +1,6 @@
-﻿local songlist = nil
+﻿local NavInput = require("NavInput")
+
+local songlist = nil
 
 local tex_tower = TEXTURE:CreateTexture()
 local tex_bg = TEXTURE:CreateTexture()
@@ -225,14 +227,15 @@ function draw()
 end
 
 function update()
+    local navPn = NavInput.p[1]
     if songlist ~= nil then
-        if (INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow")) then
+        if navPn.right() then
             move(1)
             SHARED:GetSharedSound("Move"):Play()
-        elseif (INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("LeftArrow")) then
+        elseif navPn.left() then
             move(-1)
             SHARED:GetSharedSound("Move"):Play()
-        elseif INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return") then
+        elseif navPn.decide() then
             local success, song_decide = handleDecide()
             if song_decide and success then
                 SHARED:GetSharedSound("SongDecide"):Play()
@@ -243,7 +246,7 @@ function update()
             else
                 SHARED:GetSharedSound("Error"):Play()
             end
-        elseif INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+        elseif navPn.cancel() then
             if closeFolder() then
                 SHARED:GetSharedSound("Decide"):Play()
             else
@@ -252,7 +255,7 @@ function update()
             end
         end
     else
-        if INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+        if navPn.cancel() then
             SHARED:GetSharedSound("Cancel"):Play()
             return Exit("title", nil)
         end

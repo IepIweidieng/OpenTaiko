@@ -3,6 +3,7 @@
 -- update() returns "back" or {mode, players, songs} when confirmed, nil otherwise.
 
 local I18N = require("i18n")
+local NavInput = require("NavInput")
 
 local M = {}
 
@@ -377,10 +378,10 @@ function M.update()
         end
     end
 
-    local pressDecide = INPUT:Pressed("Decide")  or INPUT:KeyboardPressed("Return")
-    local pressCancel = INPUT:Pressed("Cancel")  or INPUT:KeyboardPressed("Escape")
-    local pressRight  = INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow")
-    local pressLeft   = INPUT:Pressed("LeftChange")  or INPUT:KeyboardPressed("LeftArrow")
+    local pressDecide = NavInput.decide()
+    local pressCancel = NavInput.cancel()
+    local pressRight  = NavInput.right()
+    local pressLeft   = NavInput.left()
 
     -- While an error is displayed, consume all input to dismiss it
     if errorMsg ~= nil then

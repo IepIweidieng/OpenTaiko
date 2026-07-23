@@ -1,5 +1,7 @@
 -- pagoda.lua  —  Pagoda of the Unknown sub-module for dan_select
 
+local NavInput = require("NavInput")
+
 local M = {}
 
 -- ── Song pools (loaded from pagoda_pools.json) ────────────────────────────────
@@ -628,17 +630,18 @@ function M.update(dt)
         _puchi_sine_y = math.sin(_puchi_sine_counter.Value * math.pi / 180) * PUCHI_FLOAT_AMP
     end
 
-    if INPUT:KeyboardPressed("F3") then
+    local navPn = NavInput.p[1]
+    if INPUT:Pressed("ToggleAutoP1") then
         CONFIG:SetAutoStatus(0, not CONFIG:GetAutoStatus(0))
         SHARED:GetSharedSound("Move"):Play()
     end
 
     if _btn_timer > 0 then return nil end
 
-    local up_p   = INPUT:Pressed("LeftChange")  or INPUT:KeyboardPressed("UpArrow")
-    local down_p = INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("DownArrow")
-    local ok_p   = INPUT:Pressed("Decide")      or INPUT:KeyboardPressed("Return")
-    local back_p = INPUT:Pressed("Cancel")      or INPUT:KeyboardPressed("Escape")
+    local up_p   = navPn.upOrPadLeft()
+    local down_p = navPn.downOrPadRight()
+    local ok_p   = navPn.decide()
+    local back_p = navPn.cancel()
 
     -- ── MISSING SONGS ──────────────────────────────────────────────────────────
     if _pagoda_state == "missing_songs" then
@@ -717,11 +720,11 @@ function M.update(dt)
 
         -- Speed slider (left/right), only for already-cleared levels
         if is_past then
-            if INPUT:KeyboardPressed("LeftArrow")  or INPUT:Pressed("LeftChange")  then
+            if navPn.left()  then
                 _preview_speed = math.max(spd_min, _preview_speed - 1)
                 SHARED:GetSharedSound("Move"):Play()
             end
-            if INPUT:KeyboardPressed("RightArrow") or INPUT:Pressed("RightChange") then
+            if navPn.right() then
                 _preview_speed = math.min(spd_max, _preview_speed + 1)
                 SHARED:GetSharedSound("Move"):Play()
             end
@@ -750,11 +753,11 @@ function M.update(dt)
 
     -- ── LEVEL CLEAR ────────────────────────────────────────────────────────────
     if _pagoda_state == "level_clear" then
-        if up_p or INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("LeftArrow") then
+        if up_p or navPn.left() then
             _menu_sel = math.max(1, _menu_sel - 1)
             SHARED:GetSharedSound("Move"):Play()
         end
-        if down_p or INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow") then
+        if down_p or navPn.right() then
             _menu_sel = math.min(2, _menu_sel + 1)
             SHARED:GetSharedSound("Move"):Play()
         end
@@ -774,11 +777,11 @@ function M.update(dt)
 
     -- ── GAME OVER ──────────────────────────────────────────────────────────────
     if _pagoda_state == "game_over" then
-        if up_p or INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("LeftArrow") then
+        if up_p or navPn.left() then
             _menu_sel = math.max(1, _menu_sel - 1)
             SHARED:GetSharedSound("Move"):Play()
         end
-        if down_p or INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow") then
+        if down_p or navPn.right() then
             _menu_sel = math.min(2, _menu_sel + 1)
             SHARED:GetSharedSound("Move"):Play()
         end
@@ -823,11 +826,11 @@ function M.update(dt)
 
     -- ── PRACTICE PREVIEW ───────────────────────────────────────────────────────
     if _pagoda_state == "practice_preview" then
-        if up_p or INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("LeftArrow") then
+        if up_p or navPn.left() then
             _menu_sel = math.max(1, _menu_sel - 1)
             SHARED:GetSharedSound("Move"):Play()
         end
-        if down_p or INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow") then
+        if down_p or navPn.right() then
             _menu_sel = math.min(2, _menu_sel + 1)
             SHARED:GetSharedSound("Move"):Play()
         end

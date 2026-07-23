@@ -6,6 +6,8 @@
 -- Gate.draw()
 -- Gate.update()         — returns "vault" when gate fully open, "back" to exit, nil otherwise
 
+local NavInput = require("NavInput")
+
 local M = {}
 
 local tx   = {}
@@ -241,10 +243,11 @@ function M.update()
     if phase == "done" then return "vault" end
     if phase ~= "idle"  then return nil    end
 
-    local decide = INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return")
-    local cancel = INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape")
-    local right  = INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow")
-    local left   = INPUT:Pressed("LeftChange")  or INPUT:KeyboardPressed("LeftArrow")
+	local navPn = NavInput.p[1]
+    local decide = navPn.decide()
+    local cancel = navPn.cancel()
+    local right  = navPn.right()
+    local left   = navPn.left()
 
     if right then
         selectedKey = (selectedKey % 4) + 1

@@ -491,7 +491,7 @@ function Edit:select(it, kind)
     if self.selected and self.selected.it == it then return end
     self:deselect()
     self.selected = { it = it, kind = kind }
-    local ui = PopUI.new{ theme = THEME }
+    local ui = PopUI.new{ theme = THEME, navPlayer = (playerIndex or 0) + 1 }
     self.selUI = ui
     local edit = self
     local defs = {}
@@ -739,7 +739,7 @@ end
 function Edit:buildBar()
     self._barDirty = false
     if self.ui then self.ui:disposeWidgets() end
-    local ui = PopUI.new{ theme = THEME }
+    local ui = PopUI.new{ theme = THEME, navPlayer = (playerIndex or 0) + 1 }
     self.ui = ui
     self.barSlots = {}
     local edit = self

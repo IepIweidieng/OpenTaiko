@@ -409,53 +409,58 @@ function M.handleUpdate(ts)
     local allDiffsSelected = true
     local canceled         = false
     local decided          = false
+    local uniNavPlayer = 1
 
     for i = 1, CONFIG.PlayerCount do
+        if i == uniNavPlayer and G.diffSelected[i] then
+            uniNavPlayer = i + 1
+        end
+        local navPn = G.NavInput.p[i]
+        local inputPn = G.inputSets[i]
+
         if G.activeConfig.mountAISlotToP2 and i == 2 then
             -- AI mirrors P1
             G.diffIndex[2]   = G.diffIndex[1]
             G.diffSelected[2] = G.diffSelected[1]
-        else
-            local inpset = G.inputSets[i]
 
-            if G.diffSelected[i] == false then
-                if INPUT:Pressed(inpset.right) or (i == 1 and INPUT:KeyboardPressed("RightArrow")) then
-                    G.sounds.Skip:Play()
-                    G.diffIndex[i] = (G.diffIndex[i] + 1) % (3 + #G.diffBars)
-                elseif INPUT:Pressed(inpset.left) or (i == 1 and INPUT:KeyboardPressed("LeftArrow")) then
-                    G.sounds.Skip:Play()
-                    G.diffIndex[i] = (G.diffIndex[i] - 1) % (3 + #G.diffBars)
-                elseif INPUT:Pressed(inpset.decide1) or INPUT:Pressed(inpset.decide2)
-                        or (i == 1 and INPUT:KeyboardPressed("Return")) then
-                    if G.diffIndex[i] == 0 then
-                        G.sounds.Cancel:Play(); canceled = true
-                    elseif G.diffIndex[i] == 1 then
-                        G.act_inner["mod_select_dialog"]:Activate(i - 1); return nil
-                    elseif G.diffIndex[i] == 2 then
-                        G.act_inner["customize_dialog"]:Activate(i - 1); return nil
-                    else
-                        decided = true; G.diffSelected[i] = true
-                    end
-                elseif (inpset.cancel ~= nil and INPUT:Pressed(inpset.cancel))
-                        or (i == 1 and INPUT:KeyboardPressed("Escape")) then
-                    G.sounds.Cancel:Play()
-                    if G.diffSelected[i] then G.diffSelected[i] = false
-                    else canceled = true end
+            -- AI level slider (AI battle only)
+            if navPn.left(i == uniNavPlayer) and CONFIG.AILevel > 1 then
+                CONFIG.AILevel = CONFIG.AILevel - 1; G.sounds.Skip:Play()
+            elseif navPn.right(i == uniNavPlayer) and CONFIG.AILevel < 10 then
+                CONFIG.AILevel = CONFIG.AILevel + 1; G.sounds.Skip:Play()
+            end
+        elseif G.diffSelected[i] == false then
+            if navPn.right(i == uniNavPlayer) then
+                G.sounds.Skip:Play()
+                G.diffIndex[i] = (G.diffIndex[i] + 1) % (3 + #G.diffBars)
+            elseif navPn.left(i == uniNavPlayer) then
+                G.sounds.Skip:Play()
+                G.diffIndex[i] = (G.diffIndex[i] - 1) % (3 + #G.diffBars)
+            elseif navPn.decide(i == uniNavPlayer) then
+                if G.diffIndex[i] == 0 then
+                    G.sounds.Cancel:Play(); canceled = true
+                elseif G.diffIndex[i] == 1 then
+                    G.act_inner["mod_select_dialog"]:Activate(i - 1); return nil
+                elseif G.diffIndex[i] == 2 then
+                    G.act_inner["customize_dialog"]:Activate(i - 1); return nil
+                else
+                    decided = true; G.diffSelected[i] = true
                 end
+            elseif navPn.cancel(i == uniNavPlayer) then
+                G.sounds.Cancel:Play()
+                if G.diffSelected[i] then G.diffSelected[i] = false
+                else canceled = true end
+            end
+                
+            if inputPn.auto ~= nil and INPUT:Pressed(inputPn.auto) then
+                G.sounds.Decide:Play(); CONFIG:SetAutoStatus(i - 1, not CONFIG:GetAutoStatus(i - 1))
             end
         end
 
         if G.diffSelected[i] == false then allDiffsSelected = false end
     end
 
-    if INPUT:KeyboardPressed("F3") then
-        G.sounds.Decide:Play(); CONFIG:SetAutoStatus(0, not CONFIG:GetAutoStatus(0))
-    end
-    if INPUT:KeyboardPressed("F4") and CONFIG.PlayerCount >= 2 then
-        G.sounds.Decide:Play(); CONFIG:SetAutoStatus(1, not CONFIG:GetAutoStatus(1))
-    end
-
-    if canceled or INPUT:KeyboardPressed("Escape") then
+    if canceled or G.NavInput.cancel() then
         G.sounds.Decide:Play()
         G.activeScreen = "transition"
         G.startCounter("screen_transition", 1920, 0, -0.5/1920, "none", M.updateTransitionVisuals, function()
@@ -478,15 +483,6 @@ function M.handleUpdate(ts)
         end
     elseif decided then
         G.sounds.Decide:Play()
-    end
-
-    -- AI level slider (AI battle only)
-    if G.activeConfig.mountAISlotToP2 then
-        if INPUT:Pressed("LBlue2P") and CONFIG.AILevel > 1 then
-            CONFIG.AILevel = CONFIG.AILevel - 1; G.sounds.Skip:Play()
-        elseif INPUT:Pressed("RBlue2P") and CONFIG.AILevel < 10 then
-            CONFIG.AILevel = CONFIG.AILevel + 1; G.sounds.Skip:Play()
-        end
     end
 
     return nil

@@ -4,6 +4,8 @@
 -- P toggles between preview (centered) and render (top-left, scale 0.5).
 -- Return / Escape exits.
 
+local NavInput = require("NavInput")
+
 local CHARACTER_NAME = "05v2 - Aoi"
 
 local character  = nil
@@ -89,8 +91,7 @@ end
 -- ── Update ────────────────────────────────────────────────────────────────────
 
 function update(ts)
-    if INPUT:KeyboardPressed("return") or INPUT:KeyboardPressed("escape") or
-       INPUT:Pressed("Decide") or INPUT:Pressed("Cancel") then
+    if NavInput.decide() or NavInput.cancel() then
         Exit("stage", "_title")
         return
     end

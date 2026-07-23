@@ -6,6 +6,8 @@
 local standard_dan = require("standard_dan")
 local pagoda       = require("pagoda")
 
+local NavInput     = require("NavInput")
+
 local TX  = "Textures/"
 local SND = "Sounds/"
 
@@ -230,7 +232,8 @@ function update()
     end
 
     -- F3 auto toggle (always available)
-    if INPUT:KeyboardPressed("F3") then
+	local navPn = NavInput.p[1]
+    if INPUT:Pressed("ToggleAutoP1") then
         CONFIG:SetAutoStatus(0, not CONFIG:GetAutoStatus(0))
         SHARED:GetSharedSound("Move"):Play()
     end
@@ -266,7 +269,7 @@ function update()
 
     -- ── LOADING ───────────────────────────────────────────────────────────────
     if state == "loading" then
-        if INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+        if navPn.cancel() then
             return Exit("title", nil, "dan_doors")   -- close the doors over dan_select, open onto the title
         end
         return
@@ -302,7 +305,7 @@ function update()
             end
         end
 
-        if INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+        if navPn.cancel() then
             SHARED:GetSharedSound("Cancel"):Play()
             return Exit("title", nil, "dan_doors")   -- close the doors over dan_select, open onto the title
         end
@@ -313,20 +316,20 @@ function update()
     if state == "menu_3way" then
         if bg_zoom_counter ~= nil then bg_zoom_counter:Tick() end
 
-        if INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+        if navPn.cancel() then
             SHARED:GetSharedSound("Cancel"):Play()
             return Exit("title", nil, "dan_doors")   -- close the doors over dan_select, open onto the title
         end
 
-        if INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("UpArrow") then
+        if navPn.upOrPadLeft() then
             menu_sel = math.max(1, menu_sel - 1)
             SHARED:GetSharedSound("Move"):Play()
-        elseif INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("DownArrow") then
+        elseif navPn.downOrPadRight() then
             menu_sel = math.min(3, menu_sel + 1)
             SHARED:GetSharedSound("Move"):Play()
         end
 
-        if INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return") then
+        if navPn.decide() then
             if menu_sel == 1 then
                 SHARED:GetSharedSound("Decide"):Play()
                 menu_exit_target  = "standard_dan"

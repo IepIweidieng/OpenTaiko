@@ -24,6 +24,8 @@
 --   cps=28,                         -- typewriter speed each node starts at (default 42; {speed:} overrides)
 --   onSfx=fn, onVoice=fn, onExpr=fn, portraits={name=LuaTexture} }
 
+local NavInput = require("NavInput")
+
 local floor = math.floor
 local Dialogue = {}
 Dialogue.__index = Dialogue
@@ -225,7 +227,7 @@ end
 local function kp(k) return INPUT:KeyboardPressed(k) end
 
 function Dialogue:advancePressed()
-    if kp("Return") or kp("Space") then return true end
+    if NavInput.decide() or kp("Space") then return true end
     if self.mouse and INPUT.MousePressed and INPUT:MousePressed("Left") then return true end
     if self.advanceInput ~= nil and self.advanceInput() then return true end
     return false
@@ -237,8 +239,8 @@ function Dialogue:update(dt)
     -- choices phase
     if self.choosing then
         local ch = node.choices
-        if kp("UpArrow") or kp("W") then self.choiceIdx = (self.choiceIdx - 2) % #ch + 1 end
-        if kp("DownArrow") or kp("S") then self.choiceIdx = self.choiceIdx % #ch + 1 end
+        if NavInput.upOrPadLeft() or kp("W") then self.choiceIdx = (self.choiceIdx - 2) % #ch + 1 end
+        if NavInput.downOrPadRight() or kp("S") then self.choiceIdx = self.choiceIdx % #ch + 1 end
         if self:advancePressed() then
             self.result = ch[self.choiceIdx].value
             self.activeFlag = false

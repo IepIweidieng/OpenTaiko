@@ -13,6 +13,8 @@
 -- On Yes: deduct coins (if any), unlock the song, then play the modal ROActivity
 --         and wait for it to finish before DEACTIVATE.
 
+local NavInput = require("NavInput")
+
 local _player    = 0
 local _node      = nil
 local _mode      = "unlock"
@@ -133,11 +135,11 @@ end
 -- ── Update ────────────────────────────────────────────────────────────────────
 
 local function pressedDecide()
-    return INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return")
+    return NavInput.p[_player + 1].decide()
 end
 
 local function pressedCancel()
-    return INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape")
+    return NavInput.p[_player + 1].cancel()
 end
 
 local function doUnlock()

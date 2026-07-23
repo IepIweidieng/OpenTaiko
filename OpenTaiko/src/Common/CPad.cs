@@ -73,10 +73,17 @@ public class CPad {
 		return list;
 	}
 
-	public bool HasInput(EKeyConfigPart part, EPad pad, Func<IInputDevice?, int, bool> predicate) {
-		if (part == EKeyConfigPart.Unknown) {
+	// Each pad below EPad.Max has separate keybinds for different instruments
+	// Each pad at EPad.Max and above has unified System keybinds
+	public static EKeyConfigPart ResolveKeyConfigPart(EKeyConfigPart part, EKeyConfigPad pad)
+		=> (pad >= EKeyConfigPad.Max) ? EKeyConfigPart.Unknown
+			: (pad >= (EKeyConfigPad)EPad.Max) ? EKeyConfigPart.System
+			: part;
+
+	public bool HasInput(EKeyConfigPart part, EKeyConfigPad pad, Func<IInputDevice?, int, bool> predicate) {
+		part = ResolveKeyConfigPart(part, pad);
+		if (part == EKeyConfigPart.Unknown)
 			return false;
-		}
 
 		var device = this.rConfigIni.KeyAssign[(int)part][(int)pad].GetDevice(predicate);
 		if (device != null && (device.CurrentType >= 0 && device.CurrentType < InputDeviceType.Total)) {
@@ -86,22 +93,22 @@ public class CPad {
 		return false;
 	}
 
-	public bool bPressed(EKeyConfigPart part, EPad pad)
+	public bool bPressed(EKeyConfigPart part, EKeyConfigPad pad)
 		=> HasInput(part, pad, (device, keyCode) => device?.KeyPressed(keyCode) ?? false);
-	public bool bPressed(EKeyConfigPart part, EKeyConfigPad pad) => bPressed(part, (EPad)pad);
+	public bool bPressed(EKeyConfigPart part, EPad pad) => bPressed(part, (EKeyConfigPad)pad);
 
-	public bool IsPressing(EKeyConfigPart part, EPad pad)
+	public bool IsPressing(EKeyConfigPart part, EKeyConfigPad pad)
 		=> HasInput(part, pad, (device, keyCode) => device?.KeyPressing(keyCode) ?? false);
-	public bool IsPressing(EKeyConfigPart part, EKeyConfigPad pad) => IsPressing(part, (EPad)pad);
+	public bool IsPressing(EKeyConfigPart part, EPad pad) => IsPressing(part, (EKeyConfigPad)pad);
 
-	public bool IsReleased(EKeyConfigPart part, EPad pad)
+	public bool IsReleased(EKeyConfigPart part, EKeyConfigPad pad)
 		=> HasInput(part, pad, (device, keyCode) => device?.KeyReleased(keyCode) ?? false);
-	public bool IsReleased(EKeyConfigPart part, EKeyConfigPad pad) => IsReleased(part, pad);
+	public bool IsReleased(EKeyConfigPart part, EPad pad) => IsReleased(part, (EKeyConfigPad)pad);
 
-	public bool IsReleasing(EKeyConfigPart part, EPad pad) {
-		if (part == EKeyConfigPart.Unknown) {
+	public bool IsReleasing(EKeyConfigPart part, EKeyConfigPad pad) {
+		part = ResolveKeyConfigPart(part, pad);
+		if (part == EKeyConfigPart.Unknown)
 			return false;
-		}
 
 		var availables = this.rConfigIni.KeyAssign[(int)part][(int)pad].GetAllInputs((device, code) => device?.KeyAvailable(code) ?? false);
 		if (!availables.Any())
@@ -116,7 +123,7 @@ public class CPad {
 		return true;
 	}
 
-	public bool IsReleasing(EKeyConfigPart part, EKeyConfigPad pad) => IsReleasing(part, (EPad)pad);
+	public bool IsReleasing(EKeyConfigPart part, EPad pad) => IsReleasing(part, (EKeyConfigPad)pad);
 
 	public void InvalidateInputToPadCache() => inputToPadCacheValid = false;
 

@@ -445,19 +445,20 @@ function M.handleSongSelectInput(Sort, Diff)
         if G.highlightedPlayer ~= prev then Sort.applySort(); M.refreshPage(true) end
     end
     if not G.activeConfig.songOnly then   -- online lobby (songOnly): Auto cannot be toggled in song select
-        if INPUT:KeyboardPressed("F3") then
-            G.sounds.Decide:Play(); CONFIG:SetAutoStatus(0, not CONFIG:GetAutoStatus(0))
-        end
-        if INPUT:KeyboardPressed("F4") and CONFIG.PlayerCount >= 2 then
-            G.sounds.Decide:Play(); CONFIG:SetAutoStatus(1, not CONFIG:GetAutoStatus(1))
+        for p = 1, CONFIG.PlayerCount, 1 do
+            local isAI = (G.activeConfig.mountAISlotToP2 and p == 2)
+            local inputPn = G.inputSets[p]
+            if not isAI and inputPn.auto ~= nil and INPUT:Pressed(inputPn.auto) then
+                G.sounds.Decide:Play(); CONFIG:SetAutoStatus(p - 1, not CONFIG:GetAutoStatus(p - 1))
+            end
         end
     end
 
-    local inpset = G.inputSets[G.highlightedPlayer + 1]
+    local navPn = G.NavInput.p[G.highlightedPlayer + 1]
 
     -- Release hold if direction key lifted
-    if G.holdDir ==  1 and not INPUT:Pressing(inpset.right) and not INPUT:KeyboardPressing("RightArrow") then stopHold()
-    elseif G.holdDir == -1 and not INPUT:Pressing(inpset.left)  and not INPUT:KeyboardPressing("LeftArrow")  then stopHold()
+    if G.holdDir ==  1 and not navPn.rightPressing() then stopHold()
+    elseif G.holdDir == -1 and not navPn.leftPressing() then stopHold()
     end
 
     -- Main navigation
@@ -475,14 +476,14 @@ function M.handleSongSelectInput(Sort, Diff)
             local baseFolder = (ssn ~= nil and not ssn.IsRoot) and ssn.Parent or G.songList:GetRoot()
             sd:Activate(G.highlightedPlayer, "search", baseFolder)
         end
-    elseif (INPUT:Pressed(inpset.right) or INPUT:KeyboardPressed("RightArrow")) and G.songList ~= nil then
+    elseif navPn.right() and G.songList ~= nil then
         doMove(1); startHold(1)
-    elseif (INPUT:Pressed(inpset.left) or INPUT:KeyboardPressed("LeftArrow")) and G.songList ~= nil then
+    elseif navPn.left() and G.songList ~= nil then
         doMove(-1); startHold(-1)
-    elseif INPUT:Pressed(inpset.decide1) or INPUT:Pressed(inpset.decide2) or INPUT:KeyboardPressed("Return") then
+    elseif navPn.decide() then
         stopHold()
         G.selectedSongNode = handleDecideSongSelect(Sort)
-    elseif (inpset.cancel ~= nil and INPUT:Pressed(inpset.cancel)) or INPUT:KeyboardPressed("Escape") then
+    elseif navPn.cancel() then
         stopHold()
         if not startCloseAnim(Sort) then
             G.sounds.Cancel:Play()

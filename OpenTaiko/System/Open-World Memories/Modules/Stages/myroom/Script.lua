@@ -18,6 +18,7 @@ local PopUI    = require("PopUI")
 local I18N      = require("i18n")
 local MO       = require("online")          -- P2P "visit my room" (lobby + presence); see online.lua
 local JB       = require("jukebox")         -- the Jukebox furniture's audio player; see jukebox.lua
+local NavInput = require("NavInput")
 local net      = MO.net
 
 local SCREEN_W, SCREEN_H = 1920, 1080
@@ -549,7 +550,7 @@ local buildPhoneMenu   -- forward decl (the textbox panes route Back into it)
 
 local function buildPhoneTextPane(title, hintText, maxLen, confirmLabel, onConfirm)
     if phoneUI then phoneUI:disposeWidgets() end
-    local ui = PopUI.new{ theme = PHONE_THEME }
+    local ui = PopUI.new{ theme = PHONE_THEME, navPlayer = playerIndex + 1 }
     phoneUI = ui
     local x, y, w = SCREEN_W / 2 - 430, 330, 860
     ui:panel{ x = x, y = y, w = w, h = 330, title = title }
@@ -564,7 +565,7 @@ end
 
 buildPhoneMenu = function()
     if phoneUI then phoneUI:disposeWidgets() end
-    local ui = PopUI.new{ theme = PHONE_THEME }
+    local ui = PopUI.new{ theme = PHONE_THEME, navPlayer = playerIndex + 1 }
     phoneUI = ui
     local entries
     if net.online and net.isHost then
@@ -651,6 +652,7 @@ local function pickPlayer(i)
     playerIndex = i
     MO.playerIndex = i
     if pcScreen then pcScreen.playerIndex = i end
+    if edit then edit.playerIndex = i end
     loadRoom()
     rebuild()
     spawnAtEntrance()
@@ -670,7 +672,7 @@ openPlayerSelect = function()
         return
     end
     closePlayerSelect()
-    local ui = PopUI.new{ theme = PHONE_THEME }
+    local ui = PopUI.new{ theme = PHONE_THEME, navPlayer = nil } -- accessible by all players
     playerSelUI = ui
     local x, y, w = SCREEN_W / 2 - 380, 210, 760
     local h = 120 + #entries * 78 + 40
@@ -834,7 +836,7 @@ function update(ts)
         settlePlayer(dt); world:update(dt, px, py, pz); return nil
     end
 
-    if kp("Escape") then
+    if NavInput.p[playerIndex + 1].cancel() then
         if MO.isGuest() then backToOwnRoom(I18N.tr("You left the room.")); return nil end
         MO.leave(); GLOBALCAMERA:Reset(); saveRoom(); return Exit("stage", "_title")
     end
@@ -921,7 +923,7 @@ function update(ts)
     if focusKey then for _, e in ipairs(inter) do if e.key == focusKey then focused = e; break end end end
     prompt = focused and focused.kind or nil
     interactGlow(focused)
-    if focused and (kp("Return") or kp("Space")) then
+    if focused and (NavInput.p[playerIndex + 1].decide() or kp("Space")) then
         if focused.kind == "exit" then
             if MO.isGuest() then backToOwnRoom(I18N.tr("You left the room.")); return nil end
             MO.leave(); GLOBALCAMERA:Reset(); saveRoom(); return Exit("stage", "_title")
@@ -938,7 +940,7 @@ function update(ts)
             dlg:start({ { name = "", text = dlgLoc("pod", "locked",
                 "You press the panel on the Mysterious pod. It hums, but nothing opens. Not yet.") } })
         elseif focused.kind == "jukebox" then
-            JB.openFor(focused.it, Room.displayName("jukebox"))
+            JB.openFor(focused.it, Room.displayName("jukebox"), playerIndex)
             mode = "jukebox"
         end
     end

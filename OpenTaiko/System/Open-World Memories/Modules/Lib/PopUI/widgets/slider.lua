@@ -38,7 +38,7 @@ function Slider:setValue(v, silent)
     if not silent and self.onChange then self.onChange(self.value, self) end
 end
 
-function Slider:onActivate() end  -- Decide does nothing; arrows adjust
+function Slider:onActivate() end  -- Decide handled in onDecide(); onActivate() does nothing
 
 function Slider:restyle()
     self.eff = self.mgr:resolveTheme(self.style)
@@ -77,6 +77,17 @@ function Slider:restyle()
     self:bakeRing()
 end
 
+-- allow moving away focus by Decide + pad Left/Right, otherwise consume Left/Right so focus stays on the slider
+function Slider:onDecide() self:setFocus(not self.focused); return not self.focused end
+function Slider:onNavLeft(forPad)
+    if not forPad or self.focused then self:setFocus(true); self:setValue(self.value - self.step); self.mgr:playSfx("move"); return true end
+    return false
+end
+function Slider:onNavRight(forPad)
+    if not forPad or self.focused then self:setFocus(true); self:setValue(self.value + self.step); self.mgr:playSfx("move"); return true end
+    return false
+end
+
 function Slider:update(ctx)
     self._scaleC:Tick(); self._hiC:Tick()
     self._scaleCur = U.lerp(self._scaleFrom, self._scaleTo, self._scaleC.Value)
@@ -86,10 +97,6 @@ function Slider:update(ctx)
         local frac = (ctx.mx - (self.x + R)) / math.max(1, self.w - 2 * R)
         self:setValue(self.min + U.clamp(frac, 0, 1) * (self.max - self.min))
         self.mgr:playSfx("move")
-    end
-    if self.focused then
-        if ctx.navLeft then self:setValue(self.value - self.step); self.mgr:playSfx("move") end
-        if ctx.navRight then self:setValue(self.value + self.step); self.mgr:playSfx("move") end
     end
 end
 

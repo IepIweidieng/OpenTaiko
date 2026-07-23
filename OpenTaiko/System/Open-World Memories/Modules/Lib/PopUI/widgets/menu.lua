@@ -56,8 +56,8 @@ function Menu:_clampScroll()
     self._scrollTarget = U.clamp(self._scrollTarget, 0, maxScroll)
 end
 
-function Menu:onNavDown() if self.selected < self:_count() then self:setSelected(self.selected + 1); return true end return false end
-function Menu:onNavUp() if self.selected > 1 then self:setSelected(self.selected - 1); return true end return false end
+function Menu:onNavDownOrPadRight() if self.selected < self:_count() then self:setSelected(self.selected + 1); return true end return false end
+function Menu:onNavUpOrPadLeft() if self.selected > 1 then self:setSelected(self.selected - 1); return true end return false end
 
 function Menu:onActivate()
     local it = self.items[self.selected]

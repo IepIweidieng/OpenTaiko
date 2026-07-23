@@ -1,4 +1,6 @@
-﻿local text = nil
+﻿local NavInput = require("NavInput")
+
+local text = nil
 local textTex = nil
 
 local sounds = {}
@@ -167,29 +169,30 @@ end
 function update()
 	flashcounter:Tick()
 
+	local navPn = NavInput.p[1]
 	if INPUT:KeyboardPressed("S") then
 		sounds.Skip:Play()
 		return Exit("stage", "demo1")
 	end
 
 	-- Navigation
-	if (INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow")) and songList ~= nil then
+	if navPn.right() and songList ~= nil then
 		sounds.Skip:Play()
 		songList:Move(1)
 		refreshPage()
 	end
-	if (INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("LeftArrow")) and songList ~= nil then
+	if navPn.left() and songList ~= nil then
 		sounds.Skip:Play()
 		songList:Move(-1)
 		refreshPage()
 	end
-	if INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return") then
+	if navPn.decide() then
 		local isPlayStarted = handleDecide()
 		if isPlayStarted == true then
 			return Exit("play", nil)
 		end 
 	end
-	if INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+	if navPn.cancel() then
 		local closeFolder = handleFolderClose()
 		if closeFolder == true then
 			refreshPage()

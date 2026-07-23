@@ -634,8 +634,8 @@ end
 
 local function speedText() return tr("Speed") .. string.format("  ×%.2f", pb.speed) end
 
-local function buildUI(itemName)
-    ui = PopUI.new{ theme = ctx and ctx.theme or nil }
+local function buildUI(itemName, playerIndex)
+    ui = PopUI.new{ theme = ctx and ctx.theme or nil, navPlayer = (playerIndex or 0) + 1 }
     W = {}
     ui:panel{ x = PANEL.x, y = PANEL.y, w = PANEL.w, h = PANEL.h, title = itemName or tr("Jukebox") }
     W.tabBgm = ui:button{ x = TAB.x, y = TAB.y, w = TAB.w, h = TAB.h, text = tr("BGM"),
@@ -729,13 +729,13 @@ function JB.init(c) ctx = c end
 function JB.isOpen() return isOpen end
 function JB.isActive() return pb.playing or pb.paused end   -- pc.lua BGM suppression probe
 
-function JB.openFor(item, displayName)
+function JB.openFor(item, displayName, playerIndex)
     if isOpen then return end
     isOpen, justOpened = true, true
     tab, navGenre, selEntry = "bgm", nil, nil
     openItem = item
     if item and not (pb.playing or pb.paused) then pb.item = item; pb.cell = { c = item.c, r = item.r } end
-    buildUI(displayName)
+    buildUI(displayName, playerIndex)
     if pb.snd then applyVolumeNow(100) end
 end
 

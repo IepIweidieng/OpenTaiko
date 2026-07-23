@@ -1,5 +1,7 @@
 -- standard_dan.lua  —  Standard Dan Challenge sub-module for dan_select
 
+local NavInput       = require("NavInput")
+
 local M = {}
 local ContentsDrawer = require("standard_dan_contents_draw")
 
@@ -450,7 +452,7 @@ function M.update(dt)
         if bar_y_offset == 0.0 then bar_y_offset_counter = nil end
     end
 
-    if INPUT:KeyboardPressed("F3") then
+    if INPUT:Pressed("ToggleAutoP1") then
         CONFIG:SetAutoStatus(0, not CONFIG:GetAutoStatus(0))
         SHARED:GetSharedSound("Move"):Play()
     end
@@ -468,11 +470,12 @@ function M.update(dt)
     end
 
     -- ── SONG SELECT ───────────────────────────────────────────────────────────
+	local navPn = NavInput.p[1]
     if _state == "song_select" then
         if hold_dir ~= 0 then
             local still =
-                (hold_dir ==  1 and (INPUT:Pressing("RightChange") or INPUT:KeyboardPressing("RightArrow"))) or
-                (hold_dir == -1 and (INPUT:Pressing("LeftChange")  or INPUT:KeyboardPressing("LeftArrow")))
+                (hold_dir ==  1 and navPn.right()) or
+                (hold_dir == -1 and navPn.left())
             if not still then
                 hold_dir = 0 ; hold_phase = 0 ; hold_elapsed = 0.0
             else
@@ -485,13 +488,13 @@ function M.update(dt)
             end
         end
 
-        if INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow") then
+        if navPn.right() then
             _do_scroll(1) ; hold_dir = 1 ; hold_phase = 1 ; hold_elapsed = 0.0
-        elseif INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("LeftArrow") then
+        elseif navPn.left() then
             _do_scroll(-1) ; hold_dir = -1 ; hold_phase = 1 ; hold_elapsed = 0.0
         end
 
-        if INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return") then
+        if navPn.decide() then
             local ssn = _song_list ~= nil and _song_list:GetSelectedSongNode() or nil
             if ssn ~= nil then
                 if ssn.IsSong then
@@ -507,7 +510,7 @@ function M.update(dt)
             end
         end
 
-        if INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+        if navPn.cancel() then
             local r = _handle_cancel()
             if r == "back" then return "back" end
         end
@@ -516,15 +519,15 @@ function M.update(dt)
 
     -- ── CONFIRM ───────────────────────────────────────────────────────────────
     if _state == "confirm" then
-        if INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow") then
+        if navPn.right() then
             confirm_sel = (confirm_sel + 1) % 4
             SHARED:GetSharedSound("Move"):Play()
-        elseif INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("LeftArrow") then
+        elseif navPn.left() then
             confirm_sel = (confirm_sel + 3) % 4
             SHARED:GetSharedSound("Move"):Play()
         end
 
-        if INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return") then
+        if navPn.decide() then
             if confirm_sel == 0 then
                 SHARED:GetSharedSound("Cancel"):Play()
                 _state = "song_select"
@@ -547,7 +550,7 @@ function M.update(dt)
             end
         end
 
-        if INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+        if navPn.cancel() then
             SHARED:GetSharedSound("Cancel"):Play()
             _state = "song_select"
         end

@@ -66,16 +66,19 @@ function Chooser:restyle()
     self._capR = cap(self._capR and self._capR.canvas, 1)
 end
 
--- consume Left/Right so focus stays on the chooser
-function Chooser:onNavLeft() if self.focused then self:setIndex(self.index - 1); return true end return false end
-function Chooser:onNavRight() if self.focused then self:setIndex(self.index + 1); return true end return false end
+-- allow moving away focus by Decide + pad Left/Right, otherwise consume Left/Right so focus stays on the chooser
+function Chooser:onDecide() self:setFocus(not self.focused); return not self.focused end
+function Chooser:onNavLeft(forPad)
+    if not forPad or self.focused then self:setFocus(true); self:setIndex(self.index - 1); return true end
+    return false
+end
+function Chooser:onNavRight(forPad)
+    if not forPad or self.focused then self:setFocus(true); self:setIndex(self.index + 1); return true end
+    return false
+end
 
 function Chooser:update(ctx)
     Widget.update(self, ctx)
-    if self.focused then
-        if ctx.navLeft then self:setIndex(self.index - 1) end
-        if ctx.navRight then self:setIndex(self.index + 1) end
-    end
     -- which arrow is the mouse over? (left / right third) — drives hover/press visual feedback
     self._hoverThird = nil
     if self.hovered and ctx.inside then

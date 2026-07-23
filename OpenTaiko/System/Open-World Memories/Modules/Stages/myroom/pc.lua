@@ -26,6 +26,7 @@
 
 local PopUI = require("PopUI")
 local I18N = require("i18n")
+local NavInput = require("NavInput")
 
 local PC = {}
 PC.__index = PC
@@ -500,9 +501,15 @@ local function setFocusTo(ui, w)
     for i, fw in ipairs(ui.focusables) do if fw == w then ui.focusIdx = i; return end end
 end
 
+-- Left/Right switch tabs while a tab button is focused (config_ui's setupHandleTabKeys)
+local function setupHandleTabKeys(pc, tab)
+    function tab:onNavRight() return pc:setTab(self._tab % #TABS + 1) end
+    function tab:onNavLeft() return pc:setTab((self._tab - 2) % #TABS + 1) end
+end
+
 function PC:buildUI()
     if self.ui then self.ui:disposeWidgets() end
-    local ui = PopUI.new{ theme = THEME }
+    local ui = PopUI.new{ theme = THEME, navPlayer = (self.playerIndex or 0) + 1 }
     self.ui = ui
     local pc = self
     ui:panel{ x = PANEL.x, y = PANEL.y, w = PANEL.w, h = PANEL.h, title = I18N.tr("My Computer") }
@@ -519,6 +526,8 @@ function PC:buildUI()
         -- config_ui handoff: Down from a tab enters the 2nd layer (list / rename box); Up wraps too
         t.onNavDown = function() return pc:focusList() end
         t.onNavUp = function() return pc:focusList() end
+        t.onDecide = function (self) self:onClick(); return self:onNavDown() end
+        setupHandleTabKeys(pc, t)
         self.tabBtns[i] = t
     end
     -- the round RED close button
@@ -536,7 +545,7 @@ function PC:buildUI()
             onChange = function(t) pc.renameVal = t end,
             onSubmit = function(t) pc.renameVal = t; pc:applyRename() end,
         }
-        self.tb.onNavUp = function() setFocusTo(ui, pc.tabBtns[pc.tab]); return true end
+        self.tb.onNavUpOrPadLeft = function() setFocusTo(ui, pc.tabBtns[pc.tab]); return true end
         ui:button{ text = I18N.tr("Apply"), x = LIST.x + 670, y = LIST.y + 86, w = 180, h = 82, accent = true,
                    onClick = function() pc:applyRename() end }
     else
@@ -573,13 +582,13 @@ function PC:buildUI()
         self.menu = menu
         -- 2nd-layer ↔ 1st-layer handoff at the list edges (config_ui pattern); header rows are
         -- skipped in BOTH directions — the cursor hops straight between the entries around them
-        menu.onNavUp = function(m)
+        menu.onNavUpOrPadLeft = function(m)
             local i = m.selected - 1
             while i >= 1 and not pc:rowSelectable(i) do i = i - 1 end
             if i >= 1 then m:setSelected(i); return true end
             setFocusTo(ui, pc.tabBtns[pc.tab]); return true
         end
-        menu.onNavDown = function(m)
+        menu.onNavDownOrPadRight = function(m)
             local i = m.selected + 1
             while i <= #m.items and not pc:rowSelectable(i) do i = i + 1 end
             if i <= #m.items then m:setSelected(i); return true end
@@ -607,19 +616,9 @@ function PC:setTab(i)
         self.sel = 1
         self.msg = nil
         self:buildUI()
+        return true
     end
-end
-
--- Left/Right switch tabs while a tab button is focused (config_ui's handleTabKeys)
-function PC:handleTabKeys()
-    local ui = self.ui
-    if ui == nil then return end
-    local fw = ui.focusables[ui.focusIdx]
-    if not (fw and fw._tab) then return end
-    local right = INPUT:KeyboardPressed("RightArrow") or INPUT:Pressed("RBlue")
-    local left  = INPUT:KeyboardPressed("LeftArrow") or INPUT:Pressed("LBlue")
-    if right then self:setTab(fw._tab % #TABS + 1)
-    elseif left then self:setTab((fw._tab - 2) % #TABS + 1) end
+    return false
 end
 
 -- ── detail state (recomputed on selection change, drawn every frame) ──────────────────────────────
@@ -801,7 +800,6 @@ function PC:update(ts)
     -- closing the screen on its first update (and the next Esc/Enter then quit the stage). Keep the
     -- comparison explicit.
     local r = self.ui:update(ts)
-    if self.ui and not self.ui:isCapturing() then self:handleTabKeys() end
     -- failed-unlock red flash decay (~0.4 s)
     local dt = math.max(0, math.min(0.1, (ts - (self._lastTs or ts)) / 1000))
     self._lastTs = ts

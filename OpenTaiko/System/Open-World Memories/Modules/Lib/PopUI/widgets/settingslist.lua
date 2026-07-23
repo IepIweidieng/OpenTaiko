@@ -71,8 +71,8 @@ function List:_setSelected(i)
     self.selected = i
     self:_ensureVisible(); self:_notifyFocus(); self.mgr:playSfx("move")
 end
-function List:onNavDown() if self.selected < #self._focusable then self:_setSelected(self.selected + 1); return true end return false end
-function List:onNavUp() if self.selected > 1 then self:_setSelected(self.selected - 1); return true end return false end
+function List:onNavDownOrPadRight() if self.selected < #self._focusable then self:_setSelected(self.selected + 1); return true end return false end
+function List:onNavUpOrPadLeft() if self.selected > 1 then self:_setSelected(self.selected - 1); return true end return false end
 
 function List:_ensureVisible()
     local rowIdx = self:_selRowIndex() or 1
@@ -107,6 +107,17 @@ function List:onActivate()
     end
 end
 
+-- allow moving away focus by Decide + pad Left/Right, otherwise consume Left/Right so focus stays on the list
+function List:onDecide() self:setFocus(not self.focused); return not self.focused end  -- blocks onActivate() when not focused
+function List:onNavLeft(forPad)
+    if not forPad or self.focused then self:setFocus(true); editOpt(self:_selOpt(), -1); self.mgr:playSfx("move"); return true end
+    return false
+end
+function List:onNavRight(forPad)
+    if not forPad or self.focused then self:setFocus(true); editOpt(self:_selOpt(), 1); self.mgr:playSfx("move"); return true end
+    return false
+end
+
 function List:update(ctx)
     self._scaleC:Tick(); self._hiC:Tick()
     self._hiCur = U.lerp(self._hiFrom, self._hiTo, self._hiC.Value)
@@ -129,10 +140,6 @@ function List:update(ctx)
                 end
             end
         end
-    end
-    if self.focused then
-        if ctx.navLeft then editOpt(self:_selOpt(), -1); self.mgr:playSfx("move") end
-        if ctx.navRight then editOpt(self:_selOpt(), 1); self.mgr:playSfx("move") end
     end
     self._scrollCur = self._scrollCur + (self._scrollTarget - self._scrollCur) * math.min(1, ctx.dt * 16)
 end

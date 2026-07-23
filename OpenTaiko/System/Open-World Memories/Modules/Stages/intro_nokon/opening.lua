@@ -7,6 +7,8 @@
 --
 -- update() returns "start", "back", or nil.
 
+local NavInput = require("NavInput")
+
 local M = {}
 
 local tx     = {}   -- shared with Script.lua (allocated/freed there)
@@ -235,14 +237,13 @@ function M.update()
         end
 
         -- Navigation
-        if INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow") or
-           INPUT:Pressed("LeftChange")  or INPUT:KeyboardPressed("LeftArrow") then
+        if NavInput.right() or NavInput.left() then
             selectedItem = 1 - selectedItem
             SHARED:GetSharedSound("Skip"):Play()
         end
 
         -- Confirm
-        if INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return") then
+        if NavInput.decide() then
             if selectedItem == 0 then
                 SHARED:GetSharedSound("Decide"):Play()
                 return "start"

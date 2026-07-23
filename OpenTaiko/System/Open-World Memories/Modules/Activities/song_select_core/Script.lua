@@ -19,6 +19,7 @@ local Diff    = require("diffselect")
 local Replay  = require("replaylist")
 local DrawSS  = require("draw_songselect")
 local CFG     = require("sscore_config")
+local NavInput = require("NavInput")
 
 -- Song-preview volume fades (skinner-tunable in Config/layout.json).
 local PREVIEW_FADE_IN_MS  = CFG.num("preview.fade_in_ms", 280)
@@ -108,12 +109,13 @@ local G = {
     holdDir = 0,
 
     -- Per-player input bindings
+    NavInput = NavInput,
     inputSets = {
-        { right = "RightChange", left = "LeftChange", decide1 = "Decide",  decide2 = "Decide",  cancel = "Cancel", auto = "ToggleAutoP1" },
-        { right = "RBlue2P",     left = "LBlue2P",    decide1 = "RRed2P",  decide2 = "LRed2P",  cancel = nil,      auto = "ToggleAutoP2" },
-        { right = "RBlue3P",     left = "LBlue3P",    decide1 = "RRed3P",  decide2 = "LRed3P",  cancel = nil,      auto = nil },
-        { right = "RBlue4P",     left = "LBlue4P",    decide1 = "RRed4P",  decide2 = "LRed4P",  cancel = nil,      auto = nil },
-        { right = "RBlue5P",     left = "LBlue5P",    decide1 = "RRed5P",  decide2 = "LRed5P",  cancel = nil,      auto = nil },
+        { auto = "ToggleAutoP1" },
+        { auto = "ToggleAutoP2" },
+        { auto = nil },
+        { auto = nil },
+        { auto = nil },
     },
 }
 

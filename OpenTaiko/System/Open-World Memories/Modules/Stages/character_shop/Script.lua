@@ -1,6 +1,8 @@
 -- character_shop/Script.lua
 -- Allows the player to unlock and equip characters, puchichara, and nameplates.
 
+local NavInput = require("NavInput")
+
 -- ─────────────────────────────────────────────────────────────────────────────
 -- State
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -525,23 +527,24 @@ function update()
         return
     end
 
+    local navPn = NavInput.p[1]
 
     if currentScreen == "main" then
-        if INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+        if navPn.cancel() then
             if sounds.Cancel ~= nil then sounds.Cancel:Play() end
             return Exit("title", nil)
         end
 
-        if INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("DownArrow") then
+        if navPn.downOrPadRight() then
             if sounds.Move ~= nil then sounds.Move:Play() end
             mainIdx = (mainIdx % #MAIN_OPTIONS) + 1
         end
-        if INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("UpArrow") then
+        if navPn.upOrPadLeft() then
             if sounds.Move ~= nil then sounds.Move:Play() end
             mainIdx = ((mainIdx - 2 + #MAIN_OPTIONS) % #MAIN_OPTIONS) + 1
         end
 
-        if INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return") then
+        if navPn.decide() then
             if sounds.Decide ~= nil then sounds.Decide:Play() end
             subIdx = 0
             if mainIdx == 1 then
@@ -564,26 +567,26 @@ function update()
         end
 
     elseif currentScreen == "character" then
-        if INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+        if navPn.cancel() then
             if sounds.Cancel ~= nil then sounds.Cancel:Play() end
             currentScreen = "main"
             return
         end
 
-        if INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow") then
+        if navPn.right() then
             if sounds.Move ~= nil then sounds.Move:Play() end
             if #characterList > 0 then
                 subIdx = modWrap(subIdx + 1, #characterList)
             end
         end
-        if INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("LeftArrow") then
+        if navPn.left() then
             if sounds.Move ~= nil then sounds.Move:Play() end
             if #characterList > 0 then
                 subIdx = modWrap(subIdx - 1, #characterList)
             end
         end
 
-        if (INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return")) and #characterList > 0 then
+        if navPn.decide() and #characterList > 0 then
             tryUnlockCharacter(characterList[subIdx + 1], false)
         end
 
@@ -593,26 +596,26 @@ function update()
         end
 
     elseif currentScreen == "puchichara" then
-        if INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+        if navPn.cancel() then
             if sounds.Cancel ~= nil then sounds.Cancel:Play() end
             currentScreen = "main"
             return
         end
 
-        if INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow") then
+        if navPn.right() then
             if sounds.Move ~= nil then sounds.Move:Play() end
             if #puchiList > 0 then
                 subIdx = modWrap(subIdx + 1, #puchiList)
             end
         end
-        if INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("LeftArrow") then
+        if navPn.left() then
             if sounds.Move ~= nil then sounds.Move:Play() end
             if #puchiList > 0 then
                 subIdx = modWrap(subIdx - 1, #puchiList)
             end
         end
 
-        if (INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return")) and #puchiList > 0 then
+        if navPn.decide() and #puchiList > 0 then
             tryUnlockPuchi(puchiList[subIdx + 1], false)
         end
 
@@ -621,26 +624,26 @@ function update()
         end
 
     elseif currentScreen == "nameplate" then
-        if INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+        if navPn.cancel() then
             if sounds.Cancel ~= nil then sounds.Cancel:Play() end
             currentScreen = "main"
             return
         end
 
-        if INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("DownArrow") then
+        if navPn.downOrPadRight() then
             if sounds.Move ~= nil then sounds.Move:Play() end
             if #nameplateList > 0 then
                 subIdx = modWrap(subIdx + 1, #nameplateList)
             end
         end
-        if INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("UpArrow") then
+        if navPn.upOrPadLeft() then
             if sounds.Move ~= nil then sounds.Move:Play() end
             if #nameplateList > 0 then
                 subIdx = modWrap(subIdx - 1, #nameplateList)
             end
         end
 
-        if (INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return")) and #nameplateList > 0 then
+        if navPn.decide() and #nameplateList > 0 then
             tryUnlockNameplate(nameplateList[subIdx + 1], false)
         end
 
@@ -649,26 +652,26 @@ function update()
         end
 
     elseif currentScreen == "hitsounds" then
-        if INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+        if navPn.cancel() then
             if sounds.Cancel ~= nil then sounds.Cancel:Play() end
             currentScreen = "main"
             return
         end
 
-        if INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow") then
+        if navPn.right() then
             if sounds.Move ~= nil then sounds.Move:Play() end
             if #hitsoundList > 0 then
                 subIdx = modWrap(subIdx + 1, #hitsoundList)
             end
         end
-        if INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("LeftArrow") then
+        if navPn.left() then
             if sounds.Move ~= nil then sounds.Move:Play() end
             if #hitsoundList > 0 then
                 subIdx = modWrap(subIdx - 1, #hitsoundList)
             end
         end
 
-        if (INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return")) and #hitsoundList > 0 then
+        if navPn.decide() and #hitsoundList > 0 then
             local entry = hitsoundList[subIdx + 1]
             if entry ~= nil then
                 save.SelectedHitsounds = entry.FolderName ---@diagnostic disable-line: inject-field

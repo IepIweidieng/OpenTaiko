@@ -11,6 +11,7 @@
 -- key-config service; model.RequestExit()/model.PlaySfx(name) are callbacks.
 
 local PopUI = require("PopUI")
+local NavInput = require("NavInput")
 
 local SW, SH = 1920, 1080
 
@@ -181,12 +182,12 @@ local function placeControl(ctrl, kind, entry, opt)
     ctrl._opt = opt
     -- up from the first row of a category page goes to the active tab (in main mode; in bind mode it falls
     -- through to focusPrev → the back button)
-    ctrl.onNavUp = function(self)
+    ctrl.onNavUpOrPadLeft = function(self)
         if mode == "main" and current and self == current.firstCtrl then setFocusTo(activeTab()); return true end
         return false
     end
     -- down from the last row wraps up to the tab strip (two-layer nav: tab strip <-> rows, both ways)
-    ctrl.onNavDown = function(self)
+    ctrl.onNavDownOrPadRight = function(self)
         if mode == "main" and current and self == current.lastCtrl then setFocusTo(activeTab()); return true end
         return false
     end
@@ -274,7 +275,7 @@ local function addBindRow(page, act)
     btn._entry = entry
     btn._opt = entry.opt
     btn._act = act
-    btn.onNavUp = function(self)
+    btn.onNavUpOrPadLeft = function(self)
         if mode == "main" and current and self == current.firstCtrl then setFocusTo(activeTab()); return true end
         return false
     end
@@ -427,13 +428,9 @@ end
 
 -- horizontal arrows (or LBlue/RBlue) move between tabs, only while a tab is focused, and wrap both ways across
 -- all tabs including the exit tab
-local function handleTabKeys()
-    local fw = ui.focusables[ui.focusIdx]
-    if not (fw and fw._tab) then return end
-    local right = INPUT:KeyboardPressed("RightArrow") or INPUT:Pressed("RBlue")
-    local left  = INPUT:KeyboardPressed("LeftArrow") or INPUT:Pressed("LBlue")
-    if right then focusTab(fw._tab % nTabs + 1)
-    elseif left then focusTab((fw._tab - 2) % nTabs + 1) end
+local function setupHandleTabKeys(tab)
+    function tab:onNavRight() focusTab(self._tab % nTabs + 1); return true end
+    function tab:onNavLeft() focusTab((self._tab - 2) % nTabs + 1); return true end
 end
 
 -- ── gradient background ───────────────────────────────────────────────────────────
@@ -537,14 +534,17 @@ function activate(model)
     for i = 0, M.CategoryLabels.Count - 1 do tabLabels[#tabLabels + 1] = M.CategoryLabels[i] end
     tabLabels[#tabLabels + 1] = tr("SETTINGS_UI_KEYS", "Input")
     local tx = VX
+    local function tabDecide(self) self:onClick(); return self:onNavDown() end
     local function tabNavDown() if mode == "main" and current and current.firstCtrl then setFocusTo(current.firstCtrl); return true end return false end
     local function tabNavUp() if mode == "main" and current and current.lastCtrl then setFocusTo(current.lastCtrl); return true end return true end
     for i, label in ipairs(tabLabels) do
         local catId = (i <= M.Categories.Count) and M.Categories[i - 1] or nil
         local t = ui:button{ text = label, y = TAB_Y, h = TAB_H, onClick = function() switchTab(i) end }
         t._tab = i; t._catId = catId
+        t.onDecide = tabDecide
         t.onNavDown = tabNavDown
         t.onNavUp = tabNavUp   -- up from a tab wraps to the last row
+        setupHandleTabKeys(t)
         t.x = floor(tx); tx = tx + t.w + 16
         tabs[i] = t
     end
@@ -554,8 +554,10 @@ function activate(model)
         local i = #tabs + 1
         local t = ui:button{ text = tr("SETTINGS_UI_EXIT", "Exit"), y = TAB_Y, h = TAB_H, onClick = function() requestExit() end }
         t._tab = i; t._exit = true
+        t.onDecide = tabDecide
         t.onNavDown = tabNavDown
         t.onNavUp = tabNavUp
+        setupHandleTabKeys(t)
         t.x = floor(tx); tx = tx + t.w + 16
         tabs[i] = t
     end
@@ -624,7 +626,6 @@ function update(ts)
     local r = ui:update(ts)
 
     if not typing then
-        handleTabKeys()
         -- bind mode: delete/backspace clears the most-recently-added binding of the focused action
         if mode == "bind" and (INPUT:KeyboardPressed("Delete") or INPUT:KeyboardPressed("Backspace")) then
             local fw = ui.focusables[ui.focusIdx]

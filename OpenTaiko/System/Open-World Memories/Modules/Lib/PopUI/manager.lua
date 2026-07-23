@@ -16,6 +16,8 @@ local Menu   = require("PopUI.widgets.menu")
 local Chooser = require("PopUI.widgets.chooser")
 local SettingsList = require("PopUI.widgets.settingslist")
 
+local NavInput = require("NavInput")
+
 local SCREEN_W, SCREEN_H = 1920, 1080
 local HOLD_DELAY, HOLD_REPEAT = 0.20, 0.07
 
@@ -40,6 +42,7 @@ end
 function M.new(opts)
     opts = opts or {}
     local self = setmetatable({}, M)
+    self.navPlayer = opts.navPlayer  -- for NavInput.getPn(navPlayer)
     self.userTheme = opts.theme or {}
     self.theme = Theme.resolve(self.userTheme, nil)
     self.sfx = opts.sfx or {}
@@ -246,6 +249,7 @@ function M:_setFocusIndex(i)
     self.focusIdx = i
 end
 
+function M:focusStay() self:_setFocusIndex(self.focusIdx < 1 and 1 or self.focusIdx) end
 function M:focusNext() self:_setFocusIndex(self.focusIdx < 1 and 1 or self.focusIdx + 1); self:playSfx("move") end
 function M:focusPrev() self:_setFocusIndex(self.focusIdx < 1 and 1 or self.focusIdx - 1); self:playSfx("move") end
 
@@ -258,8 +262,9 @@ function M:isCapturing() return self._captureWidget ~= nil end
 function M:_repeatKey(key, dt)
     local st = self._rep[key]
     if not st then st = { held = false, t = 0 }; self._rep[key] = st end
-    if INPUT:KeyboardPressed(key) then st.held = true; st.t = 0; return true end
-    if st.held and INPUT:KeyboardPressing(key) then
+    local navPn = NavInput.getPn(self.navPlayer)
+    if navPn[key]() then st.held = true; st.t = 0; return true end
+    if st.held and navPn[key .. "Pressing"]() then
         st.t = st.t + dt
         if st.t >= HOLD_DELAY then st.t = st.t - HOLD_REPEAT; return true end
         return false
@@ -297,12 +302,15 @@ function M:update(ts)
         self._captureWidget = nil
     end
     local captured = self._captureWidget ~= nil
-    c.decide = (not captured) and (INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return") or INPUT:KeyboardPressed("Space")) or false
-    c.cancel = INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape")
-    c.navDown  = (not captured) and self:_repeatKey("DownArrow", dt) or false
-    c.navUp    = (not captured) and self:_repeatKey("UpArrow", dt) or false
-    c.navLeft  = (not captured) and (self:_repeatKey("LeftArrow", dt) or INPUT:Pressed("LBlue")) or false
-    c.navRight = (not captured) and (self:_repeatKey("RightArrow", dt) or INPUT:Pressed("RBlue")) or false
+    local navPn = NavInput.getPn(self.navPlayer)
+    c.decide = (not captured) and (navPn.decide() or INPUT:KeyboardPressed("Space")) or false
+    c.cancel = navPn.cancel()
+    c.navDown  = (not captured) and self:_repeatKey("down", dt) or false
+    c.navDownOrPadRight = (not captured) and self:_repeatKey("downOrPadRight", dt) or false
+    c.navUp    = (not captured) and self:_repeatKey("up", dt) or false
+    c.navUpOrPadLeft = (not captured) and self:_repeatKey("upOrPadLeft", dt) or false
+    c.navLeft  = (not captured) and self:_repeatKey("leftKeyboard", dt) or false
+    c.navRight = (not captured) and self:_repeatKey("rightKeyboard", dt) or false
 
     self.cancelRequested = false
 
@@ -326,13 +334,54 @@ function M:update(ts)
         end
         -- keyboard/gamepad focus navigation; a focused widget (e.g. a list) may consume Up/Down for its
         -- own internal selection and only let focus escape at its boundary.
+        -- Pad Left/Right is also tried if specified by the callbacks; treated as normal Left/Right if not consumed.
         local fw = self.focusables[self.focusIdx]
-        if c.navDown then
-            if not (fw and fw.onNavDown and fw:onNavDown()) then self:focusNext() end
+        if c.navDown or c.navDownOrPadRight then
+            local on = nil
+            if c.navDown then on = fw and fw.onNavDown
+            else on = fw and fw.onNavRight  -- from padRight
+            end
+            if not (on and on(fw, not c.navDown)) then 
+                local on = fw and fw.onNavDownOrPadRight
+                if not (on and on(fw)) then self:focusNext() end
+            end
+            c.navDown = false
+            c.navDownOrPadRight = false
         end
-        if c.navUp then
-            fw = self.focusables[self.focusIdx]
-            if not (fw and fw.onNavUp and fw:onNavUp()) then self:focusPrev() end
+        fw = self.focusables[self.focusIdx]
+        if c.navUp or c.navUpOrPadLeft then
+            local on = nil
+            if c.navUp then on = fw and fw.onNavUp
+            else on = fw and fw.onNavLeft  -- from padLeft
+            end
+            if not (on and on(fw, not c.navUp)) then 
+                local on = fw and fw.onNavUpOrPadLeft
+                if not (on and on(fw)) then self:focusPrev() end
+            end
+            c.navUp = false
+            c.navUpOrPadLeft = false;
+        end
+        -- Ensure focus for keyboard Left/Right
+        fw = self.focusables[self.focusIdx]
+        if c.navRight then
+            local on = fw and fw.onNavRight
+            if on and on(fw, false) then c.navRight = false
+            else self:focusStay()
+            end
+        end
+        fw = self.focusables[self.focusIdx]
+        if c.navLeft then
+            local on = fw and fw.onNavLeft
+            if on and on(fw, false) then c.navLeft = false
+            else self:focusStay()
+            end
+        end
+        fw = self.focusables[self.focusIdx]
+        if c.decide then
+            local on = fw and fw.onDecide
+            if on and on(fw) then c.decide = false
+            else -- pass to be handled by keyActivate() -> onActivate()
+            end
         end
     end
 
@@ -352,7 +401,11 @@ function M:update(ts)
             self._pressW:release(inside); self._pressW = nil
         end
         -- keyboard/gamepad activate (single-shot squish→boing, not a same-frame press+release that cancels it)
-        if c.decide and focusW then focusW:keyActivate() end
+        if c.decide then
+            if focusW then focusW:keyActivate(); c.decide = false
+            else self:focusStay()
+            end
+        end
         -- cancel bubbles to the stage
         if c.cancel then self.cancelRequested = true end
     end

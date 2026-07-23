@@ -14,6 +14,7 @@
 -- screen opens, and a loading line shows until the hovered list lands.
 
 local PopUI = require("PopUI")
+local NavInput = require("NavInput")
 
 local M = {}
 local G            -- shared state injected by Script.lua
@@ -377,7 +378,7 @@ end
 function M.handleUpdate(ts)
     -- confirm prompt takes over input until answered
     if G.replayConfirm ~= nil then
-        if INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return") then
+        if NavInput.decide() then
             local c = G.replayConfirm
             G.replayConfirm = nil
             if REPLAY:Watch(c.filepath, c.chartPath) then
@@ -386,7 +387,7 @@ function M.handleUpdate(ts)
                 G.lastSignal = "play"
                 return "play"
             end
-        elseif INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+        elseif NavInput.cancel() then
             G.sounds.Cancel:Play(); G.replayConfirm = nil
         end
         return "consume"

@@ -1,6 +1,7 @@
 ---@diagnostic disable: undefined-global, undefined-field, need-check-nil, unused-local, inject-field, param-type-mismatch
 local DBItems = require("DBControllers/dbItems")
 local PopUI = require("PopUI")
+local NavInput = require("NavInput")
 
 local save = nil
 local playerIndex = 0          -- which of the 5 local saves' shop we're browsing (chosen on entry)
@@ -90,15 +91,15 @@ local function deepcopy(o, seen)
 
   local no
   if type(o) == 'table' then
-    no = {}
-    seen[o] = no
+	no = {}
+	seen[o] = no
 
-    for k, v in next, o, nil do
-      no[deepcopy(k, seen)] = deepcopy(v, seen)
-    end
-    setmetatable(no, deepcopy(getmetatable(o), seen))
+	for k, v in next, o, nil do
+	  no[deepcopy(k, seen)] = deepcopy(v, seen)
+	end
+	setmetatable(no, deepcopy(getmetatable(o), seen))
   else -- number, string, boolean, etc
-    no = o
+	no = o
   end
   return no
 end
@@ -543,13 +544,13 @@ local function buildCycle()
   -- odd indices first (from high to low)
   local oddStart = (layoutSize - 1) % 2 == 1 and (layoutSize - 1) or (layoutSize - 2)
   for i = oddStart, 1, -2 do
-    table.insert(cycle, i)
+	table.insert(cycle, i)
   end
 
   -- even indices after (from high to low)
   local evenStart = (layoutSize - 1) % 2 == 0 and (layoutSize - 1) or (layoutSize - 2)
   for i = evenStart, 0, -2 do
-    table.insert(cycle, i)
+	table.insert(cycle, i)
   end
 
   -- reroll and return
@@ -565,10 +566,10 @@ local function moveInCycle(direction)
   -- find current index in cycle
   local idx
   for i,v in ipairs(cycle) do
-      if v == selectedItem then
-          idx = i
-          break
-      end
+	  if v == selectedItem then
+		  idx = i
+		  break
+	  end
   end
   if not idx then return selectedItem end
 
@@ -626,7 +627,7 @@ local SHOP_SFX  -- set in activate() once sounds exist
 local CONFIRM_CX, BTN_W = 960, 340
 local function buildConfirmUI(item, slot)
 	if confirmUI then confirmUI:disposeWidgets() end
-	confirmUI = PopUI.new{ theme = {}, sfx = SHOP_SFX }
+	confirmUI = PopUI.new{ theme = {}, sfx = SHOP_SFX, navPlayer = playerIndex + 1 }
 	local cx, bx = CONFIRM_CX, CONFIRM_CX - BTN_W / 2
 	local hasQty = (item.Stock or 1) > 1
 	local panelH = hasQty and 720 or 640
@@ -661,7 +662,7 @@ end
 
 local function buildRefreshUI()
 	if confirmUI then confirmUI:disposeWidgets() end
-	confirmUI = PopUI.new{ theme = {}, sfx = SHOP_SFX }
+	confirmUI = PopUI.new{ theme = {}, sfx = SHOP_SFX, navPlayer = playerIndex + 1 }
 	local cx, bx = CONFIRM_CX, CONFIRM_CX - BTN_W / 2
 	local rerollPrice = math.floor(10 * (2 ^ executedRerolls))
 	confirmUI:panel{ x = 660, y = 280, w = 600, h = 480, title = "Reroll" }
@@ -703,19 +704,20 @@ function update(ts)
 			currentScreen = "shop"
 		end
 	elseif currentScreen == "shop" then
-		if INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow") then
+		local navPn = NavInput.p[playerIndex + 1]
+		if navPn.right() then
 			sounds.Skip:Play()
 			selectedItem = moveInCycle(1)
 		end
-		if INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("LeftArrow") then
+		if navPn.left() then
 			sounds.Skip:Play()
 			selectedItem = moveInCycle(-1)
 		end
-		if INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+		if navPn.cancel() then
 			sounds.Cancel:Play()
 			return Exit("title", nil)
 		end
-		if INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return") then
+		if navPn.decide() then
 				-- Back button
 				if selectedItem == -2 then
 					sounds.Decide:Play()
@@ -782,12 +784,12 @@ local function openShopPlayerSelect()
 	end
 	if #entries <= 1 then enterShopFor(entries[1] and entries[1].value or 0); return end
 	if confirmUI then confirmUI:disposeWidgets() end
-	confirmUI = PopUI.new{ theme = {}, sfx = SHOP_SFX }
+	confirmUI = PopUI.new{ theme = {}, sfx = SHOP_SFX, navPlayer = nil } -- accessible by all players
 	local x, y, w = 960 - 380, 210, 760
 	local h = 120 + #entries * 78 + 40
 	confirmUI:panel{ x = x, y = y, w = w, h = h, title = "Whose shop?" }
 	confirmUI:menu{ x = x + 36, y = y + 92, w = w - 72, h = #entries * 78, rowHeight = 78, items = entries,
-	                onSelect = function(_, it) enterShopFor(it.value) end }
+					onSelect = function(_, it) enterShopFor(it.value) end }
 	confirmUI:_setFocusIndex(1)
 	currentScreen = "playerselect"
 end

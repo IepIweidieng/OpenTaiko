@@ -10,6 +10,8 @@
 --   Move: WASD    Jump/swim: Space    Sprint: LCtrl    Look: mouse
 --   Break: L-click    Place: R-click    Block palette: E    Hotbar: wheel + 1-9    Pause: Esc
 
+local NavInput = require("NavInput")
+
 -- ════════════════════════════════════════════════════════════════════════════════
 -- Config
 -- ════════════════════════════════════════════════════════════════════════════════
@@ -1510,7 +1512,7 @@ function update(ts)
 
     -- inventory / furnace UI: E toggles, Esc closes; while open it owns the mouse + keys
     if Inv.openMode then
-        if kp("E") or kp("Escape") then
+        if kp("E") or NavInput.cancel() then
             Inv.close()
             INPUT:SetMouseLocked(true)
             return nil
@@ -1526,7 +1528,7 @@ function update(ts)
         return nil
     end
 
-    if kp("Escape") then
+    if NavInput.cancel() then
         paused = not paused
         INPUT:SetMouseLocked(not paused)
         return nil
@@ -1541,9 +1543,9 @@ function update(ts)
                 menuSel = i
             end
         end
-        if kp("DownArrow") or kp("S") then menuSel = menuSel % #menuItems + 1 end
-        if kp("UpArrow") or kp("W") then menuSel = (menuSel - 2) % #menuItems + 1 end
-        if kp("Return") then return menuActivate(menuSel) end
+        if NavInput.downOrPadRight() or kp("S") then menuSel = menuSel % #menuItems + 1 end
+        if NavInput.upOrPadLeft() or kp("W") then menuSel = (menuSel - 2) % #menuItems + 1 end
+        if NavInput.decide() then return menuActivate(menuSel) end
         if INPUT:MousePressed("Left") then
             local r = MENU_RECTS[menuSel]
             if mx >= r[1] - r[3] / 2 and mx <= r[1] + r[3] / 2 and my >= r[2] - r[4] / 2 and my <= r[2] + r[4] / 2 then

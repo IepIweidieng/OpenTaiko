@@ -47,7 +47,7 @@ public class Dan_C {
 	/// 段位認定の条件が有効であるかどうかを返します。
 	/// </summary>
 	/// <returns>段位認定の条件が有効であるかどうか。</returns>
-	[JsonIgnore]  // The backing IsEnable field is cached instead of this accessor.
+	[JsonIgnore]  // Cache IsEnable instead
 	public bool ExamIsEnable => this.IsEnable;
 
 	/// <summary>
@@ -75,7 +75,7 @@ public class Dan_C {
 	/// 条件の種別を設定します。
 	/// </summary>
 	/// <param name="type">条件の種別。</param>
-	[JsonIgnore]  // The backing Type field is cached instead of this accessor.
+	[JsonIgnore]  // Cache Type instead
 	public Exam.Type ExamType { get => this.Type; private set => this.Type = value; }
 
 	/// <summary>
@@ -86,7 +86,7 @@ public class Dan_C {
 	/// 条件の範囲を設定します。
 	/// </summary>
 	/// <param name="range"></param>
-	[JsonIgnore]  // The backing Range field is cached instead of this accessor.
+	[JsonIgnore]  // Cache Range instead
 	public Exam.Range ExamRange { get => this.Range; private set => this.Range = value; }
 
 	/// <summary>

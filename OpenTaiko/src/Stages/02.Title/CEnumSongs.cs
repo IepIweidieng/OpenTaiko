@@ -3,6 +3,8 @@ using System.Reflection;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace OpenTaiko;
 
@@ -484,7 +486,7 @@ internal partial class CEnumSongs                   // #27060 2011.2.7 yyagi 曲
 		return (Dictionary<string, CSongListNode>)songlistdb_.Deserialize(stream);
 	}
 
-	// Mobile song cache serialized by System.Text.Json source generation. Runtime state is marked
+	// JSON song cache serialized by System.Text.Json source generation. Runtime state is marked
 	// [JsonIgnore] and rebuilt on load. The schema signature guards layout changes.
 	private sealed class SongListCacheFile {
 		public string Signature { get; set; }
@@ -493,17 +495,17 @@ internal partial class CEnumSongs                   // #27060 2011.2.7 yyagi 曲
 
 	// Source generation only, with no runtime options, reflection, or converters. Nothing runs
 	// when the class loads, and the generated code stays safe under AOT and trimming.
-	[System.Text.Json.Serialization.JsonSourceGenerationOptions(IncludeFields = true)]
-	[System.Text.Json.Serialization.JsonSerializable(typeof(SongListCacheFile))]
-	private partial class SongCacheJsonContext : System.Text.Json.Serialization.JsonSerializerContext { }
+	[JsonSourceGenerationOptions(IncludeFields = true)]
+	[JsonSerializable(typeof(SongListCacheFile))]
+	private partial class SongCacheJsonContext : JsonSerializerContext { }
 
 	internal static void WriteSongListCacheJson(Stream stream, Dictionary<string, CSongListNode> listSongsDB) {
 		var file = new SongListCacheFile { Signature = SongListCacheSchemaSignature, Songs = listSongsDB };
-		System.Text.Json.JsonSerializer.Serialize(stream, file, SongCacheJsonContext.Default.SongListCacheFile);
+		JsonSerializer.Serialize(stream, file, SongCacheJsonContext.Default.SongListCacheFile);
 	}
 
 	internal static Dictionary<string, CSongListNode> ReadSongListCacheJson(Stream stream) {
-		var file = System.Text.Json.JsonSerializer.Deserialize(stream, SongCacheJsonContext.Default.SongListCacheFile);
+		var file = JsonSerializer.Deserialize(stream, SongCacheJsonContext.Default.SongListCacheFile);
 		// A cache with a different schema (renamed, added, or removed field) is discarded so the caller rebuilds.
 		if (file == null || file.Signature != SongListCacheSchemaSignature)
 			return null;

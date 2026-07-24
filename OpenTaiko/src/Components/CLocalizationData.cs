@@ -4,7 +4,7 @@ namespace OpenTaiko;
 
 [Serializable]
 public class CLocalizationData {
-	// Public so System.Text.Json includes this field in the mobile song cache.
+	// Public so System.Text.Json includes this field in the JSON song cache.
 	[JsonProperty("strings")]
 	[System.Text.Json.Serialization.JsonPropertyName("strings")]
 	public Dictionary<string, string> Strings = new Dictionary<string, string>();

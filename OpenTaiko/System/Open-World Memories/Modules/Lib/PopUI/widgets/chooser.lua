@@ -80,12 +80,14 @@ end
 function Chooser:update(ctx)
     Widget.update(self, ctx)
     -- which arrow is the mouse over? (left / right third) — drives hover/press visual feedback
-    self._hoverThird = nil
-    if self.hovered and ctx.inside then
+    if not (self.hovered and ctx.inside) then
+        self._hoverThird = nil
+    elseif ctx.moved or not self._wasHovered then
         local third = self.w / 3
         if ctx.mx < self.x + third then self._hoverThird = "left"
         elseif ctx.mx > self.x + self.w - third then self._hoverThird = "right" end
     end
+    self._wasHovered = self.hovered
     if self.hovered and ctx.mPressed and self._hoverThird then
         self._pressThird = self._hoverThird
         if self._hoverThird == "left" then self:setIndex(self.index - 1) else self:setIndex(self.index + 1) end

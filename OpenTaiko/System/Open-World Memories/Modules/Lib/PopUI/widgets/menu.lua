@@ -97,7 +97,7 @@ function Menu:update(ctx)
         self:_clampScroll()
     end
     -- mouse hover row → preview-select; click sets selection
-    if self.hovered and ctx.inside then
+    if self.hovered and ctx.inside and (ctx.moved or not self._wasHovered) then
         local rel = ctx.my - self.y + self._scrollCur
         local row = math.floor(rel / self.rowHeight) + 1
         if row >= 1 and row <= self:_count() then
@@ -105,6 +105,7 @@ function Menu:update(ctx)
             if row ~= self.selected and not ctx.mPressing then self:setSelected(row) end
         end
     end
+    self._wasHovered = self.hovered
     -- smooth scroll
     self._scrollCur = self._scrollCur + (self._scrollTarget - self._scrollCur) * math.min(1, ctx.dt * 14)
 end

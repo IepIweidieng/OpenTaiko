@@ -429,8 +429,8 @@ end
 -- horizontal arrows (or LBlue/RBlue) move between tabs, only while a tab is focused, and wrap both ways across
 -- all tabs including the exit tab
 local function setupHandleTabKeys(tab)
-    function tab:onNavRight() focusTab(self._tab % nTabs + 1); return true end
-    function tab:onNavLeft() focusTab((self._tab - 2) % nTabs + 1); return true end
+    function tab:onNavRight() focusTab((activeTabIndex or 1) % nTabs + 1); return true end
+    function tab:onNavLeft() focusTab(((activeTabIndex or 1) - 2) % nTabs + 1); return true end
 end
 
 -- ── gradient background ───────────────────────────────────────────────────────────

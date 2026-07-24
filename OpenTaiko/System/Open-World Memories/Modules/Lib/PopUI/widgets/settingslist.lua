@@ -127,7 +127,7 @@ function List:update(ctx)
         self._scrollTarget = U.clamp(self._scrollTarget, 0, maxS)
     end
     -- mouse hover row -> preview-select; click activates
-    if self.hovered and ctx.inside then
+    if self.hovered and ctx.inside and (ctx.moved or not self._wasHovered) then
         local rel = ctx.my - self.y + self._scrollCur
         local rowIdx = math.floor(rel / self.rowHeight) + 1
         if rowIdx >= 1 and rowIdx <= #self.rows and not self.rows[rowIdx].header then
@@ -141,6 +141,7 @@ function List:update(ctx)
             end
         end
     end
+    self._wasHovered = self.hovered
     self._scrollCur = self._scrollCur + (self._scrollTarget - self._scrollCur) * math.min(1, ctx.dt * 16)
 end
 

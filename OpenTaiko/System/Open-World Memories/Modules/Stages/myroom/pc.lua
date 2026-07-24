@@ -503,8 +503,8 @@ end
 
 -- Left/Right switch tabs while a tab button is focused (config_ui's setupHandleTabKeys)
 local function setupHandleTabKeys(pc, tab)
-    function tab:onNavRight() return pc:setTab(self._tab % #TABS + 1) end
-    function tab:onNavLeft() return pc:setTab((self._tab - 2) % #TABS + 1) end
+    function tab:onNavRight() return pc:setTab(pc.tab % #TABS + 1) end
+    function tab:onNavLeft() return pc:setTab((pc.tab - 2) % #TABS + 1) end
 end
 
 function PC:buildUI()
@@ -526,7 +526,7 @@ function PC:buildUI()
         -- config_ui handoff: Down from a tab enters the 2nd layer (list / rename box); Up wraps too
         t.onNavDown = function() return pc:focusList() end
         t.onNavUp = function() return pc:focusList() end
-        t.onDecide = function (self) self:onClick(); return self:onNavDown() end
+        t.onDecide = function (self) pc:setTab(pc.tab); return self:onNavDown() end
         setupHandleTabKeys(pc, t)
         self.tabBtns[i] = t
     end

@@ -281,6 +281,8 @@ function M:update(ts)
     local c = self._ctx
     c.dt, c.ts = dt, ts
     c.mx, c.my = INPUT:GetMouseXY()
+    c.mdx, c.mdy = INPUT:GetMouseDelta()
+    c.moved = c.mdx ~= 0 or c.mdy ~= 0
     c.inside = INPUT:IsMouseInside()
     c.mPressed  = INPUT:MousePressed("Left")
     c.mPressing = INPUT:MousePressing("Left")
@@ -292,7 +294,8 @@ function M:update(ts)
     -- widget's own :update that reads the mouse directly — slider drag, list/chooser scroll). One-shot: cleared here.
     if self._suppressMouse then
         c.mx, c.my = -100000, -100000
-        c.inside = false
+        c.mdx, c.mdy = 0, 0
+        c.moved, c.inside = false, false
         c.mPressed, c.mPressing, c.mReleased = false, false, false
         c.scrollDx, c.scrollDy = 0, 0
         self._suppressMouse = false
@@ -327,9 +330,7 @@ function M:update(ts)
             if self._hoverW then self._hoverW:setHover(false) end
             if hoverW then hoverW:setHover(true) end
             self._hoverW = hoverW
-        end
-        -- mouse moves focus to the hovered widget
-        if hoverW then
+            -- mouse moves focus to the newly hovered widget
             for i, w in ipairs(self.focusables) do if w == hoverW then self.focusIdx = i; break end end
         end
         -- keyboard/gamepad focus navigation; a focused widget (e.g. a list) may consume Up/Down for its

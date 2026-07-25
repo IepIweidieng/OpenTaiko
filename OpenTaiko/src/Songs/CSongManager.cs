@@ -146,6 +146,11 @@ internal class CSongManager {
 			try {
 				string hash = TjaHash(p);
 				CTja? tja = listSongsDB.ContainsKey(p + hash) ? null : new CTja(p);
+				// Chips take the majority of the memory usage of CTja objects. Free them as they are
+				// not required for the preparsed dict. Tower charts keep their chips because
+				// LoadChartInfo counts floors from the bar lines.
+				if (tja != null && !tja.bChartExists[(int)Difficulty.Tower])
+					tja.ReleaseChips();
 				dict[p] = (hash, tja);
 			} catch { }
 			Interlocked.Increment(ref _nSearchFileCount);

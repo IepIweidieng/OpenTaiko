@@ -4316,16 +4316,6 @@ internal class CTja : CActivity {
 
 		base.Activate();
 	}
-
-	// Drops the parsed chips and keeps the header metadata.
-	public void ReleaseChips() {
-		this.listChip = new List<CChip>();
-		this.listNoteChip = new List<CChip>();
-		this.listBarLineChip = new List<CChip>();
-		this.listBRANCH = new List<CChip>();
-		this.listChip_Branch = new[] { new List<CChip>(), new List<CChip>(), new List<CChip>() };
-	}
-
 	public override void DeActivate() {
 		if (this.listWAV != null) {
 			foreach (CWAV cwav in this.listWAV.Values) {

@@ -7,17 +7,24 @@ internal interface ILang {
 static internal class CLangManager {
 	// Cheap factory-like design pattern
 
-	private static void InitializeLangs() {
-		foreach (string path in OpenTaiko.GetMergedDirectories(Path.Combine(OpenTaiko.strEXEFolder, "Lang"), "*")) {
-			// Key by the folder name (the language code). On iOS GetMergedDirectories returns paths under
-			// the app bundle, not under strEXEFolder/Lang, so Path.GetRelativePath would not yield the code.
-			string id = new DirectoryInfo(path).Name;
-			_langs.Add(id, CLang.GetCLang(id));
+	// Loads the languages once. The lock and the single dictionary assignment let the song
+	// enumeration read localized strings from several threads.
+	private static void EnsureLangs() {
+		lock (_langsLock) {
+			if (_langs.Count > 0) return;
+			var langs = new Dictionary<string, CLang>();
+			foreach (string path in OpenTaiko.GetMergedDirectories(Path.Combine(OpenTaiko.strEXEFolder, "Lang"), "*")) {
+				// Key by the folder name (the language code). On iOS GetMergedDirectories returns paths under
+				// the app bundle, not under strEXEFolder/Lang, so Path.GetRelativePath would not yield the code.
+				string id = new DirectoryInfo(path).Name;
+				langs.Add(id, CLang.GetCLang(id));
+			}
+			_langs = langs;
 		}
 	}
 	public static CLang LangInstance {
 		get {
-			if (_langs.Count == 0) InitializeLangs();
+			EnsureLangs();
 			return _langs[_langId];
 		}
 	}
@@ -50,7 +57,7 @@ static internal class CLangManager {
 	}
 	public static Dictionary<string, string> LanguageDict {
 		get {
-			if (_langs.Count == 0) InitializeLangs();
+			EnsureLangs();
 			return _langs.Values.Select(lang => new KeyValuePair<string, string>(lang.Id, lang.Language)).ToDictionary();
 		}
 	}
@@ -61,7 +68,7 @@ static internal class CLangManager {
 		CLocalizationData loc = new CLocalizationData();
 		loc.SetString("default", "?");
 
-		if (_langs.Count == 0) InitializeLangs();
+		EnsureLangs();
 		foreach (var lang in _langs) {
 			loc.SetString(lang.Key, lang.Value.GetString(key));
 		}
@@ -76,7 +83,7 @@ static internal class CLangManager {
 		CLocalizationData loc = new CLocalizationData();
 		loc.SetString("default", "?");
 
-		if (_langs.Count == 0) InitializeLangs();
+		EnsureLangs();
 		foreach (var lang in _langs) {
 			loc.SetString(lang.Key, lang.Value.GetString(key, values));
 		}
@@ -85,6 +92,7 @@ static internal class CLangManager {
 		return loc;
 	}
 
+	private static readonly object _langsLock = new();
 	private static Dictionary<string, CLang> _langs = [];
 	private static string _langId = "en";
 

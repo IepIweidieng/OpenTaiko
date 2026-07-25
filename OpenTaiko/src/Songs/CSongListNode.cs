@@ -112,7 +112,8 @@ internal class CSongListNode {
 	// Constructor
 
 	public CSongListNode() {
-		this.nID = id++;
+		// Increment atomically because the song enumeration can build nodes concurrently.
+		this.nID = Interlocked.Increment(ref lastAssignedID);
 	}
 
 	public CSongListNode Clone() {
@@ -146,7 +147,7 @@ internal class CSongListNode {
 
 	#region [ private ]
 	//-----------------
-	private static int id;
+	private static int lastAssignedID = -1;
 	//-----------------
 	#endregion
 }

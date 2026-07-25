@@ -71,8 +71,8 @@ function List:_setSelected(i)
     self.selected = i
     self:_ensureVisible(); self:_notifyFocus(); self.mgr:playSfx("move")
 end
-function List:onNavDownOrPadRight() if self.selected < #self._focusable then self:_setSelected(self.selected + 1); return true end return false end
-function List:onNavUpOrPadLeft() if self.selected > 1 then self:_setSelected(self.selected - 1); return true end return false end
+function List:onNavDownOrPadRight() self:setCapturing(false); if self.selected < #self._focusable then self:_setSelected(self.selected + 1); return true end return false end
+function List:onNavUpOrPadLeft() self:setCapturing(false); if self.selected > 1 then self:_setSelected(self.selected - 1); return true end return false end
 
 function List:_ensureVisible()
     local rowIdx = self:_selRowIndex() or 1
@@ -107,27 +107,33 @@ function List:onActivate()
     end
 end
 
--- allow moving away focus by Decide + pad Left/Right, otherwise consume Left/Right so focus stays on the list
-function List:onDecide() self:setFocus(not self.focused); return not self.focused end  -- blocks onActivate() when not focused
+-- consume Left/Right (also for pad Left/Right in capturing mode), so focus stays on the chooser
+-- consume Cancel to quit capturing mode
+function List:onDecide() self:setCapturing(not self.capturing); return true end
+function List:onCancel()
+    if self.capturing then self:setCapturing(false); return true end
+    return false
+end
 function List:onNavLeft(forPad)
-    if not forPad or self.focused then self:setFocus(true); editOpt(self:_selOpt(), -1); self.mgr:playSfx("move"); return true end
+    if not forPad or self.capturing then self:setCapturing(true); editOpt(self:_selOpt(), -1); self.mgr:playSfx("move"); return true end
     return false
 end
 function List:onNavRight(forPad)
-    if not forPad or self.focused then self:setFocus(true); editOpt(self:_selOpt(), 1); self.mgr:playSfx("move"); return true end
+    if not forPad or self.capturing then self:setCapturing(true); editOpt(self:_selOpt(), 1); self.mgr:playSfx("move"); return true end
     return false
 end
 
 function List:update(ctx)
-    self._scaleC:Tick(); self._hiC:Tick()
-    self._hiCur = U.lerp(self._hiFrom, self._hiTo, self._hiC.Value)
+    Widget.update(self, ctx)
     if self.hovered and ctx.scrollDy and ctx.scrollDy ~= 0 then
         self._scrollTarget = self._scrollTarget - ctx.scrollDy * self.rowHeight
         local maxS = math.max(0, #self.rows * self.rowHeight - self.h)
         self._scrollTarget = U.clamp(self._scrollTarget, 0, maxS)
     end
+    local capturing = self.capturing
     -- mouse hover row -> preview-select; click activates
-    if self.hovered and ctx.inside and (ctx.moved or not self._wasHovered) then
+    if not self.focused or ctx.mPressed then capturing = false end  -- reset first
+    if self.hovered and ctx.inside and (ctx.moved or not self._wasHovered or self.pressed) then
         local rel = ctx.my - self.y + self._scrollCur
         local rowIdx = math.floor(rel / self.rowHeight) + 1
         if rowIdx >= 1 and rowIdx <= #self.rows and not self.rows[rowIdx].header then
@@ -135,12 +141,17 @@ function List:update(ctx)
             for fi, ri in ipairs(self._focusable) do
                 if ri == rowIdx then
                     -- preview-select on hover / press-select on click; the manager's release fires onActivate
-                    if fi ~= self.selected and (ctx.mPressed or not ctx.mPressing) then self:_setSelected(fi) end
+                    if fi ~= self.selected then
+                        self:setCapturing(false)
+                        if (ctx.mPressed or ctx.mReleased) then self:_setSelected(fi) end
+                    end
+                    if ctx.mPressed then capturing = self.pressed end
                     break
                 end
             end
         end
     end
+    self:setCapturing(capturing)
     self._wasHovered = self.hovered
     self._scrollCur = self._scrollCur + (self._scrollTarget - self._scrollCur) * math.min(1, ctx.dt * 16)
 end
@@ -171,7 +182,9 @@ function List:draw()
                 self._ring.canvas:SetOpacity(self._hiCur); self._ring.canvas:DrawAtAnchor(rcx, rcy, "center")
             end
             local opt = r.opt
-            local nameCol = isSel and self.eff.colors.textOnAccent or self.eff.colors.text
+            local nameCol = isSel and self._hiCapCur > 0.01
+                and U.lerpColor(self.eff.colors.text, self.eff.colors.primary2, self._hiCapCur)
+                or self.eff.colors.text
             self.mgr:drawText(sz, tostring(opt.Name or ""), math.floor(self.x + 28), math.floor(rcy - th * 0.5), nameCol)
             local val = opt:Display() or ""
             if val ~= "" then

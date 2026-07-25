@@ -154,7 +154,7 @@ local function makeControl(opt)
     elseif kind == "Int" then
         local custom = (opt:Display() ~= tostring(opt.Value))
         local w = ui:slider{ w = W_SLIDER, h = 40, min = opt.Min, max = opt.Max, step = opt.Step,
-            value = opt.Value, showValue = not custom,
+            value = opt.Value, showValue = not custom or function () return opt:Display() end,
             onChange = function(v) opt:SetValue(floor(v + 0.5)) end }
         return w, custom
     elseif kind == "Choice" then
@@ -504,18 +504,6 @@ local function drawPreview()
     end
 end
 
--- int values whose :Display() differs from the raw number, drawn next to the slider
-local function drawCustomValues()
-    if not current then return end
-    local sz = ui.theme.font.small
-    for _, e in ipairs(current.entries) do
-        if e.kind == "option" and e.customDisplay and e.ctrl.y > -9000 then
-            local cy = e.ctrl.y + e.ctrl.h * 0.5
-            ui:drawText(sz, e.opt:Display(), e.ctrl.x + e.ctrl.w + 18, floor(cy - ui:textHeight(sz) * 0.5), ui.theme.colors.text)
-        end
-    end
-end
-
 -- ── lifecycle ─────────────────────────────────────────────────────────────────────
 function onStart() end
 
@@ -584,6 +572,7 @@ function reload(model)
     PopUI.flushSharedFonts()
     local keepTab   = activeTabIndex or 1
     local keepFocus = ui and ui.focusIdx or 1
+    local keepCapturing = ui and ui.focusables[ui.focusIdx] and ui.focusables[ui.focusIdx].capturing or false
     local keepST, keepSC = scrollTarget, scrollCur
     if ui then ui:disposeWidgets(); ui:clear() end
     activate(model)
@@ -591,6 +580,8 @@ function reload(model)
     scrollTarget, scrollCur = keepST, keepSC
     ui.focusIdx = clamp(keepFocus, 1, math.max(1, #ui.focusables))
     lastFocusIdx = ui.focusIdx   -- keep the restored scroll: no focus-follow snap on the next update
+    local fw = ui.focusables[ui.focusIdx]
+    if ui.focusIdx == keepFocus and fw then fw:setCapturing(keepCapturing) end
 end
 
 function update(ts)
@@ -666,7 +657,6 @@ function draw()
     if M == nil then return end
     drawGradient()
     ui:draw()             -- tabs (bottom z) + rows (top z) + preview panel
-    drawCustomValues()    -- slider :Display() values, at row positions
 
     -- header mask: cover the area above the pane top so rows that scrolled up are cut cleanly (no abrupt pop, no
     -- overlap with the tab strip). the colour matches the gradient at y=VY for a seamless seam.

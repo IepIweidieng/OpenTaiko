@@ -336,52 +336,37 @@ function M:update(ts)
         -- keyboard/gamepad focus navigation; a focused widget (e.g. a list) may consume Up/Down for its
         -- own internal selection and only let focus escape at its boundary.
         -- Pad Left/Right is also tried if specified by the callbacks; treated as normal Left/Right if not consumed.
-        local fw = self.focusables[self.focusIdx]
-        if c.navDown or c.navDownOrPadRight then
-            local on = nil
-            if c.navDown then on = fw and fw.onNavDown
-            else on = fw and fw.onNavRight  -- from padRight
+        for i, v in ipairs{
+            { "navDown", "onNavDown", "onNavRight", "navDownOrPadRight", "onNavDownOrPadRight", self.focusNext },
+            { "navUp", "onNavUp", "onNavLeft", "navUpOrPadLeft", "onNavUpOrPadLeft", self.focusPrev },
+            } do
+            local nav, onNav, onNavH, navOrPadH, onNavOrPadH, focus = table.unpack(v)
+            local fw = self.focusables[self.focusIdx]
+            if c[nav] or c[navOrPadH] then
+                local on = nil
+                if c[nav] then on = fw and fw[onNav]
+                else on = fw and fw[onNavH]  -- from padRight / padLeft
+                end
+                if not (on and on(fw, not c[nav])) then
+                    local on = fw and fw[onNavOrPadH]
+                    if not (on and on(fw)) then focus(self) end
+                end
+                c[nav] = false
+                c[navOrPadH] = false
             end
-            if not (on and on(fw, not c.navDown)) then 
-                local on = fw and fw.onNavDownOrPadRight
-                if not (on and on(fw)) then self:focusNext() end
-            end
-            c.navDown = false
-            c.navDownOrPadRight = false
-        end
-        fw = self.focusables[self.focusIdx]
-        if c.navUp or c.navUpOrPadLeft then
-            local on = nil
-            if c.navUp then on = fw and fw.onNavUp
-            else on = fw and fw.onNavLeft  -- from padLeft
-            end
-            if not (on and on(fw, not c.navUp)) then 
-                local on = fw and fw.onNavUpOrPadLeft
-                if not (on and on(fw)) then self:focusPrev() end
-            end
-            c.navUp = false
-            c.navUpOrPadLeft = false;
         end
         -- Ensure focus for keyboard Left/Right
-        fw = self.focusables[self.focusIdx]
-        if c.navRight then
-            local on = fw and fw.onNavRight
-            if on and on(fw, false) then c.navRight = false
-            else self:focusStay()
-            end
-        end
-        fw = self.focusables[self.focusIdx]
-        if c.navLeft then
-            local on = fw and fw.onNavLeft
-            if on and on(fw, false) then c.navLeft = false
-            else self:focusStay()
-            end
-        end
-        fw = self.focusables[self.focusIdx]
-        if c.decide then
-            local on = fw and fw.onDecide
-            if on and on(fw) then c.decide = false
-            else -- pass to be handled by keyActivate() -> onActivate()
+        for i, v in ipairs{
+            { "navRight", "onNavRight", self.focusStay }, { "navLeft", "onNavLeft", self.focusStay },
+            { "decide", "onDecide", function () end }, { "cancel", "onCancel", function () end }, -- pass to be handled below
+            } do
+            local nav, onNav, focus = table.unpack(v)
+            local fw = self.focusables[self.focusIdx]
+            if c[nav] then
+                local on = fw and fw[onNav]
+                if on and on(fw, false) then c[nav] = false
+                else focus(self)
+                end
             end
         end
     end

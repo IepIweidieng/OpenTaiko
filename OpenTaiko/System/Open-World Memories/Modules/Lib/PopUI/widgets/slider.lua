@@ -18,7 +18,11 @@ function Slider.new(o)
     self.max = o.max or 100
     self.step = o.step or 1
     self.value = o.value or self.min
-    self.showValue = (o.showValue ~= false)
+    if o.showValue == nil or o.showValue == true then
+        self.showValue = function (self) return tostring(math.floor(self.value)) end
+    else
+        self.showValue = o.showValue
+    end
     self._knobBoost = 0
     return self
 end
@@ -36,6 +40,7 @@ function Slider:setValue(v, silent)
     if nv == self.value then return end
     self.value = nv
     if not silent and self.onChange then self.onChange(self.value, self) end
+    self.mgr:playSfx("move")
 end
 
 function Slider:onActivate() end  -- Decide handled in onDecide(); onActivate() does nothing
@@ -45,7 +50,7 @@ function Slider:restyle()
     local c = self.eff.colors
     local th = math.floor(self.h * 0.5)          -- track height
     local ow = math.max(3, self.eff.outlineWidth - 1)
-    local m = 4
+    local m = 4  -- margin
     self._trackH = th
     self._trackR = math.floor(th * 0.5)          -- the knob travels (and the fill spans) within [x+R, x+w-R]
     self._ow = ow
@@ -66,38 +71,48 @@ function Slider:restyle()
     local mid = self.mgr:reuseCanvas(self._mid and self._mid.canvas, STRIP, self._fillH)
     Shape.fillRoundGradient(mid, 0, 0, STRIP, self._fillH, 0, c.primary, c.primary2)
     mid:Upload(); self._mid = { canvas = mid, w = STRIP }
-    -- knob: an anti-aliased circle (smooth edge) with a face + accent pip
-    local kd = self.h
+    -- knob: an anti-aliased circle (smooth edge) with a face + tintable pip
+    local kd = self.h  -- knob diameter
     local knob = self.mgr:reuseCanvas(self._knob and self._knob.canvas, kd + 2 * m, kd + 2 * m)
     Shape.fillRoundAA(knob, m, m, kd, kd, kd * 0.5, c.outline)                                  -- smooth outer circle
     Shape.fillRound(knob, m + ow, m + ow, kd - 2 * ow, kd - 2 * ow, (kd - 2 * ow) * 0.5, c.surface)
-    local pip = math.max(2, math.floor(kd * 0.30))
-    Shape.fillRound(knob, m + (kd - pip) * 0.5, m + (kd - pip) * 0.5, pip, pip, pip * 0.5, c.accent)
     knob:Upload(); self._knob = { canvas = knob, m = m, d = kd }
+    local pipd = math.max(2, math.floor(kd * 0.30))
+    local pip = self.mgr:reuseCanvas(self._pip and self._pip.canvas, pipd + 2 * m, pipd + 2 * m)
+    Shape.fillRound(pip, m, m, pipd, pipd, pipd * 0.5, { 255, 255, 255, 255 })
+    pip:Upload(); self._pip = { canvas = pip, m = m, d = pipd }
     self:bakeRing()
 end
 
--- allow moving away focus by Decide + pad Left/Right, otherwise consume Left/Right so focus stays on the slider
-function Slider:onDecide() self:setFocus(not self.focused); return not self.focused end
+-- consume Left/Right (also for pad Left/Right in capturing mode), so focus stays on the chooser
+-- consume Cancel to quit capturing mode
+function Slider:onDecide() self:setCapturing(not self.capturing); return true end
+function Slider:onCancel()
+    if self.capturing then self:setCapturing(false); return true end
+    return false
+end
 function Slider:onNavLeft(forPad)
-    if not forPad or self.focused then self:setFocus(true); self:setValue(self.value - self.step); self.mgr:playSfx("move"); return true end
+    if not forPad or self.capturing then self:setCapturing(true); self:setValue(self.value - self.step); self.mgr:playSfx("move"); return true end
     return false
 end
 function Slider:onNavRight(forPad)
-    if not forPad or self.focused then self:setFocus(true); self:setValue(self.value + self.step); self.mgr:playSfx("move"); return true end
+    if not forPad or self.capturing then self:setCapturing(true); self:setValue(self.value + self.step); self.mgr:playSfx("move"); return true end
     return false
 end
 
 function Slider:update(ctx)
-    self._scaleC:Tick(); self._hiC:Tick()
-    self._scaleCur = U.lerp(self._scaleFrom, self._scaleTo, self._scaleC.Value)
-    self._hiCur    = U.lerp(self._hiFrom, self._hiTo, self._hiC.Value)
+    Widget.update(self, ctx)
     local R = self._trackR
-    if self.pressed and ctx.mPressing then
-        local frac = (ctx.mx - (self.x + R)) / math.max(1, self.w - 2 * R)
-        self:setValue(self.min + U.clamp(frac, 0, 1) * (self.max - self.min))
-        self.mgr:playSfx("move")
+    local capturing = self.capturing
+    if not self.focused then capturing = false end
+    if ctx.mPressing then
+        capturing = self.pressed
+        if self.pressed then
+            local frac = (ctx.mx - (self.x + R)) / math.max(1, self.w - 2 * R)
+            self:setValue(self.min + U.clamp(frac, 0, 1) * (self.max - self.min))
+        end
     end
+    self:setCapturing(capturing)
 end
 
 function Slider:draw()
@@ -125,13 +140,23 @@ function Slider:draw()
         self._mid.canvas:SetScale(midW / self._mid.w, 1)
         self._mid.canvas:Draw(math.floor(midStart), top)
     end
-    self._knob.canvas:SetColor(1, 1, 1); self._knob.canvas:SetOpacity(1); self._knob.canvas:SetScale(s, s)
-    self._knob.canvas:DrawAtAnchor(math.floor(kx), cy, "center")
+    local pipColor = self._hiCapCur > 0.01
+        and U.lerpColor(self.eff.colors.primary, self.eff.colors.accent, self._hiCapCur)
+        or self.eff.colors.primary
+    for i, v in ipairs{ { self._knob, { 255, 255, 255, 255 } }, { self._pip, pipColor } } do
+        local part, color = table.unpack(v)
+        local r, g, b, a = table.unpack(color)
+        part.canvas:SetColor(r / 255, g / 255, b / 255); part.canvas:SetOpacity(a / 255); part.canvas:SetScale(s, s)
+        part.canvas:DrawAtAnchor(math.floor(kx), cy, "center")
+    end
     if self.showValue then
         local sz = self.eff.font.small
         local y = cy - math.floor(self.mgr:textHeight(sz) * 0.5) + self.mgr:textNudge(sz)
+        local textColor = self._hiCapCur > 0.01
+            and U.lerpColor(self.eff.colors.text, self.eff.colors.primary2, self._hiCapCur)
+            or self.eff.colors.text
         -- glyph-atlas draw: value changes every drag-frame; correct advances + bounded glyph cache
-        self.mgr:drawText(sz, tostring(math.floor(self.value)), math.floor(self.x + self.w + 18), y, self.eff.colors.text)
+        self.mgr:drawText(sz, self:showValue(), math.floor(self.x + self.w + 18), y, textColor)
     end
 end
 

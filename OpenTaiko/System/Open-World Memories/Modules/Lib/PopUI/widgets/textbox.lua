@@ -17,7 +17,6 @@ function TextBox.new(o)
     self.placeholder = o.placeholder or ""
     self.maxLen = o.maxLen or 64
     self.padX = o.padX or 24
-    self._capturing = false
     self.noPop = true   -- don't hover-zoom the box: DrawDirect text can't scale to match, so keep both static
     return self
 end
@@ -30,15 +29,14 @@ function TextBox:restyle()
     self:bakeRing()
 end
 
-function TextBox:_endCapture()
-    self._capturing = false
+function TextBox:onEndCapture()
     self.mgr:releaseKeys(self)
     self._ti = nil
 end
 
 function TextBox:onActivate()
-    if self._capturing then return end
-    self._capturing = true
+    if self.capturing then return end
+    self:setCapturing(true)
     self._ti = INPUT:CreateTextInput(self.value or "", self.maxLen)
     self._lastText = self.value or ""
     self.mgr:captureKeys(self)
@@ -46,7 +44,7 @@ end
 
 function TextBox:update(ctx)
     Widget.update(self, ctx)   -- tick scale/highlight tweens
-    if self._capturing then
+    if self.capturing then
         local submitted = self._ti:Update()
         local t = self._ti.Text or ""
         if t ~= self._lastText then
@@ -54,12 +52,12 @@ function TextBox:update(ctx)
             if self.onChange then self.onChange(t, self) end
         end
         if submitted then
-            self.value = t; self:_endCapture()
+            self.value = t; self:setCapturing(false)
             if self.onSubmit then self.onSubmit(self.value, self) end
         elseif INPUT:KeyboardPressed("Escape") then
-            self.value = t; self:_endCapture()
+            self.value = t; self:setCapturing(false)
         elseif INPUT:MousePressed("Left") and not self:hitTest(INPUT:GetMouseXY()) then
-            self.value = t; self:_endCapture()
+            self.value = t; self:setCapturing(false)
         end
     end
 end
@@ -70,9 +68,12 @@ function TextBox:drawContent(cx, cy, s)
     local x = math.floor(self.x + self.padX)
     local y = math.floor(self.y + self.h * 0.5 - self.mgr:textHeight(sz) * 0.5 + self.mgr:textNudge(sz))
     -- glyph-atlas draw (bounded glyph cache + correct advances) — typing can't flood VRAM, spacing is right
+    local textColor = self._hiCapCur > 0.01
+        and U.lerpColor(c.text, c.primary2, self._hiCapCur)
+        or c.text
     local str, col
-    if self._capturing then str, col = (self._ti.DisplayText or ""), c.text
-    elseif self.value ~= nil and self.value ~= "" then str, col = self.value, c.text
+    if self.capturing then str, col = (self._ti.DisplayText or ""), textColor
+    elseif self.value ~= nil and self.value ~= "" then str, col = self.value, textColor
     else str, col = self.placeholder, c.textDisabled end
     if str == "" then return end
     -- left-clip: if the text is wider than the field, show the longest trailing suffix that fits

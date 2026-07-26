@@ -60,6 +60,8 @@ internal abstract class CStagePlayScreenCommon : CStage {
 	// `yield return progress` between the pre-setup, batches of child actors, and the note-state build, so the
 	// song load can advance it a slice per frame (smooth bar, no freeze) instead of one blocking call.
 	public virtual System.Collections.Generic.IEnumerator<float> ActivateSteps() {
+		base.Activate(); // activate ChildActivities here
+
 		OpenTaiko.HttpEventReporter.ReportGameplayStart();
 
 		// Initialize tower-mode life from the song node so the correct value is

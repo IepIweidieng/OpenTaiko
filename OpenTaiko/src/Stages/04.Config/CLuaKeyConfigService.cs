@@ -175,7 +175,7 @@ public sealed class CLuaKeyConfigService {
 	// Takes LuaFunction instead of not Action<bool> to prevent NLua from calling Reflection.Emit,
 	// which is unavailable under iOS AOT.
 	public void StartCapture(CLuaKeyAction a, int slot, NLua.LuaFunction onDone) {
-		var cb = LuaDelegate.AsAction<bool>(onDone);
+		var cb = onDone.AsAction<bool>();
 		if (IsCapturing || slot < 0 || slot > 15) { cb?.Invoke(false); return; }
 		_capPart = ParsePart(a.Part); _capPad = a.Pad; _capSlot = slot; _onDone = cb;
 		IsCapturing = true;

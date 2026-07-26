@@ -57,11 +57,12 @@ public sealed class CLuaConfigOption {
 		if (ni == Index) return;
 		Index = ni; _apply();
 	}
-	public void Activate() { _action?.Invoke(); }        // Action / KeyConfig rows
+	public void Activate() { _action?.Invoke(_actionDone); } // Action / KeyConfig rows
 
 	// --- C#-only wiring (never touched from Lua) ---
 	internal Action _apply = () => { };                  // write config + live side effect
-	internal Action? _action;                            // Kind == "Action" / "KeyConfig"
+	internal Action<Action?>? _action;                   // Kind == "Action" / "KeyConfig"
+	internal Action? _actionDone;                        // Kind == "Action" / "KeyConfig"
 	internal Func<CLuaConfigOption, string> _display = o => o.Value.ToString();
 
 	// --- builders used by CConfigOptionBuilder ---
@@ -93,16 +94,22 @@ public sealed class CLuaConfigOption {
 		o._display = x => (x.Choices.Length > 0 && x.Index >= 0 && x.Index < x.Choices.Length) ? x.Choices[x.Index] : "";
 		return o;
 	}
-	internal static CLuaConfigOption Action_(string cat, string sec, string name, string desc, Action action) {
+	internal static CLuaConfigOption Action_(string cat, string sec, string name, string desc, Action<Action?> action, Action? actionDone = null) {
 		var o = new CLuaConfigOption { Category = cat, Section = sec, Kind = "Action", Name = name, Desc = desc };
 		o._action = action;
+		o._actionDone = actionDone;
 		o._display = _ => "";
 		return o;
 	}
-	internal static CLuaConfigOption KeyConfig_(string cat, string sec, string name, string desc, string part, string group, Action open) {
+	internal static CLuaConfigOption Action_(string cat, string sec, string name, string desc, Action action)
+		=> Action_(cat, sec, name, desc, onDone => action());
+	internal static CLuaConfigOption KeyConfig_(string cat, string sec, string name, string desc, string part, string group, Action<Action?> open, Action? close = null) {
 		var o = new CLuaConfigOption { Category = cat, Section = sec, Kind = "KeyConfig", Name = name, Desc = desc, KeyPart = part, KeyGroup = group };
 		o._action = open;
+		o._actionDone = close;
 		o._display = _ => "›";
 		return o;
 	}
+	internal static CLuaConfigOption KeyConfig_(string cat, string sec, string name, string desc, string part, string group, Action? open = null)
+		=> KeyConfig_(cat, sec, name, desc, part, group, (open == null) ? onClose => { } : onClose => open());
 }

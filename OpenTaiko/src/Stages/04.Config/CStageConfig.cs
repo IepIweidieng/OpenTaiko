@@ -59,9 +59,9 @@ internal class CStageConfig : CStage {
 	private void RebuildModel() {
 		if (_hooks == null) {
 			_hooks = new CConfigOptionBuilder.Hooks {
-				// language change → rebuild the localized model + push it to Lua
-				Relocalize = () => { _model = CConfigOptionBuilder.Build(_hooks); UI?.Call("reload", _model); },
-				Calibration = () => actCalibrationMode.Start(),
+				// any other settings or texts changed → rebuild model + push reload to Lua
+				Refresh = () => { _model = CConfigOptionBuilder.Build(_hooks); UI?.Call("reload", _model); },
+				Calibration = (onDone) => actCalibrationMode.Start(onDone),
 				ReloadSongs = () => tReloadSongs(false),
 				HardReloadSongs = () => tReloadSongs(true),
 				ImportScore = () => { try { new System.Threading.Thread(CScoreIni_Importer.ImportScoreInisToSavesDb3).Start(); } catch (Exception e) { Trace.TraceError(e.ToString()); } },
@@ -163,7 +163,9 @@ internal class CStageConfig : CStage {
 			if (base.ePhaseID == CStage.EPhase.Common_NORMAL) {
 				if (_model != null && _model.Keys.IsCapturing) {
 					// C# owns input this frame: poll the device sweep for the key being bound
-					_model.Keys.PollCaptureFrame();
+					var (done, needRefresh) = _model.Keys.PollCaptureFrame();
+					if (needRefresh)
+						_hooks.Refresh();
 				} else {
 					var r = UI?.Update();   // Lua handles nav/edit/cancel; returns "exit" at the top level
 					if (r != null && r.Length > 0 && (r[0] as string) == "exit") {

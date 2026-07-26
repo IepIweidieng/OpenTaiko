@@ -185,6 +185,8 @@ internal class CConfigIni : INotifyPropertyChanged {
 			public int ID;
 			public int Code;
 
+			public STKEYASSIGN() : this(InputDeviceType.Unknown, 0, 0) { }
+
 			public STKEYASSIGN(InputDeviceType DeviceType, int nID, int nCode) {
 				this.InputDevice = DeviceType;
 				this.ID = nID;
@@ -1050,25 +1052,21 @@ internal class CConfigIni : INotifyPropertyChanged {
 
 	// メソッド
 
-	public void RemoveDuplicateKeyAssignments(InputDeviceType deviceType, int nID, int nCode, EKeyConfigPad pad) {
+	public IEnumerable<(EKeyConfigPart part, EKeyConfigPad pad, int slot)> GetDuplicateKeyAssignments(InputDeviceType deviceType, int nID, int nCode, EKeyConfigPad pad) {
 		bool isMenu = pad is EKeyConfigPad.Decide or EKeyConfigPad.RightChange or EKeyConfigPad.LeftChange;
-		for (int i = 0; i <= (int)EKeyConfigPart.System; i++) {
+		for (EKeyConfigPart i = 0; i <= EKeyConfigPart.System; i++) {
 			// Do not restrict duplicate keybinds for System controls
-			for (int j = 0; j < (int)EKeyConfigPad.Capture; j++) {
-				bool isJMenu = j is (int)EKeyConfigPad.LeftChange
-					or (int)EKeyConfigPad.RightChange
-					or (int)EKeyConfigPad.Decide;
+			for (EKeyConfigPad j = 0; j < EKeyConfigPad.Capture; j++) {
+				bool isJMenu = j is EKeyConfigPad.Decide or EKeyConfigPad.RightChange or EKeyConfigPad.LeftChange;
 				if (isMenu != isJMenu) {
 					continue;
 				}
 				for (int k = 0; k < 0x10; k++) {
-					if (this.KeyAssign[i][j][k].InputDevice == deviceType
-						&& this.KeyAssign[i][j][k].ID == nID
-						&& this.KeyAssign[i][j][k].Code == nCode
+					if (this.KeyAssign[(int)i][(int)j][k].InputDevice == deviceType
+						&& this.KeyAssign[(int)i][(int)j][k].ID == nID
+						&& this.KeyAssign[(int)i][(int)j][k].Code == nCode
 						) {
-						this.KeyAssign[i][j][k].InputDevice = InputDeviceType.Unknown;
-						this.KeyAssign[i][j][k].ID = 0;
-						this.KeyAssign[i][j][k].Code = 0;
+						yield return (i, j, k);
 					}
 				}
 			}
@@ -2932,7 +2930,7 @@ internal class CConfigIni : INotifyPropertyChanged {
 			for (int j = 0; j < (int)EKeyConfigPad.Max; j++) {
 				this.KeyAssign[i][j] = new STKEYASSIGN[16];
 				for (int k = 0; k < 16; k++) {
-					this.KeyAssign[i][j][k] = new STKEYASSIGN(InputDeviceType.Unknown, 0, 0);
+					this.KeyAssign[i][j][k] = new();
 				}
 			}
 		}

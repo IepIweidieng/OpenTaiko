@@ -32,7 +32,7 @@ namespace OpenTaikoTests {
 		// Replace every binding on a pad slot with a single known one (so the round-trip is deterministic).
 		static void OnlyKey(STKEYASSIGN[] slot, InputDeviceType dev, int id, int code) {
 			for (int i = 0; i < slot.Length; i++)
-				slot[i] = new STKEYASSIGN(InputDeviceType.Unknown, 0, 0);
+				slot[i] = new STKEYASSIGN();
 			slot[0] = new STKEYASSIGN(dev, id, code);
 		}
 

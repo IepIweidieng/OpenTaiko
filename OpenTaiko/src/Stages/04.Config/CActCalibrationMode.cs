@@ -22,16 +22,20 @@ internal class CActCalibrationMode : CActivity {
 		base.DeActivate();
 	}
 
-	public void Start() {
+	public void Start(Action? onDone) {
+		this.onDone = onDone;
 		CalibrateTick = new CCounter(0, 500, 1, OpenTaiko.Timer);
 		UpdateText();
 	}
 
-	public void Stop() {
+	public void Stop(bool changed = false) {
 		CalibrateTick = new CCounter();
 		Offsets.Clear();
 		LastOffset = 0;
 		buttonIndex = 1;
+		if (changed)
+			this.onDone?.Invoke();
+		this.onDone = null;
 	}
 
 	public int Update() {
@@ -73,7 +77,7 @@ internal class CActCalibrationMode : CActivity {
 		{
 			OpenTaiko.ConfigIni.nGlobalOffsetMs = GetMedianOffset();
 			OpenTaiko.Skin.soundDecideSFX.tPlay();
-			Stop();
+			Stop(changed: true);
 
 			return 0;
 		} else if (OpenTaiko.ConfigIni.KeyAssign.System.Cancel.IsPressed() ||
@@ -187,6 +191,7 @@ internal class CActCalibrationMode : CActivity {
 	private int LastOffset = 0;
 	private CCachedFontRenderer font;
 	private CTexture offsettext;
+	private Action? onDone;
 
 	//private CSound hitSound;
 

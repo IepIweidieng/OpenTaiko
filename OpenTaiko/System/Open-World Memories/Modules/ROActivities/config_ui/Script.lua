@@ -226,12 +226,12 @@ local function addOptionRow(page, opt, nameOverride)
     page.lastCtrl = ctrl
 end
 
-local function newPage()
-    return { entries = {}, widgets = {}, firstCtrl = nil, contentH = 0 }
+local function newPage(keys)
+    return { keys = keys, entries = {}, widgets = {}, firstCtrl = nil, contentH = 0 }
 end
 
 local function buildCatPage(catId)
-    local page = newPage()
+    local page = newPage{ "cats", catId }
     local lastSection = nil
     for i = 0, M.Options.Count - 1 do
         local opt = M.Options[i]
@@ -247,7 +247,7 @@ local function buildCatPage(catId)
 end
 
 local function buildKeysTabPage()
-    local page = newPage()
+    local page = newPage{ "idxKeysTab" }
     addHeader(page, tr("SETTINGS_UI_KEYS_INDEX_HEADER", "Input Settings"))
     for i = 0, M.Options.Count - 1 do
         local opt = M.Options[i]
@@ -288,7 +288,7 @@ local function addBindRow(page, act)
 end
 
 local function buildBindPage(group)
-    local page = newPage()
+    local page = newPage{ "binds", group }
     local actions = M.Keys:ListActions(group)
     local lastGroup = nil
     for i = 0, actions.Count - 1 do
@@ -575,9 +575,11 @@ function reload(model)
     local keepFocus = ui and ui.focusIdx or 1
     local keepCapturing = ui and ui.focusables[ui.focusIdx] and ui.focusables[ui.focusIdx].capturing or false
     local keepST, keepSC = scrollTarget, scrollCur
+    local keepPageKeys = pages.current and pages.current.keys
     if ui then ui:disposeWidgets(); ui:clear() end
     activate(model)
     if keepTab > 1 and keepTab <= tabs.n then switchTab(keepTab) end
+    if keepPageKeys and keepPageKeys[1] == "binds" then enterKeys(keepPageKeys[2]) end
     scrollTarget, scrollCur = keepST, keepSC
     ui.focusIdx = clamp(keepFocus, 1, math.max(1, #ui.focusables))
     lastFocusIdx = ui.focusIdx   -- keep the restored scroll: no focus-follow snap on the next update

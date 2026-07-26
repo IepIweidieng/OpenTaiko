@@ -484,7 +484,7 @@ function update(ts)
 
     -- While songs are loading or unavailable, only allow Cancel/Escape to exit.
     if IsSongsEnumerating() or G.songList == nil or G.songList:GetSongNodeAtOffset(0) == nil then
-        if INPUT:KeyboardPressed("Escape") or INPUT:Pressed("Cancel") then
+        if G.NavInput.cancel() then
             G.sounds.Cancel:Play()
             return "cancel"
         end

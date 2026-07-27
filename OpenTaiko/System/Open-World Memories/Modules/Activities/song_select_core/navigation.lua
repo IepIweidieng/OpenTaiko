@@ -80,7 +80,7 @@ local function playPreview(songNode)
                 -- preview never starts playing over the next box. (Just don't Play — the load doesn't
                 -- auto-play, and Stopping could cut the shared slot if it's reused for the new selection.)
                 if G.songList == nil or G.songList:GetSelectedSongNode() ~= songNode then return end
-                local speed = CONFIG.SongSpeed / 20
+                local speed = CONFIG.SONGSPEED:ToActual(CONFIG.SongSpeed)
                 snd:SetSpeed(speed)
                 snd:SetVolume(0)            -- start silent; Script.lua fades it in to full
                 snd:Play()
@@ -512,14 +512,14 @@ function M.handleSongSelectInput(Sort, Diff)
     if INPUT:KeyboardPressed("Q") then
         G.sounds.Skip:Play()
         CONFIG.SongSpeed = CONFIG.SongSpeed - 1
-        local spd = CONFIG.SongSpeed / 20
+        local spd = CONFIG.SONGSPEED:ToActual(CONFIG.SongSpeed)
         SHARED:GetSharedSound("presound"):SetSpeed(spd)
         if G.previewDemoStartRaw > 0 then G.previewDemoStart = math.floor(G.previewDemoStartRaw / spd) end
     end
     if INPUT:KeyboardPressed("W") then
         G.sounds.Skip:Play()
         CONFIG.SongSpeed = CONFIG.SongSpeed + 1
-        local spd = CONFIG.SongSpeed / 20
+        local spd = CONFIG.SONGSPEED:ToActual(CONFIG.SongSpeed)
         SHARED:GetSharedSound("presound"):SetSpeed(spd)
         if G.previewDemoStartRaw > 0 then G.previewDemoStart = math.floor(G.previewDemoStartRaw / spd) end
     end

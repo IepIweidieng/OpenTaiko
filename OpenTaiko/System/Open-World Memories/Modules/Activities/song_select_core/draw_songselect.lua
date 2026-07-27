@@ -431,7 +431,7 @@ function M.drawPanel()
 
             if sel.bpmBase ~= nil then
                 -- rebuild the BPM string/color only when the song-speed multiplier changes
-                local mult = CONFIG.SongSpeed / 20
+                local mult = CONFIG.SONGSPEED:ToActual(CONFIG.SongSpeed)
                 if sel.bpmMult ~= mult then
                     sel.bpmMult = mult
                     local bpmText = formatNumber(sel.bpmBase * mult, 3)

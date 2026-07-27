@@ -112,16 +112,16 @@ namespace OpenTaiko {
 			OpenTaiko.ConfigIni.bJust[player] = Math.Clamp(mode, 0, 2);
 		}
 
-		public override void SetModFlags(int player, Int64 flags) {
-			byte[] _flags = BitConverter.GetBytes(flags);
+		public override void SetModFlags(int player, long flags) {
+			ModState state = new() { Flags = flags };
 
-			SetScrollSpeed(player, _flags[0]);
-			SetStealthMod(player, _flags[1]);
-			SetRandomMod(player, _flags[2]);
-			SongSpeed = _flags[3];
-			SetTimingZone(player, _flags[4]);
-			SetJusticeMod(player, _flags[5]);
-			SetFunMod(player, _flags[7]);
+			SetScrollSpeed(player, state.ScrollSpeed);
+			SetStealthMod(player, state.StealthMod);
+			SetRandomMod(player, state.RandomMod);
+			SongSpeed = state.SongSpeed;
+			SetTimingZone(player, state.TimingZone);
+			SetJusticeMod(player, state.JusticeMod);
+			SetFunMod(player, state.FunMod);
 		}
 
 		#endregion

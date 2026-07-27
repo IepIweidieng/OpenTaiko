@@ -275,11 +275,13 @@ internal class CConfigIni : INotifyPropertyChanged {
 
 	public int nMsSleepUnfocused; // #23568 2010.11.04 ikanick add
 	public int nMsSleepPerFrame; // #xxxxx 2011.11.27 yyagi add
-	public int nSongSpeed;
 
-	public double SongPlaybackSpeed {
-		get => ((double)nSongSpeed) / 20.0;
-	}
+	public int nSongSpeed;
+	public const int SongSpeedNormal = 20;
+	public const double SongSpeedScaleFromActual = 20;
+	public double SongPlaybackSpeed => SongSpeedToActual(nSongSpeed);
+	public static double SongSpeedToActual(double nSongSpeed) => nSongSpeed / 20.0;
+	public static double SongSpeedFromActual(double actual) => 20.0 * actual;
 
 	public bool bNoAudioIfNot1xSpeed; // FIXME: Negation should be removed and booleans flipped
 	public int nMsWaitPreviewSoundFromSongSelected;
@@ -352,7 +354,13 @@ internal class CConfigIni : INotifyPropertyChanged {
 	}
 
 	public int nMinDisplayedCombo;
+
 	public int[] nScrollSpeed;
+	public const int ScrollSpeedNormal = 9;
+	public const double ScrollSpeedScaleFromActual = 10;
+	public static double ScrollSpeedToActual(double nScrollSpeed) => (nScrollSpeed + 1) / 10.0;
+	public static double ScrollSpeedFromActual(double actual) => 10 * actual - 1;
+
 	public int[] nTimingZones;
 	public EGameType[] nGameType;
 	public EFunMods[] nFunMods;

@@ -239,7 +239,7 @@ local function drawLobby()
     if net.song then
         txt(fontMid, net.song.title or "?", 255, 255, 255, sx, JK_Y + 6)
         if net.songSubtitle and net.songSubtitle ~= "" then txt(fontSmall, net.songSubtitle, 205, 205, 220, sx, JK_Y + 46) end
-        txt(fontSmall, string.format("Speed x%.2f", (net.song.speed or 20) / 20), 190, 220, 255, sx, JK_Y + 76)
+        txt(fontSmall, string.format("Speed x%.2f", net.song.speed and CONFIG.SONGSPEED:ToActual(net.song.speed) or 1), 190, 220, 255, sx, JK_Y + 76)
         -- available difficulties + their level numbers
         local lx = sx
         for d = 0, 4 do

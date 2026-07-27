@@ -339,9 +339,10 @@ end
 local DIFF_NAMES = { [0] = "Easy", [1] = "Normal", [2] = "Hard", [3] = "Oni", [4] = "Edit" }
 
 local function _spd_range(level)
-    local min = (level >= 33) and (20 + (level - 32)) or 20
-    local max = min + 20
-    return min, max
+    local SPEED = CONFIG.SONGSPEED
+    local min = (level >= 33) and (1 + (level - 32) / SPEED.ScaleFromActual) or 1
+    local max = min + 1
+    return SPEED:FromActual(min), SPEED:FromActual(max)
 end
 
 -- Roll and cache the songs that will be used for the given challenge level.
@@ -461,7 +462,7 @@ local function _build_dan(level)
         end
 
         -- Use default speed when no preview (practice, or missing cache)
-        _preview_speed = (level >= 33) and (20 + (level - 32)) or 20
+        _preview_speed = _spd_range(level)
     end
 
     if added_count == 0 then return false end
@@ -962,8 +963,9 @@ function M.draw()
         -- Speed slider — only for levels the player has already passed
         if is_past then
             local spd_min, spd_max = _spd_range(lv)
+            local SPEED = CONFIG.SONGSPEED
             local spd_label = string.format("◄  Speed  x%.2f  ►      min x%.2f  /  max x%.2f",
-                _preview_speed / 20.0, spd_min / 20.0, spd_max / 20.0)
+                SPEED:ToActual(_preview_speed), SPEED:ToActual(spd_min), SPEED:ToActual(spd_max))
             _font_hint:GetText(spd_label, false, 800, C_SEL):DrawAtAnchor(cx, base_y - 50, "center")
         end
 

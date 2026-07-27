@@ -23,7 +23,7 @@
 						return OpenTaiko.ConfigIni.SongPlaybackSpeed; // 1.0 = normal
 					}
 				case "sc": {
-						if (expr._player >= 0) return OpenTaiko.ConfigIni.nScrollSpeed[expr._player] / 9.0; // 1.0 = default
+						if (expr._player >= 0) return CConfigIni.ScrollSpeedToActual(OpenTaiko.ConfigIni.nScrollSpeed[expr._player]); // 1.0 = default
 						break;
 					}
 

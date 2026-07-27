@@ -554,7 +554,7 @@ public static class ImGuiDebugWindow {
 						if (ImGui.TreeNodeEx($"Player {i + 1} {(modifiedstats ? "*" : "")}###TREE_SONGSELECT_PLAYER_{i}", ImGuiTreeNodeFlags.Framed | ImGuiTreeNodeFlags.DefaultOpen)) {
 
 							ImGui.TextColored(OpenTaiko.ConfigIni.nScrollSpeed[i] == 9 ? normal : diff,
-								String.Format("Scroll Speed: {0:0.0}", (OpenTaiko.ConfigIni.nScrollSpeed[i] + 1) / 10.0f));
+								String.Format("Scroll Speed: {0:0.0}", CConfigIni.ScrollSpeedToActual(OpenTaiko.ConfigIni.nScrollSpeed[i])));
 
 							ImGui.TextColored(OpenTaiko.ConfigIni.eSTEALTH[i] == EStealthMode.Off ? normal : diff,
 								"Stealth: " + OpenTaiko.ConfigIni.eSTEALTH[i].ToString());

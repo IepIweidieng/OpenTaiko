@@ -203,7 +203,7 @@ end
 -- Helper: scroll speed display  e.g. value 19 -> "2.0"
 -- ============================================================
 local function scrollSpeedDisplay(value)
-    return string.format("%.1f", (value + 1) / 10)
+    return string.format("%.1f", CONFIG.SCROLLSPEED:ToActual(value))
 end
 
 -- ============================================================

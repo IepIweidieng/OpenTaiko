@@ -328,9 +328,9 @@ public class CSound : IDisposable {
 	public void SetLoop(bool looped) {
 		if (IsBassSound) {
 			if (looped) {
-				Bass.ChannelFlags(this.hBassStream, BassFlags.Loop, BassFlags.Loop);
+				Bass.ChannelAddFlag(this.hBassStream, BassFlags.Loop);
 			} else {
-				Bass.ChannelFlags(this.hBassStream, BassFlags.Default, BassFlags.Default);
+				Bass.ChannelRemoveFlag(this.hBassStream, BassFlags.Loop);
 			}
 		}
 	}

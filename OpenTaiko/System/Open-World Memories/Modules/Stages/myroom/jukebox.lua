@@ -13,7 +13,7 @@
 -- LuaSound gotchas honoured here (see song_select_core): there is NO pause — pause = remember
 -- GetTimestampMs then Stop, resume = Play THEN SetTimestamp (Play always restarts at 0); always
 -- Stop before re-Play (double-buffered sound would play twice); SetTimestamp takes timeline ms →
--- divide source ms by the current speed; SetLoop is only read at Play time.
+-- divide source ms by the current speed
 --
 -- Multiplayer: the HOST's jukebox state travels over the "jukebox" net channel as a full state
 -- table (online.lua). Guests resolve the song against their OWN folders — UniqueId first, then
@@ -340,19 +340,9 @@ local function pbSetRepeat(b)
     if pb.rep == b then return end
     pb.rep = b
     if pb.snd == nil then return end
+    pcall(function() pb.snd:SetLoop(b) end)
     if pb.playing then
-        -- SetLoop is read at Play time: restart in place with the new flag
-        local pos = pbPos()
-        pcall(function()
-            pb.snd:Stop()
-            pb.snd:SetLoop(b)
-            pb.snd:SetSpeed(pb.speed)
-            pb.snd:Play()
-            pb.snd:SetTimestamp(math.floor(pos / pb.speed))
-        end)
         pb.grace = 1.0
-    else
-        pcall(function() pb.snd:SetLoop(b) end)
     end
 end
 

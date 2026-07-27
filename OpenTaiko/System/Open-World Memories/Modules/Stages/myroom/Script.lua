@@ -235,6 +235,7 @@ function deactivate()
     saveRoom()
     if pcScreen and pcScreen:active() then pcScreen:close() end
     if mode == "edit" and edit then edit:leave() end
+    PCS.tickBgmFade(math.huge)                     -- force finishing fading out
     persistJukebox()                               -- snapshot the LIVE playing position first...
     persistLocked = true                           -- ...lock it against the teardown's own onState...
     JB.stopAll()                                   -- ...then kill jukebox audio + UI with the stage

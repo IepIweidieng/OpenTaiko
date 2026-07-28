@@ -15,6 +15,7 @@ local Bubble = require("PopUI.widgets.bubble")
 local Menu   = require("PopUI.widgets.menu")
 local Chooser = require("PopUI.widgets.chooser")
 local SettingsList = require("PopUI.widgets.settingslist")
+local Sfx          = require("PopUI.sfx")
 
 local NavInput = require("NavInput")
 
@@ -45,7 +46,8 @@ function M.new(opts)
     self.navPlayer = opts.navPlayer  -- for NavInput.getPn(navPlayer)
     self.userTheme = opts.theme or {}
     self.theme = Theme.resolve(self.userTheme, nil)
-    self.sfx = opts.sfx or {}
+    self.userSfx = opts.sfx or {}
+    self.sfx = Sfx.resolve(self.userSfx, nil)
     self.drawBg = opts.bg == true
     self.widgets = {}
     self.focusables = {}
@@ -67,6 +69,7 @@ end
 
 -- ── caches ───────────────────────────────────────────────────────────────────────
 function M:resolveTheme(style) return Theme.resolve(self.userTheme, style) end
+function M:resolveSfx(sfx) return Sfx.resolve(self.userSfx, sfx) end
 
 function M:font(size)
     local f = sharedFonts[size]
@@ -166,11 +169,7 @@ function M:reuseCanvas(old, w, h)
     return CANVAS:CreateCanvas(w, h)
 end
 
-function M:playSfx(name)
-    local s = self.sfx[name]
-    if not s then return end
-    if type(s) == "function" then s() else pcall(function() s:Play() end) end
-end
+function M:playSfx(name) return Sfx.playSfx(self.sfx, name) end
 
 -- Draw a solid filled rectangle in screen space (tinted). Reuses one shared 2x2 white canvas so callers
 -- (scrollbars, dividers, overlays) don't each allocate. Colours are 0-255.
@@ -242,6 +241,11 @@ function M:setTheme(t)
     for _, w in ipairs(self.widgets) do w:restyle() end
 end
 
+function M:setSfx(t)
+    self.userSfx = t or {}
+    self.sfx = Sfx.resolve(self.userSfx, nil)
+end
+
 -- ── focus navigation ────────────────────────────────────────────────────────────
 function M:_setFocusIndex(i)
     if #self.focusables == 0 then self.focusIdx = 0; return end
@@ -249,9 +253,10 @@ function M:_setFocusIndex(i)
     self.focusIdx = i
 end
 
+function M:clearPrevFocus() if self._focusW then self._focusW:setFocus(false); self._focusW = nil end end
 function M:focusStay() self:_setFocusIndex(self.focusIdx < 1 and 1 or self.focusIdx) end
-function M:focusNext() self:_setFocusIndex(self.focusIdx < 1 and 1 or self.focusIdx + 1); self:playSfx("move") end
-function M:focusPrev() self:_setFocusIndex(self.focusIdx < 1 and 1 or self.focusIdx - 1); self:playSfx("move") end
+function M:focusNext() self:_setFocusIndex(self.focusIdx < 1 and 1 or self.focusIdx + 1) end
+function M:focusPrev() self:_setFocusIndex(self.focusIdx < 1 and 1 or self.focusIdx - 1) end
 
 function M:captureKeys(w) self._captureWidget = w end
 function M:releaseKeys(w) if self._captureWidget == w then self._captureWidget = nil end end
@@ -317,6 +322,7 @@ function M:update(ts)
 
     self.cancelRequested = false
 
+    local justHoveredIdx
     if not captured then
         -- mouse hover: topmost visible+enabled hit
         local hoverW = nil
@@ -331,7 +337,7 @@ function M:update(ts)
             if hoverW then hoverW:setHover(true) end
             self._hoverW = hoverW
             -- mouse moves focus to the newly hovered widget
-            for i, w in ipairs(self.focusables) do if w == hoverW then self.focusIdx = i; break end end
+            for i, w in ipairs(self.focusables) do if w == hoverW then self.focusIdx = i; justHoveredIdx = i; break end end
         end
         -- keyboard/gamepad focus navigation; a focused widget (e.g. a list) may consume Up/Down for its
         -- own internal selection and only let focus escape at its boundary.
@@ -374,8 +380,8 @@ function M:update(ts)
     -- apply focus flags from focusIdx
     local focusW = self.focusables[self.focusIdx]
     if focusW ~= self._focusW then
-        if self._focusW then self._focusW:setFocus(false) end
-        if focusW then focusW:setFocus(true) end
+        if self._focusW then self._focusW:setFocus(false, justHoveredIdx == self.focusIdx) end
+        if focusW then focusW:setFocus(true, not self._focusW or justHoveredIdx == self.focusIdx) end
         self._focusW = focusW
     end
 

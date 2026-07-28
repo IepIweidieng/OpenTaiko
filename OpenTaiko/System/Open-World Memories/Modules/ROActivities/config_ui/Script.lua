@@ -314,6 +314,7 @@ local function showPage(page)
     scrollTarget, scrollCur = 0, 0
     lastFocusIdx = -1   -- force one ensureFocusedVisible after the page changes
     ui:_rebuildFocus()
+    ui:clearPrevFocus()
 end
 
 local function setTabsVisible(b) for _, t in ipairs(tabs) do t:setVisible(b) end end
@@ -357,6 +358,7 @@ end
 local function backToKeysTab()
     keysBack:setVisible(false); keysTitle:setVisible(false)
     switchTab(tabs.idxKeysTab)   -- back to the keys tab, not the exit tab
+    SHARED:GetSharedSound("Cancel"):Play()
 end
 
 function enterMain() if mode == "bind" then backToKeysTab() end end
@@ -423,8 +425,12 @@ end
 
 -- focus a tab: category/keys tabs switch their page on focus; the exit tab only highlights (decide/click on it
 -- exits), so cycling onto it never exits by accident
-local function focusTab(i)
-    if tabs[i]._exit then setFocusTo(tabs[i]) else switchTab(i) end
+local function focusTab(i, silence)
+    if tabs[i]._exit then setFocusTo(tabs[i])
+    else
+        switchTab(i)
+        if not silence then SHARED:GetSharedSound("Skip"):Play() end
+    end
 end
 
 -- horizontal arrows (or LBlue/RBlue) move between tabs, only while a tab is focused, and wrap both ways across
@@ -523,9 +529,15 @@ function activate(model)
     for i = 0, M.CategoryLabels.Count - 1 do tabLabels[#tabLabels + 1] = M.CategoryLabels[i] end
     tabLabels[#tabLabels + 1] = tr("SETTINGS_UI_KEYS", "Input")
     local tx = VX
-    local function tabDecide(self) self:onClick(); return self:onNavDown() end
-    local function tabNavDown() if mode == "main" and pages.current and pages.current.firstCtrl then setFocusTo(pages.current.firstCtrl); return true end return false end
-    local function tabNavUp() if mode == "main" and pages.current and pages.current.lastCtrl then setFocusTo(pages.current.lastCtrl); return true end return true end
+    local function tabDecide(self) self:keyActivate(); return self:onNavDown() end
+    local function tabNavDown()
+        if mode == "main" and pages.current and pages.current.firstCtrl then setFocusTo(pages.current.firstCtrl); return true end
+        return false
+    end
+    local function tabNavUp()
+        if mode == "main" and pages.current and pages.current.lastCtrl then setFocusTo(pages.current.lastCtrl); return true end
+        return true
+    end
     for i, label in ipairs(tabLabels) do
         local catId = (i <= M.Categories.Count) and M.Categories[i - 1] or nil
         local t = ui:button{ text = label, y = TAB_Y, h = TAB_H, onClick = function() switchTab(i) end }
@@ -541,9 +553,8 @@ function activate(model)
     -- trailing exit tab: decide/click leaves the config; cycling onto it just highlights it
     do
         local i = #tabs + 1
-        local t = ui:button{ text = tr("SETTINGS_UI_EXIT", "Exit"), y = TAB_Y, h = TAB_H, onClick = function() requestExit() end }
+        local t = ui:button{ text = tr("SETTINGS_UI_EXIT", "Exit"), y = TAB_Y, h = TAB_H, onClick = requestExit, sfx = { click = "" } }
         t._tab = i; t._exit = true
-        t.onDecide = tabDecide
         t.onNavDown = tabNavDown
         t.onNavUp = tabNavUp
         setupHandleTabKeys(t)
@@ -553,7 +564,7 @@ function activate(model)
     tabs.n = #tabs
 
     -- keys-mode chrome, shown only while binding keys
-    keysBack = ui:button{ text = tr("SETTINGS_UI_BACK", "< Back"), x = VX, y = TAB_Y, h = TAB_H, onClick = backToKeysTab }
+    keysBack = ui:button{ text = tr("SETTINGS_UI_BACK", "< Back"), x = VX, y = TAB_Y, h = TAB_H, onClick = backToKeysTab, sfx = { click = "" } }
     keysBack:setVisible(false)
     keysTitle = ui:label{ text = "", x = floor(keysBack.x + keysBack.w + 40), y = TAB_Y + 18, size = "title", color = THEME.colors.text }
     keysTitle:setVisible(false)
@@ -635,6 +646,7 @@ function update(ts)
     if exitRequested then
         exitRequested = false
         if M.RequestExit then M.RequestExit() end
+        SHARED:GetSharedSound("Cancel"):Play()
         return "exit"
     end
 
@@ -652,7 +664,11 @@ function update(ts)
 
     if r == "cancel" then
         if mode == "bind" then backToKeysTab()
-        else if M.RequestExit then M.RequestExit() end; return "exit" end
+        else
+            if M.RequestExit then M.RequestExit() end
+            SHARED:GetSharedSound("Cancel"):Play()
+            return "exit"
+        end
     end
 end
 

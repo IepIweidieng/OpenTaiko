@@ -261,18 +261,18 @@ function Edit:enter(pc, pr)
     self.facing, self.mount = 0, "low"
     self.ghostModels, self.activeGhost = {}, nil
     self.ghostWallModels, self.activeWallGhost = {}, nil
-    self:deselect()
+    self:deselect(true)
     self:buildBar()
 end
 
 function Edit:leave()
     local world = self.world
-    if self.hold then self:restoreHold() end               -- never lose an in-hand item (phone!)
+    if self.hold then self:restoreHold(true) end               -- never lose an in-hand item (phone!)
     gridClear(world); ghostClear(world); hiliteClear(world)
     self:hideGhostModel()
     self.ghostModels = {}
     self.ghostWallModels = {}
-    self:deselect()
+    self:deselect(true)
     -- keep the 3D preview icons ALIVE across open/close: re-rendering ~20 offscreen GLB scenes on
     -- every open was the edit-menu lag. They live for the stage session (freed by ModelIcon.disposeAll
     -- on stage teardown); modelIconFor recreates any that got disposed (e.g. after a deactivate).
@@ -472,36 +472,36 @@ end
 -- ── state setters (also what the PopUI callbacks route through — harness-drivable) ────────────────
 function Edit:setCategory(i)
     if self.cat ~= i then
-        if self.hold then self:restoreHold() end
+        if self.hold then self:restoreHold(true) end
         self.cat = i
         self.sel = nil
-        self:deselect()
+        self:deselect(true)
         self._barDirty = true
     end
 end
 function Edit:setSelection(id)
     self.sel = (self.sel == id) and nil or id
     self.facing, self.mount = 0, "low"
-    self:deselect()
+    self:deselect(true)
     self._barDirty = true
 end
 
 -- ── selection: inline Rotate / Move / Remove buttons right under the placed item ──────────────────
 function Edit:select(it, kind)
     if self.selected and self.selected.it == it then return end
-    self:deselect()
+    self:deselect(true)
     self.selected = { it = it, kind = kind }
     local ui = PopUI.new{ theme = THEME, navPlayer = (playerIndex or 0) + 1 }
     self.selUI = ui
     local edit = self
     local defs = {}
     if kind == "ground" then
-        defs[#defs + 1] = { I18N.tr("Rotate"), function() edit:doRotate(it) end }
-        defs[#defs + 1] = { I18N.tr("Move"), function() edit:beginHoldMove() end }
-        defs[#defs + 1] = { I18N.tr("Remove"), function() edit:doRemove(it) end }
+        defs[#defs + 1] = { I18N.tr("Rotate"), function() edit:doRotate(it); return true end }
+        defs[#defs + 1] = { I18N.tr("Move"), function() edit:beginHoldMove(); return true end }
+        defs[#defs + 1] = { I18N.tr("Remove"), function() edit:doRemove(it); return true end }
     else
-        defs[#defs + 1] = { I18N.tr("Move"), function() edit:beginHoldMove() end }
-        if it.id ~= "phone" then defs[#defs + 1] = { I18N.tr("Remove"), function() edit:doRemove(it) end } end
+        defs[#defs + 1] = { I18N.tr("Move"), function() edit:beginHoldMove(); return true end }
+        if it.id ~= "phone" then defs[#defs + 1] = { I18N.tr("Remove"), function() edit:doRemove(it); return true end } end
     end
     self.selBtns = {}
     for i, d in ipairs(defs) do
@@ -509,10 +509,14 @@ function Edit:select(it, kind)
             style = { radius = 16, font = { button = 17 } }, onClick = d[2] }
     end
     self:positionSelButtons()
+    SHARED:GetSharedSound("Decide"):Play()
 end
 
-function Edit:deselect()
+function Edit:deselect(silent)
     if self.selUI then self.selUI:disposeWidgets() end
+    if not silent and (self.selUI or self.selected or self.selBtns) then
+        SHARED:GetSharedSound("Cancel"):Play()
+    end
     self.selUI, self.selected, self.selBtns = nil, nil, nil
 end
 
@@ -557,18 +561,12 @@ function Edit:mouseOverSelUI(mx, my)
     return false
 end
 
--- error feedback for a refused rotation: a cached SFX + a brief red flash on the item
-local errSfx, errSfxFailed = nil, false
+-- error feedback for a refused rotation: an SFX + a brief red flash on the item
 local function errPlay()
-    if errSfx == nil and not errSfxFailed then
-        local ok = pcall(function() errSfx = SOUND:CreateSFX("../../../Sounds/Error.ogg") end)
-        if not ok or errSfx == nil then errSfxFailed = true; errSfx = nil end
-    end
-    if errSfx then pcall(function() errSfx:Play() end) end
+    SHARED:GetSharedSound("Error"):Play()
 end
 function Edit.disposeSfx()
-    if errSfx then pcall(function() errSfx:Dispose() end) end
-    errSfx, errSfxFailed = nil, false
+    -- no things to do for now
 end
 function Edit:rotateRefused(it)
     self._rotFlash = { it = it, f = 26 }          -- ~0.4s of red flash at 60fps
@@ -611,6 +609,7 @@ function Edit:doRotate(it)
             room:attachFurniture(p.it)             -- re-stacks onto the rotated surface
         end
         self:commit()                              -- rebuild: the rotation shows live
+        SHARED:GetSharedSound("Skip"):Play()
     else
         it.facing = oldFacing                      -- revert; riders never moved
         for _, p in ipairs(plan) do room:attachFurniture(p.it) end
@@ -625,7 +624,8 @@ function Edit:doRemove(it)
     else
         room:removeFurniture(it); room:invAdd(it.id); self:commit(); self._barDirty = true
     end
-    self:deselect()
+    self:deselect(true)
+    SHARED:GetSharedSound("Cancel"):Play()
 end
 
 -- ── the in-hand move flow (Move button OR press-drag; ground + wall items alike) ──────────────────
@@ -657,9 +657,10 @@ function Edit:pickUp(it, kind, viaDrag)
                   -- so the piece never "depops". Seeded to its origin (a valid spot).
                   lastC = it.c, lastR = it.r, lastMount = it.mount,
                   lastSlot = (kind == "wall") and { c = it.c, r = it.r, mount = it.mount or "low" } or nil }
-    self:deselect()
+    self:deselect(true)
     self.pressItem = nil
     self:commit()                                  -- rebuild without the original
+    SHARED:GetSharedSound(viaDrag and "Move" or "Decide"):Play()
 end
 
 function Edit:beginHoldMove()
@@ -667,7 +668,7 @@ function Edit:beginHoldMove()
     if s then self:pickUp(s.it, s.kind, false) end
 end
 
-function Edit:restoreHold()
+function Edit:restoreHold(silent)
     local h = self.hold
     if h == nil then return end
     local room = self.room
@@ -684,6 +685,7 @@ function Edit:restoreHold()
     end
     self.hold = nil
     self:commit()
+    if not silent then SHARED:GetSharedSound("Cancel"):Play() end
 end
 
 -- try to drop the held item at the hovered target; returns true when it landed
@@ -729,9 +731,11 @@ function Edit:playerOnExit()
 end
 function Edit:moveDoorTo(c)
     local room = self.room
-    if c == nil or c == room.exitCol or not room:canMoveExitTo(c) or self:playerOnExit() then return false end
+    if c == room.exitCol then return true end
+    if c == nil or not room:canMoveExitTo(c) or self:playerOnExit() then return false end
     room.exitCol = c
     self:commit()
+    SHARED:GetSharedSound("Decide"):Play()
     return true
 end
 
@@ -773,6 +777,7 @@ function Edit:buildBar()
                                                   n = infinite and -1 or (self.room.inventory[iid] or 0), sel = selOn }
         end
     end
+    ui:clearPrevFocus()
 end
 
 -- the rounded ×N stock pill (baked once with PopUI Shape in the theme's accent colours)
@@ -865,6 +870,7 @@ end
 function Edit:update(ts)
     if INPUT:KeyboardPressed("Tab") then
         self:leave()
+        SHARED:GetSharedSound("Cancel"):Play()
         return "exit"
     end
     if self._barDirty then self:buildBar() end
@@ -900,6 +906,7 @@ function Edit:update(ts)
         elseif self.sel or self.dragExit then
             self.sel, self.dragExit = nil, false
             self._barDirty = true
+            SHARED:GetSharedSound("Cancel"):Play()
         end
     end
 
@@ -932,10 +939,15 @@ function Edit:updatePlace(mx, my, sdy, lpressed, lpressing)
     local key = self:catKey()
     if key == "furn" then
         if sdy ~= 0 then self.facing = (self.facing + (sdy > 0 and 1 or 3)) % 4 end   -- wheel rotates
-        local c, r = self:pickGround(mx, my); self.hoverC, self.hoverR = c, r
+        local c, r = self:pickGround(mx, my)
+        if c and r and (self.hoverC ~= c or self.hoverR ~= r) then
+            SHARED:GetSharedSound("Move"):Play()
+        end
+        self.hoverC, self.hoverR = c, r
         if lpressed then
             if c and room:canPlace(self.sel, c, r, self.facing) and room:invTake(self.sel) then
                 room:addFurniture(self.sel, c, r, self.facing); self:commit()
+                SHARED:GetSharedSound("Decide"):Play()
             end
             self.sel = nil; self._barDirty = true                 -- furniture → back to item select
         end
@@ -944,41 +956,55 @@ function Edit:updatePlace(mx, my, sdy, lpressed, lpressing)
         -- the wheel still nudges the preferred mount for when two bands project close together
         local s = self:pickWallSlot(mx, my)
         if sdy ~= 0 and s then
-            local want = (self.mount == "low") and "high" or "low"
-            self.mount = want
+            local mount = (self.mount == "low") and "high" or "low"
+            self.mount = mount
             local alt = room:wallItemSlots()
-            for _, o in ipairs(alt) do if o.c == s.c and o.r == s.r and o.mount == want then s = o; break end end
+            for _, o in ipairs(alt) do if o.c == s.c and o.r == s.r and o.mount == mount then s = o; break end end
+        end
+        if s and (not self.hoverSlot or self.hoverSlot.key ~= s.key) then
+            SHARED:GetSharedSound("Move"):Play()
         end
         self.hoverSlot = s
         if lpressed and s then
             if room:canPlaceWall(self.sel, s.c, s.r, s.mount) and room:invTake(self.sel) then
                 room:addWallItem(self.sel, s.c, s.r, s.mount); self:commit()
+                SHARED:GetSharedSound("Decide"):Play()
             end
             self.sel = nil; self._barDirty = true
         end
     elseif key == "floor" then
-        local c, r = self:pickGround(mx, my); self.hoverC, self.hoverR = c, r
-        if self.sel == Room.DEFAULT_FLOOR then                               -- infinite: revert to wood
-            if lpressing and c and room:cellType(c, r) == "O" and room:floorAt(c, r) ~= nil then
-                room:invAdd(room:floorAt(c, r))                              -- refund the covered paint
-                room:setFloor(c, r, nil); self:commit(); self._barDirty = true
-            end
-        elseif lpressing and c and room:cellType(c, r) == "O" and room:floorAt(c, r) ~= self.sel and (room.inventory[self.sel] or 0) > 0 then
-            if room:floorAt(c, r) then room:invAdd(room:floorAt(c, r)) end   -- refund the one being covered
-            room:invTake(self.sel); room:setFloor(c, r, self.sel); self:commit(); self._barDirty = true
-            if (room.inventory[self.sel] or 0) <= 0 then self.sel = nil end  -- out of stock → back to select
+        local c, r = self:pickGround(mx, my)
+        if c and r and (self.hoverC ~= c or self.hoverR ~= r) then
+            SHARED:GetSharedSound("Move"):Play()
+        end
+        self.hoverC, self.hoverR = c, r
+        local sel, remain
+        if self.sel == Room.DEFAULT_FLOOR then sel, remain = nil, math.huge  -- infinite: revert to wood
+        else sel, remain = self.sel, room.inventory[self.sel] or 0
+        end
+        if lpressing and c and room:cellType(c, r) == "O" and room:floorAt(c, r) ~= sel and remain > 0 then
+            if room:floorAt(c, r) then room:invAdd(room:floorAt(c, r)) end   -- refund the covered paint
+            if sel ~= nil then room:invTake(sel) end
+            room:setFloor(c, r, sel); self:commit(); self._barDirty = true
+            SHARED:GetSharedSound("Decide"):Play()
+            if remain <= 0 then self.sel = nil end  -- out of stock → back to select
         end
     elseif key == "paint" then
-        local s = self:pickWallTile(mx, my); self.hoverTile = s
-        if self.sel == Room.DEFAULT_PAINT then                               -- infinite: revert to plaster
-            if lpressing and s and room:wallPaintAt(s.key) ~= nil then
-                room:invAdd(room:wallPaintAt(s.key))                         -- refund the covered paint
-                room:setWallPaint(s.key, nil); self:commit(); self._barDirty = true
-            end
-        elseif lpressing and s and room:wallPaintAt(s.key) ~= self.sel and (room.inventory[self.sel] or 0) > 0 then
+        local s = self:pickWallTile(mx, my)
+        if s and (not self.hoverTile or self.hoverTile.key ~= s.key) then
+            SHARED:GetSharedSound("Move"):Play()
+        end
+        self.hoverTile = s
+        local sel, remain
+        if self.sel == Room.DEFAULT_PAINT then sel, remain = nil, math.huge  -- infinite: revert to plaster
+        else sel, remain = self.sel, room.inventory[self.sel] or 0
+        end
+        if lpressing and s and room:wallPaintAt(s.key) ~= sel and remain > 0 then
             if room:wallPaintAt(s.key) then room:invAdd(room:wallPaintAt(s.key)) end
-            room:invTake(self.sel); room:setWallPaint(s.key, self.sel); self:commit(); self._barDirty = true
-            if (room.inventory[self.sel] or 0) <= 0 then self.sel = nil end
+            if sel ~= nil then room:invTake(sel) end
+            room:setWallPaint(s.key, sel); self:commit(); self._barDirty = true
+            SHARED:GetSharedSound("Decide"):Play()
+            if remain <= 0 then self.sel = nil end
         end
     end
 end
@@ -986,6 +1012,7 @@ end
 -- the Door tab: the ghost doorway follows the hovered front-fringe tile; click moves the exit there
 function Edit:updateDoor(mx, my, lpressed)
     local c = self:pickFringeCol(mx, my)
+    if c and self.hoverExitC ~= c then SHARED:GetSharedSound("Move"):Play() end
     self.hoverExitC = c
     if lpressed then self:moveDoorTo(c) end
 end
@@ -996,12 +1023,18 @@ function Edit:updateHold(mx, my, sdy, lpressed, lreleased)
     local room = self.room
     if h.kind == "wall" then
         local s = self:pickWallSlot(mx, my)
+        if s and (not self.hoverSlot or self.hoverSlot.key ~= s.key) then
+            SHARED:GetSharedSound("Move"):Play()
+        end
         self.hoverSlot = s                       -- the slot's own mount: drag to the height you want
         self.hoverC, self.hoverR = nil, nil
         if s and room:canPlaceWall(h.it.id, s.c, s.r, s.mount) then h.lastSlot = s end   -- remember last valid target
     else
         if sdy ~= 0 then h.it.facing = ((h.it.facing or 0) + (sdy > 0 and 1 or 3)) % 4 end
         local c, r = self:pickGround(mx, my)
+        if c and r and (self.hoverC ~= c or self.hoverR ~= r) then
+            SHARED:GetSharedSound("Move"):Play()
+        end
         self.hoverC, self.hoverR = c, r
         self.hoverSlot = nil
         if c and room:canPlace(h.it.id, c, r, h.it.facing or 0) then h.lastC, h.lastR = c, r end   -- remember last valid target
@@ -1018,6 +1051,7 @@ end
 -- the Eraser tab: hover ANY placed thing and click/swipe to remove it (never the phone)
 function Edit:updateEraser(mx, my, lpressed, lpressing)
     local room = self.room
+    local prevDelTarget = self.defTarget
     self.delTarget, self.delKind = nil, nil
     local c, r = self:pickGround(mx, my); self.hoverC, self.hoverR = c, r
     self.hoverSlot, self.hoverTile = nil, nil
@@ -1038,16 +1072,23 @@ function Edit:updateEraser(mx, my, lpressed, lpressing)
             if paint then self.delTarget, self.delKind, self.hoverTile = paint, "paint", wt end
         end
     end
+    if self.delTarget and self.defTarget ~= prevDelTarget then
+        SHARED:GetSharedSound("Move"):Play()
+    end
     if (lpressed or lpressing) and self.delTarget then
         if self.delKind == "furn" then
             room:removeFurniture(self.delTarget); room:invAdd(self.delTarget.id)
+            SHARED:GetSharedSound("Cancel"):Play()
         elseif self.delKind == "wall" then
             if not room:removeWallItem(self.delTarget) then return end
             room:invAdd(self.delTarget.id)
+            SHARED:GetSharedSound("Cancel"):Play()
         elseif self.delKind == "floor" then
             room:invAdd(self.delTarget); room:setFloor(c, r, nil)
+            SHARED:GetSharedSound("Cancel"):Play()
         elseif self.delKind == "paint" then
             room:invAdd(self.delTarget); room:setWallPaint(self.hoverTile.key, nil)
+            SHARED:GetSharedSound("Cancel"):Play()
         end
         self:commit(); self._barDirty = true
         self.delTarget, self.delKind = nil, nil
@@ -1114,9 +1155,13 @@ end
 function Edit:updateBrowse(mx, my, lpressed, lpressing, lreleased)
     local room = self.room
     if self.dragExit then                                        -- continue a door drag
-        local c = self:pickFringeCol(mx, my); self.hoverExitC = c
+        local c = self:pickFringeCol(mx, my)
+        if c and self.hoverExitC ~= c then SHARED:GetSharedSound("Move"):Play() end
+        self.hoverExitC = c
         if lreleased then
-            self:moveDoorTo(c)
+            if not self:moveDoorTo(c) then
+                SHARED:GetSharedSound("Cancel"):Play()
+            end
             self.dragExit = false
         end
         return
@@ -1126,11 +1171,14 @@ function Edit:updateBrowse(mx, my, lpressed, lpressing, lreleased)
     local gItem = self:pickHoverItem(mx, my)                   -- precise: cursor must be over the item's box
     local ws = self:pickWallSlot(mx, my)
     local wItem = ws and room:wallItemAt(ws.c, ws.r, ws.mount)
-    local onExit = gc and room:cellType(gc, gr) == "E"
+    local onExit = gc and room:cellType(gc, gr) == "E" and not (gc == self.playerC and gr == self.playerR)
+    if (gItem and gItem ~= self.hoverItem) or onExit ~= self.hoverExit or (wItem and wItem ~= self.hoverWallItem) then
+        SHARED:GetSharedSound("Move"):Play()
+    end
     self.hoverItem = gItem
     self.hoverWallItem = wItem
     self.hoverSlot = (not gItem) and wItem and ws or nil
-    self.hoverExit = onExit and not (gc == self.playerC and gr == self.playerR)
+    self.hoverExit = onExit
 
     -- press-drag: once the pointer leaves the pressed item's cell/slot while held, pick it up
     local pi = self.pressItem
@@ -1142,7 +1190,7 @@ function Edit:updateBrowse(mx, my, lpressed, lpressing, lreleased)
             moved = ws and not (ws.c == pi.it.c and ws.r == pi.it.r and ws.mount == (pi.it.mount or "low"))
         end
         if moved then
-            self:pickUp(pi.it, pi.kind, true)                    -- drag begins; the original disappears
+            self:pickUp(pi.it, pi.kind, true)
             return
         end
     end
@@ -1154,11 +1202,12 @@ function Edit:updateBrowse(mx, my, lpressed, lpressing, lreleased)
             self.pressItem = { it = gItem, kind = "ground", c = gc, r = gr }
         elseif self.hoverExit then
             self.dragExit = true
+            SHARED:GetSharedSound("Decide"):Play()
         elseif wItem then
             self:select(wItem, "wall")
             self.pressItem = { it = wItem, kind = "wall" }
         else
-            self:deselect()                                      -- press on empty space deselects
+            self:deselect()
         end
     end
 end

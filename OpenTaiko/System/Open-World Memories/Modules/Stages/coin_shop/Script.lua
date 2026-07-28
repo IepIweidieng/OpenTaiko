@@ -609,9 +609,11 @@ local function buildConfirmUI(item, slot)
 			if item.Price * qty > save.Coins then sounds.SoldOut:Play(); return end   -- can't afford (guarded)
 			purchaseItemMultiple(item, slot, qty)
 			closeConfirm()
-		end }
+		end,
+		sfx = { click = "" } }
 	confirmUI:button{ text = "Cancel", x = bx, y = buyY + 92, w = BTN_W, h = 76,
-		onClick = function() sounds.Cancel:Play(); closeConfirm() end }
+		onClick = function() closeConfirm() end,
+		sfx = { click = "cancel" } }
 	confirmUI._item, confirmUI._qty = item, qtyChooser
 	confirmUI._totalLabel, confirmUI._buyBtn = totalLabel, buyBtn
 	updateConfirmTotals()
@@ -632,10 +634,12 @@ local function buildRefreshUI()
 			save:SpendCoins(rerollPrice); executedRerolls = executedRerolls + 1; soldOutMask = 0
 			poolItems(); storeShopState(shopDB); sounds.Buy:Play()
 			closeConfirm()
+			return true
 		end }
 	rb.enabled = (rerollPrice <= save.Coins)
 	confirmUI:button{ text = "Cancel", x = bx, y = 620, w = BTN_W, h = 76,
-		onClick = function() sounds.Cancel:Play(); closeConfirm() end }
+		onClick = function() closeConfirm() end,
+		sfx = { click = "cancel" } }
 	confirmUI:_setFocusIndex(1)   -- default focus/highlight on Reroll
 end
 
@@ -678,7 +682,7 @@ function update(ts)
 		if navPn.decide() then
 				-- Back button
 				if selectedItem == -2 then
-					sounds.Decide:Play()
+					sounds.Cancel:Play()
 					return Exit("title", nil)
 				-- Reroll button
 				elseif selectedItem == -1 then
@@ -756,7 +760,11 @@ end
 
 function activate()
 	save = nil
-	SHOP_SFX = { move = function() sounds.Skip:Play() end, click = function() sounds.Decide:Play() end }
+	SHOP_SFX = {
+		move = function() sounds.Skip:Play() end,
+		click = function() sounds.Decide:Play() end,
+		cancel = function() sounds.Cancel:Play() end,
+	}
 
 	-- (the old Confirm/Refresh/Buttons textures are no longer used — the confirm/reroll dialogs are PopUI)
 	local txNm = {

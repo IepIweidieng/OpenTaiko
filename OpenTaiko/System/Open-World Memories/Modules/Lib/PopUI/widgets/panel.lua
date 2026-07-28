@@ -22,7 +22,7 @@ function Panel.new(o)
 end
 
 function Panel:restyle()
-    self.eff = self.mgr:resolveTheme(self.style)
+    self:resolveStyle()
     local c = self.eff.colors
     self:bakeBody(c.surface, c.surface2)
     if self.title and self.title ~= "" then

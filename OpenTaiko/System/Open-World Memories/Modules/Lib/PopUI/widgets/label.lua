@@ -35,7 +35,7 @@ function Label:_fontSize()
 end
 
 function Label:restyle()
-    self.eff = self.mgr:resolveTheme(self.style)
+    self:resolveStyle()
     local c = self.eff.colors
     local sz = self:_fontSize()
     self._fg = self.color or c.text

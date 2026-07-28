@@ -638,7 +638,8 @@ local function buildUI(itemName, playerIndex)
     W.backBtn = ui:button{ x = LIST.x + LIST.w - 96, y = TAB.y, w = 96, h = TAB.h, icon = "back",
                            onClick = function()
                                if navGenre ~= nil then navGenre = nil; JB._rebuildList() end
-                           end }
+                           end,
+                           sfx = { click = "cancel" } }
     W.backBtn:setVisible(false)
     -- right pane: NOW-PLAYING title/subtitle + transport (centered labels take their CENTER x;
     -- both sit clear above the jacket box at JACKET_Y)
@@ -749,6 +750,7 @@ function JB.close()
     W = {}
     setJacket(nil)
     seekDrag = nil
+    SHARED:GetSharedSound("Cancel"):Play()
 end
 
 -- end-of-track probe, defined ONCE (no per-frame closure churn) and polled at 4 Hz. NOTE:
@@ -826,6 +828,7 @@ function JB.update(dt, ts)
     if r == "cancel" then
         if tab == "songs" and navGenre ~= nil then
             navGenre = nil; JB._rebuildList()          -- Escape backs out of a genre first...
+            SHARED:GetSharedSound("Cancel"):Play()
         else
             JB.close(); return "closed"                -- ...and closes the player from the top level
         end

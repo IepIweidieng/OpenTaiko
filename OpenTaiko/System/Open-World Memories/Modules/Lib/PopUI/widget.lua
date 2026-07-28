@@ -6,12 +6,15 @@
 
 local U     = require("PopUI.util")
 local Shape = require("PopUI.shape")
+local Sfx   = require("PopUI.sfx")
 
 local Widget = {}
 Widget.__index = Widget
 
 function Widget.new(o)
     local self = setmetatable(o or {}, Widget)
+    self.userTheme = o.theme or o.style or {}
+    self.userSfx = o.sfx or {}
     self.x = self.x or 0; self.y = self.y or 0
     self.w = self.w or 160; self.h = self.h or 64
     if self.enabled == nil then self.enabled = true end
@@ -27,13 +30,14 @@ end
 -- called by the manager right after creation
 function Widget:init(mgr)
     self.mgr = mgr
-    self.eff = mgr:resolveTheme(self.style)
     self._scaleC = COUNTER:EmptyCounter()
     self._hiC = COUNTER:EmptyCounter()
     self._hiCapC = COUNTER:EmptyCounter()
     self:restyle()
     return self
 end
+
+function Widget:playSfx(name) return Sfx.playSfx(self.sfx, name) end
 
 -- ── geometry ────────────────────────────────────────────────────────────────────
 function Widget:centerX() return self.x + self.w * 0.5 end
@@ -84,9 +88,14 @@ function Widget:bakeRing()
     self._ring = { canvas = cv, m = m }
 end
 
+function Widget:resolveStyle()
+    self.eff = self.mgr:resolveTheme(self.userTheme)
+    self.sfx = self.mgr:resolveSfx(self.userSfx)
+end
+
 -- subclasses override to (re)build their canvases + cached text. Default = a plain body + ring.
 function Widget:restyle()
-    self.eff = self.mgr:resolveTheme(self.style)
+    self:resolveStyle()
     self:bakeBody()
     self:bakeRing()
 end
@@ -122,28 +131,35 @@ function Widget:_tweenCapturingHighlight(target)
     c:ClearEasing(); c:Start()
 end
 
-function Widget:setHover(b)
+function Widget:setHover(b, silent)
     if self.hovered == b then return end
     self.hovered = b
     self:_refreshHighlight()
-    if b then if self.onHover then self.onHover(self) end
-    else if self.onUnhover then self.onUnhover(self) end end
+    if b then
+        if self.onHover then self.onHover(self, silent)
+        elseif not silent then self:playSfx("hover")
+        end
+    elseif self.onUnhover then self.onUnhover(self, silent) end
 end
 
-function Widget:setFocus(b)
+function Widget:setFocus(b, silent)
     if self.focused == b then return end
     self.focused = b
     self:_refreshHighlight()
-    if b then if self.onFocus then self.onFocus(self) end
-    else if self.onBlur then self.onBlur(self) end end
+    if b then
+        if self.onFocus then self.onFocus(self, silent)
+        elseif not silent then self:playSfx("move")
+        end
+    elseif self.onBlur then self.onBlur(self, silent)
+    end
 end
 
-function Widget:setCapturing(b)
+function Widget:setCapturing(b, silence)
     if self.capturing == b then return end
     self.capturing = b
     self:_refreshCapturingHighlight()
-    if b then if self.onCapturing then self.onCapturing(self) end
-    else if self.onEndCapture then self.onEndCapture(self) end end
+    if b then if self.onCapturing then self.onCapturing(self, silence) end
+    else if self.onEndCapturing then self.onEndCapturing(self, silence) end end
 end
 
 function Widget:_refreshHighlight()
@@ -190,8 +206,8 @@ end
 
 -- default activation: buttons override or rely on onClick
 function Widget:onActivate()
-    if self.onClick then self.onClick(self) end
-    if self.mgr then self.mgr:playSfx("click") end
+    if self.onClick and self.onClick(self) then return end
+    self:playSfx("click")
 end
 
 function Widget:setEnabled(b) self.enabled = b; self.focusable = b and (self._focusableWant ~= false); self:_refreshHighlight(); self:_refreshCapturingHighlight() end

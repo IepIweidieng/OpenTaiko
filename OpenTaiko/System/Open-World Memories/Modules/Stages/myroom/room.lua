@@ -664,7 +664,8 @@ function Room:wallItemSlots()
     local out = {}
     for _, s in ipairs(self:wallSlots()) do
         for _, m in ipairs({ "low", "high" }) do
-            out[#out + 1] = { wall = s.wall, idx = s.idx, c = s.it.c, r = s.it.r, mount = m,
+            out[#out + 1] = { wall = s.wall, idx = s.idx, key = s.key .. m,
+                              c = s.it.c, r = s.it.r, mount = m,
                               wx = s.wx, wy = FY + Room.MOUNT_Y[m] + 0.3, wz = s.wz }
         end
     end

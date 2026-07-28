@@ -169,7 +169,6 @@ internal class CStageConfig : CStage {
 				} else {
 					var r = UI?.Update();   // Lua handles nav/edit/cancel; returns "exit" at the top level
 					if (r != null && r.Length > 0 && (r[0] as string) == "exit") {
-						OpenTaiko.Skin.soundDecideSFX.tPlay();
 						this.actFIFO.tFadeOutStart();
 						base.ePhaseID = CStage.EPhase.Common_FADEOUT;
 					}

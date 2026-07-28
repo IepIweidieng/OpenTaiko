@@ -42,7 +42,7 @@ function List:_selOpt() local i = self:_selRowIndex(); return i and self.rows[i]
 function List:_notifyFocus() if self.onFocusRow then self.onFocusRow(self:_selOpt()) end end
 
 function List:restyle()
-    self.eff = self.mgr:resolveTheme(self.style)
+    self:resolveStyle()
     local c = self.eff.colors
     local rw, rh = self.w, self.rowHeight - 10
     local m = 6
@@ -69,10 +69,10 @@ function List:_setSelected(i)
     i = U.clamp(i, 1, n)
     if i == self.selected then return end
     self.selected = i
-    self:_ensureVisible(); self:_notifyFocus(); self.mgr:playSfx("move")
+    self:_ensureVisible(); self:_notifyFocus(); self:playSfx("move")
 end
-function List:onNavDownOrPadRight() self:setCapturing(false); if self.selected < #self._focusable then self:_setSelected(self.selected + 1); return true end return false end
-function List:onNavUpOrPadLeft() self:setCapturing(false); if self.selected > 1 then self:_setSelected(self.selected - 1); return true end return false end
+function List:onNavDownOrPadRight() self:setCapturing(false, true); if self.selected < #self._focusable then self:_setSelected(self.selected + 1); return true end return false end
+function List:onNavUpOrPadLeft() self:setCapturing(false, true); if self.selected > 1 then self:_setSelected(self.selected - 1); return true end return false end
 
 function List:_ensureVisible()
     local rowIdx = self:_selRowIndex() or 1
@@ -101,10 +101,17 @@ function List:onActivate()
     local k = opt.Kind
     if k == "Action" or k == "KeyConfig" then
         if self.onActivateRow then self.onActivateRow(opt) end
-        opt:Activate(); self.mgr:playSfx("click")
-    elseif k == "Toggle" then opt:Toggle(); self.mgr:playSfx("click")
-    elseif k == "Choice" then editOpt(opt, 1); self.mgr:playSfx("click")
+        opt:Activate(); self:playSfx("click")
+    elseif k == "Toggle" then opt:Toggle(); self:playSfx("click")
+    elseif k == "Choice" then editOpt(opt, 1); self:playSfx("click")
     end
+end
+
+function List:onCapturing(silence)
+    if not silence then self:playSfx("click") end
+end
+function List:onEndCapturing(silence)
+    if not silence then self:playSfx("cancel") end
 end
 
 -- consume Left/Right (also for pad Left/Right in capturing mode), so focus stays on the chooser
@@ -115,11 +122,11 @@ function List:onCancel()
     return false
 end
 function List:onNavLeft(forPad)
-    if not forPad or self.capturing then self:setCapturing(true); editOpt(self:_selOpt(), -1); self.mgr:playSfx("move"); return true end
+    if not forPad or self.capturing then self:setCapturing(true, true); editOpt(self:_selOpt(), -1); self:playSfx("move"); return true end
     return false
 end
 function List:onNavRight(forPad)
-    if not forPad or self.capturing then self:setCapturing(true); editOpt(self:_selOpt(), 1); self.mgr:playSfx("move"); return true end
+    if not forPad or self.capturing then self:setCapturing(true, true); editOpt(self:_selOpt(), 1); self:playSfx("move"); return true end
     return false
 end
 
@@ -130,7 +137,7 @@ function List:update(ctx)
         local maxS = math.max(0, #self.rows * self.rowHeight - self.h)
         self._scrollTarget = U.clamp(self._scrollTarget, 0, maxS)
     end
-    local capturing = self.capturing
+    local capturing, silence = self.capturing, false
     -- mouse hover row -> preview-select; click activates
     if not self.focused or ctx.mPressed then capturing = false end  -- reset first
     if self.hovered and ctx.inside and (ctx.moved or not self._wasHovered or self.pressed) then
@@ -142,8 +149,8 @@ function List:update(ctx)
                 if ri == rowIdx then
                     -- preview-select on hover / press-select on click; the manager's release fires onActivate
                     if fi ~= self.selected then
-                        self:setCapturing(false)
-                        if (ctx.mPressed or ctx.mReleased) then self:_setSelected(fi) end
+                        self:setCapturing(false, true)
+                        if (ctx.mPressed or ctx.mReleased) then self:_setSelected(fi); silence = true end
                     end
                     if ctx.mPressed then capturing = self.pressed end
                     break
@@ -151,7 +158,7 @@ function List:update(ctx)
             end
         end
     end
-    self:setCapturing(capturing)
+    self:setCapturing(capturing, silence)
     self._wasHovered = self.hovered
     self._scrollCur = self._scrollCur + (self._scrollTarget - self._scrollCur) * math.min(1, ctx.dt * 16)
 end

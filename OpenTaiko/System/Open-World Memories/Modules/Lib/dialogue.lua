@@ -25,6 +25,8 @@
 --   onSfx=fn, onVoice=fn, onExpr=fn, portraits={name=LuaTexture} }
 
 local NavInput = require("NavInput")
+local Util     = require("Util")
+local Sfx      = require("PopUI.sfx")
 
 local floor = math.floor
 local Dialogue = {}
@@ -85,8 +87,8 @@ function Dialogue.new(opts)
     self.gfontName = opts.gfontName or opts.gfont
     self.ui = opts.ui or "popui"   -- the rounded PopUI-style chrome is the default skin-wide look
                                    -- (pass ui="plain" for the old flat panel)
-    self.theme = {}
-    for k, v in pairs(THEME_DEFAULT) do self.theme[k] = (opts.theme and opts.theme[k]) or v end
+    self.theme = Util.merge(THEME_DEFAULT, opts.theme)
+    self.sfx = Sfx.resolve(opts.sfx, nokon_dialogue)
     local box = opts.box or {}
     self.boxX = box.x or DEF_BOX_X
     self.boxY = box.y or DEF_BOX_Y
@@ -227,10 +229,9 @@ end
 local function kp(k) return INPUT:KeyboardPressed(k) end
 
 function Dialogue:advancePressed()
-    if NavInput.decide() or kp("Space") then return true end
-    if self.mouse and INPUT.MousePressed and INPUT:MousePressed("Left") then return true end
-    if self.advanceInput ~= nil and self.advanceInput() then return true end
-    return false
+    return (NavInput.decide() or kp("Space"))
+        or (self.mouse and INPUT.MousePressed and INPUT:MousePressed("Left"))
+        or (self.advanceInput ~= nil and self.advanceInput())
 end
 
 function Dialogue:update(dt)
@@ -239,11 +240,12 @@ function Dialogue:update(dt)
     -- choices phase
     if self.choosing then
         local ch = node.choices
-        if NavInput.upOrPadLeft() or kp("W") then self.choiceIdx = (self.choiceIdx - 2) % #ch + 1 end
-        if NavInput.downOrPadRight() or kp("S") then self.choiceIdx = self.choiceIdx % #ch + 1 end
+        if NavInput.upOrPadLeft() or kp("W") then self.choiceIdx = (self.choiceIdx - 2) % #ch + 1; Sfx.playSfx(self.sfx, "skip") end
+        if NavInput.downOrPadRight() or kp("S") then self.choiceIdx = self.choiceIdx % #ch + 1; Sfx.playSfx(self.sfx, "skip") end
         if self:advancePressed() then
             self.result = ch[self.choiceIdx].value
             self.activeFlag = false
+            Sfx.playSfx(self.sfx, "click")
             return "done"
         end
         return "running"
@@ -277,6 +279,7 @@ function Dialogue:update(dt)
         if node.choices and #node.choices > 0 then
             self.choosing = true
         elseif self:advancePressed() then
+            Sfx.playSfx(self.sfx, "click")
             self:nextNode()
             if not self.activeFlag then self.result = self.result or true; return "done" end
         end

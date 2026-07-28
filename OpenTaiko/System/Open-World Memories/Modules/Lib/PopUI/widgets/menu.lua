@@ -38,8 +38,8 @@ function Menu:setSelected(i, fireChange)
     self.selected = i
     self:_ensureVisible()
     if fireChange ~= false then
-        if self.onChange then self.onChange(self.selected, self.items[self.selected], self) end
-        self.mgr:playSfx("move")
+        if self.onChange and self.onChange(self.selected, self.items[self.selected], self) then return end
+        self:playSfx("move")
     end
 end
 
@@ -61,12 +61,12 @@ function Menu:onNavUpOrPadLeft() if self.selected > 1 then self:setSelected(self
 
 function Menu:onActivate()
     local it = self.items[self.selected]
-    if it and self.onSelect then self.onSelect(self.selected, it, self) end
-    self.mgr:playSfx("click")
+    if it and self.onSelect and self.onSelect(self.selected, it, self) then return end
+    self:playSfx("click")
 end
 
 function Menu:restyle()
-    self.eff = self.mgr:resolveTheme(self.style)
+    self:resolveStyle()
     local c = self.eff.colors
     local rw, rh = self.w, self.rowHeight - 10
     local m = 6

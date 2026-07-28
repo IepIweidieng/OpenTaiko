@@ -1,6 +1,6 @@
 ---@diagnostic disable: lowercase-global
 -- PopUI/theme.lua — the look of the UI in one table. Colors are {r,g,b,a} 0-255 (the form the canvas
--- pixel ops want directly). Everything is tweakable; per-widget `style` tables override per-field.
+-- pixel ops want directly). Everything is tweakable; per-widget `theme/style` tables override per-field.
 
 local Util = require "Util"
 
@@ -46,7 +46,7 @@ Theme.DEFAULT = {
 Theme.clone = Util.deepcopy
 Theme.merge = Util.merge
 
--- resolve an effective theme = DEFAULT < user theme < per-widget style.
+-- resolve an effective theme = DEFAULT < manager theme < per-widget theme/style.
 -- NOTICE: colors defined in {r,g,b} have the alpha inherited from base styles
 function Theme.resolve(userTheme, style)
     local t = Util.merge(Theme.DEFAULT, userTheme or {})

@@ -444,6 +444,7 @@ function M.update()
         end
     elseif pressCancel then
         if activeRoll == 1 then
+            SHARED:GetSharedSound("Cancel"):Play()
             return "back"
         else
             if showGo then

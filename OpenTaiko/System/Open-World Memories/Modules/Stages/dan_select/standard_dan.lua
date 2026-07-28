@@ -533,10 +533,10 @@ function M.update(dt)
                 _state = "song_select"
             elseif confirm_sel == 1 then
                 if act["customize_dialog"] ~= nil then act["customize_dialog"]:Activate(0) end
-                SHARED:GetSharedSound("Select"):Play()
+                SHARED:GetSharedSound("Decide"):Play()
             elseif confirm_sel == 2 then
                 if act["mod_select_dialog"] ~= nil then act["mod_select_dialog"]:Activate(0) end
-                SHARED:GetSharedSound("Select"):Play()
+                SHARED:GetSharedSound("Decide"):Play()
             elseif confirm_sel == 3 then
                 local ssn = _song_list ~= nil and _song_list:GetSelectedSongNode() or nil
                 if ssn ~= nil and ssn.IsSong then

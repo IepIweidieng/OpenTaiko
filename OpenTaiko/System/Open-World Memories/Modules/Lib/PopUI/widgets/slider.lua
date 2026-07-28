@@ -37,16 +37,20 @@ function Slider:_frac() return (self.max > self.min) and (self.value - self.min)
 
 function Slider:setValue(v, silent)
     local nv = self:_snap(v)
-    if nv == self.value then return end
+    if nv == self.value then return false end
     self.value = nv
-    if not silent and self.onChange then self.onChange(self.value, self) end
-    self.mgr:playSfx("move")
+    if not silent then
+        if self.onChange and self.onChange(self.value, self) then return end
+        self:playSfx("move")
+    end
+    return true
 end
 
+-- silence click sound
 function Slider:onActivate() end  -- Decide handled in onDecide(); onActivate() does nothing
 
 function Slider:restyle()
-    self.eff = self.mgr:resolveTheme(self.style)
+    self:resolveStyle()
     local c = self.eff.colors
     local th = math.floor(self.h * 0.5)          -- track height
     local ow = math.max(3, self.eff.outlineWidth - 1)
@@ -84,6 +88,13 @@ function Slider:restyle()
     self:bakeRing()
 end
 
+function Slider:onCapturing(silence)
+    if not silence then self:playSfx("click") end
+end
+function Slider:onEndCapturing(silence)
+    if not silence then self:playSfx("cancel") end
+end
+
 -- consume Left/Right (also for pad Left/Right in capturing mode), so focus stays on the chooser
 -- consume Cancel to quit capturing mode
 function Slider:onDecide() self:setCapturing(not self.capturing); return true end
@@ -92,27 +103,29 @@ function Slider:onCancel()
     return false
 end
 function Slider:onNavLeft(forPad)
-    if not forPad or self.capturing then self:setCapturing(true); self:setValue(self.value - self.step); self.mgr:playSfx("move"); return true end
+    if not forPad or self.capturing then self:setCapturing(true, true); self:setValue(self.value - self.step); return true end
     return false
 end
 function Slider:onNavRight(forPad)
-    if not forPad or self.capturing then self:setCapturing(true); self:setValue(self.value + self.step); self.mgr:playSfx("move"); return true end
+    if not forPad or self.capturing then self:setCapturing(true, true); self:setValue(self.value + self.step); return true end
     return false
 end
 
 function Slider:update(ctx)
     Widget.update(self, ctx)
     local R = self._trackR
-    local capturing = self.capturing
+    local capturing, silence = self.capturing, false
     if not self.focused then capturing = false end
     if ctx.mPressing then
         capturing = self.pressed
         if self.pressed then
             local frac = (ctx.mx - (self.x + R)) / math.max(1, self.w - 2 * R)
-            self:setValue(self.min + U.clamp(frac, 0, 1) * (self.max - self.min))
+            if self:setValue(self.min + U.clamp(frac, 0, 1) * (self.max - self.min)) then
+                silence = true
+            end
         end
     end
-    self:setCapturing(capturing)
+    self:setCapturing(capturing, silence)
 end
 
 function Slider:draw()

@@ -55,6 +55,9 @@ local RARITY_COL = {
 local RARITY_LANG = { Poor = 0, Common = 1, Uncommon = 2, Rare = 3, Epic = 4, Legendary = 5, Mythical = 6 }
 -- rarity sort order inside a nameplate type group (Poor → Mythical; DB order is the tiebreak)
 local RARITY_ORDER = { Poor = 1, Common = 2, Uncommon = 3, Rare = 4, Epic = 5, Legendary = 6, Mythical = 7 }
+-- Rarity string → modal integer (matches HRarity.RarityToModalInt in C#)
+-- Poor=0, Common=0, Uncommon=1, Rare=2, Epic=3, Legendary=4, Mythical=4
+local RARITY_MODAL = { Poor = 0, Common = 0, Uncommon = 1, Rare = 2, Epic = 3, Legendary = 4, Mythical = 4 }
 local GOLD_MARKUP = "<g.#FFE34A.#EA9622>%s</g>"      -- the gold dan-title gradient (as C# Heya bakes it)
 -- gallery text bakes 1:1 with C# CStageHeya (pfHeyaFont at Heya_Font_Scale default = 14):
 --   title plates: Color.Black on Color.Transparent    dan rows: White (gold rows: Color.Gold) on Black
@@ -320,22 +323,31 @@ function PC.tickBgmFade(dt)
         pcall(function() bgm:Stop() end)
     end
 end
--- the failed-unlock error blip: the skin's own error sound (same file the C# UI uses;
--- character_shop's sounds.Error is the same idea). Cached once, disposed with the BGM.
-local errSfx, errSfxFailed = nil, false
+-- the failed-unlock error blip: the skin's own error sound
 local function errPlay()
-    if errSfx == nil and not errSfxFailed then
-        local ok = pcall(function() errSfx = SOUND:CreateSFX("../../../Sounds/Error.ogg") end)
-        if not ok or errSfx == nil then errSfxFailed = true; errSfx = nil end
+    SHARED:GetSharedSound("Error"):Play()
+end
+
+-- the unlock sfxs used by unlock modals
+local unlockSfxs = {}
+local function unlockPlay(rarity)
+    local idx = RARITY_MODAL[rarity] or 0
+    unlockSfxs[idx] = unlockSfxs[idx] or {}
+    local sfx = unlockSfxs[idx]
+    if sfx.snd == nil and not sfx.failed then
+        local ok = pcall(function() sfx.snd = SOUND:CreateSFX("../../ROActivities/modal/Sounds/" .. idx .. ".ogg") end)
+        if not ok or sfx.snd == nil then sfx.failed = true; sfx.snd = nil end
     end
-    if errSfx then pcall(function() errSfx:Play() end) end
+    if sfx.snd then pcall(function() sfx.snd:Play() end) end
 end
 
 function PC.disposeBgm()
     if bgm then pcall(function() bgm:Dispose() end) end
     bgm, bgmFailed = nil, false
-    if errSfx then pcall(function() errSfx:Dispose() end) end
-    errSfx, errSfxFailed = nil, false
+    for _, v in pairs(unlockSfxs) do
+        if v.snd then pcall(function() v.snd:Dispose() end) end
+        v.snd, v.failed = nil, false
+    end
 end
 
 function PC.new()
@@ -503,12 +515,12 @@ end
 
 -- Left/Right switch tabs while a tab button is focused (config_ui's setupHandleTabKeys)
 local function setupHandleTabKeys(pc, tab)
-    function tab:onNavRight() return pc:setTab(pc.tab % #TABS + 1) end
-    function tab:onNavLeft() return pc:setTab((pc.tab - 2) % #TABS + 1) end
+    function tab:onNavRight() SHARED:GetSharedSound("Skip"):Play(); return pc:setTab(pc.tab % #TABS + 1) end
+    function tab:onNavLeft() SHARED:GetSharedSound("Skip"):Play(); return pc:setTab((pc.tab - 2) % #TABS + 1) end
 end
 
 function PC:buildUI()
-    if self.ui then self.ui:disposeWidgets() end
+    if self.ui then self.ui:disposeWidgets(); self.ui:clearPrevFocus() end
     local ui = PopUI.new{ theme = THEME, navPlayer = (self.playerIndex or 0) + 1 }
     self.ui = ui
     local pc = self
@@ -526,14 +538,14 @@ function PC:buildUI()
         -- config_ui handoff: Down from a tab enters the 2nd layer (list / rename box); Up wraps too
         t.onNavDown = function() return pc:focusList() end
         t.onNavUp = function() return pc:focusList() end
-        t.onDecide = function (self) pc:setTab(pc.tab); return self:onNavDown() end
+        t.onDecide = function (self) self:keyActivate(); return self:onNavDown() end
         setupHandleTabKeys(pc, t)
         self.tabBtns[i] = t
     end
     -- the round RED close button
     ui:button{ text = "×", x = PANEL.x + PANEL.w - 74, y = PANEL.y - 14, w = 64, h = 64,
                accent = true, style = CLOSE_STYLE,
-               onClick = function() pc._wantClose = true end }
+               onClick = function() pc._wantClose = true end, sfx = { click = "" } }
 
     if self.tab == 5 then
         -- Rename pane
@@ -576,7 +588,7 @@ function PC:buildUI()
             selected = sel,
             rowStyle = function(i) return pc:rowStyleFor(i) end,
             onChange = function(i) pc.sel = i; pc:refreshDetail() end,
-            onSelect = function(i) pc.sel = i; pc:activateSelected() end,
+            onSelect = function(i) pc.sel = i; pc:activateSelected(); return true end,
         }
         ui:add(menu)
         self.menu = menu
@@ -596,7 +608,7 @@ function PC:buildUI()
         end
         self.actionBtn = ui:button{
             text = I18N.tr("Equip"), x = DETAIL_X + 40, y = PANEL.y + PANEL.h - 130, w = DETAIL_W - 80, h = 76, accent = true,
-            onClick = function() pc:activateSelected() end,
+            onClick = function() pc:activateSelected() end, sfx = { click = "" },
         }
         self.sel = sel
         self:refreshDetail()
@@ -712,32 +724,36 @@ function PC:activateSelected()
         end
         errPlay()
     end
-    local function unlockEquip(owned, uc, unlock, equip)
-        if owned then equip(); self.msg = I18N.tr("Equipped!"); return end
-        if not (uc and uc.HasCondition) then equip(); self.msg = I18N.tr("Equipped!"); return end
+    local function unlockEquip(owned, uc, rarity, unlock, equip)
+        if owned or not (uc and uc.HasCondition) then
+            equip(); SHARED:GetSharedSound("Decide"):Play(); self.msg = I18N.tr("Equipped!")
+            return
+        end
         local can = false
         pcall(function() can = uc:IsUnlockable(0) end)
         if not can then denied(); return end
         local price = uc:GetCoinPrice() or 0
         if price > 0 and price > (save.Coins or 0) then denied(); self.msg = I18N.tr("Not enough coins."); return end
         if price > 0 then save:SpendCoins(price) end
-        unlock(); equip()
+        if unlock() then SHARED:GetSharedSound("Error"):Play(); return end
+        unlockPlay(rarity); equip()
         self.msg = (price > 0) and I18N.trf("Purchased for %d coins!", price) or I18N.tr("Unlocked!")
     end
     if tab == 1 then
-        unlockEquip(save:IsCharacterUnlocked(e.FolderName), e.UnlockCondition,
-            function() save:UnlockCharacter(e.FolderName) end,
+        unlockEquip(save:IsCharacterUnlocked(e.FolderName), e.UnlockCondition, e.Rarity,
+            function() return save:UnlockCharacter(e.FolderName) end,
             function() save:ChangeCharacter(e.FolderName) end)
     elseif tab == 2 then
-        unlockEquip(save:IsPuchicharaUnlocked(e.FolderName), e.UnlockCondition,
-            function() save:UnlockPuchichara(e.FolderName) end,
+        unlockEquip(save:IsPuchicharaUnlocked(e.FolderName), e.UnlockCondition, e.Rarity,
+            function() return save:UnlockPuchichara(e.FolderName) end,
             function() save:ChangePuchichara(e.FolderName) end)
     elseif tab == 3 then
         save:ChangeDan(e.Title)
+        SHARED:GetSharedSound("Decide"):Play()
         self.msg = I18N.tr("Dan title set.")
     elseif tab == 4 then
-        unlockEquip(save:IsNameplateUnlocked(e.Id), e.UnlockCondition,
-            function() save:UnlockNameplate(e.Id) end,
+        unlockEquip(save:IsNameplateUnlocked(e.Id), e.UnlockCondition, e.Rarity,
+            function() return save:UnlockNameplate(e.Id) end,
             function() save:ChangeNameplate(e.Id) end)
     end
     -- surgical refresh — NO rebuild (scroll + cursor survive): row faces read live save state
@@ -786,6 +802,7 @@ function PC:close()
     end
     self.loadedAnims = {}
     bgmStop()
+    SHARED:GetSharedSound("Cancel"):Play()
 end
 
 -- returns "closed" once the screen has shut, else "running"

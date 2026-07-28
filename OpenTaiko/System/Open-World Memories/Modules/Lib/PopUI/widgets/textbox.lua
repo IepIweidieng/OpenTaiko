@@ -22,14 +22,20 @@ function TextBox.new(o)
 end
 
 function TextBox:restyle()
-    self.eff = self.mgr:resolveTheme(self.style)
+    self:resolveStyle()
     local c = self.eff.colors
     -- a slightly sunken field: face uses surface2 -> surface (inverted gives a soft inset feel)
     self:bakeBody(c.surface2, c.surface)
     self:bakeRing()
 end
 
-function TextBox:onEndCapture()
+function TextBox:onCapturing(silence)
+    if not silence then self:playSfx("click") end
+    self.mgr:releaseKeys(self)
+    self._ti = nil
+end
+function TextBox:onEndCapturing(silence)
+    if not silence then self:playSfx("cancel") end
     self.mgr:releaseKeys(self)
     self._ti = nil
 end
@@ -52,8 +58,10 @@ function TextBox:update(ctx)
             if self.onChange then self.onChange(t, self) end
         end
         if submitted then
-            self.value = t; self:setCapturing(false)
-            if self.onSubmit then self.onSubmit(self.value, self) end
+            self.value = t; self:setCapturing(false, true)
+            if not (self.onSubmit and self.onSubmit(self.value, self)) then
+                self:playSfx("decide")
+            end
         elseif INPUT:KeyboardPressed("Escape") then
             self.value = t; self:setCapturing(false)
         elseif INPUT:MousePressed("Left") and not self:hitTest(INPUT:GetMouseXY()) then

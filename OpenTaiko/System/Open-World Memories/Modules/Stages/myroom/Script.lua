@@ -388,7 +388,8 @@ local function playPhoneSound(stem)
         if s then pcall(function() s:SetVolume(100) end) end
         phoneSfx[stem] = s or false
     end
-    if phoneSfx[stem] then pcall(function() phoneSfx[stem]:Play() end) end
+    if phoneSfx[stem] then return pcall(function() phoneSfx[stem]:Play() end) end
+    return false
 end
 local function startBombs() bombFx = { t = 0, dur = 3.0, next = 0 } end  -- { t, dur, next }
 local function dialPhone(input)
@@ -400,7 +401,7 @@ local function dialPhone(input)
         local n = (input and input ~= "" and input) or I18N.tr("the number")
         mode = "dialogue"; phoneFlow = nil
         dlg:start({ { name = "", text = I18N.trf("You dial %s... It rings, and rings. Nobody picks up.", n) } })
-        return
+        return false
     end
     -- guarded like every other data-file read: a malformed entry (bare string, nested field) must
     -- degrade to the no-answer placeholder, not error out of the update path
@@ -419,13 +420,15 @@ local function dialPhone(input)
     end
     if name then name = I18N.tr(name) end        -- localized via lang/ja.lua (English text = the key)
     if text then text = I18N.tr(text) end
-    if sound and sound ~= "" and (text == nil or text == "") then
-        playPhoneSound(sound); mode = "play"; return  -- sound-only (e.g. 1122 → egg.ogg), no message
-    end
-    if sound and sound ~= "" then playPhoneSound(sound) end
+    local wantSilent
+    if sound and sound ~= "" then wantSilent = playPhoneSound(sound) end
     if effect == "bombs" then startBombs() end
-    mode = "dialogue"; phoneFlow = nil
-    dlg:start({ { name = name or "", text = text or "" } })
+    if text == nil or text == "" then mode = "play"  -- sound-only (e.g. 1122 → egg.ogg), no message
+    else
+        mode = "dialogue"; phoneFlow = nil
+        dlg:start({ { name = name or "", text = text or "" } })
+    end
+    return wantSilent
 end
 
 -- the bomb storm: explosion bursts around the player + screen shake, ticked every frame while active
@@ -557,11 +560,11 @@ local function buildPhoneTextPane(title, hintText, maxLen, confirmLabel, onConfi
     ui:panel{ x = x, y = y, w = w, h = 330, title = title }
     local tb = ui:textbox{ x = x + 40, y = y + 100, w = w - 80, h = 76, value = "", maxLen = maxLen,
                            placeholder = hintText,
-                           onSubmit = function(t) onConfirm(t) end }
+                           onSubmit = function(t) return onConfirm(t) end }
     ui:button{ text = confirmLabel, x = x + 40, y = y + 210, w = 300, h = 76, accent = true,
-               onClick = function() onConfirm(tb.value or "") end }
+               onClick = function() return onConfirm(tb.value or "") end }
     ui:button{ text = I18N.tr("Back"), x = x + w - 240, y = y + 210, w = 200, h = 76,
-               onClick = function() buildPhoneMenu() end }
+               onClick = function() buildPhoneMenu() end, sfx = { click = "cancel" } }
 end
 
 buildPhoneMenu = function()
@@ -597,7 +600,8 @@ buildPhoneMenu = function()
                 dlg:start(landlordScript())
             elseif v == "number" then
                 buildPhoneTextPane(I18N.tr("Enter a number"), I18N.tr("number..."), 16, I18N.tr("Call"), function(t)
-                    closePhone(); dialPhone(t)       -- looks up data/phone_numbers.json (events/eggs)
+                    closePhone();
+                    return dialPhone(t)  -- looks up data/phone_numbers.json (events/eggs)
                 end)
             elseif v == "invite" then
                 if not JB.songsEnumReady() then
@@ -617,21 +621,22 @@ buildPhoneMenu = function()
                 buildPhoneTextPane(I18N.tr("Join a friend"), I18N.tr("paste the room code..."), 4096, I18N.tr("Join"), function(t)
                     closePhone()
                     local code = (t ~= "" and t) or nil
-                    if code then
-                        if MO.join(code) then
-                            JB.stopAll()   -- our own music stays home; the host's jukebox takes over
-                            msg = net.msg or I18N.tr("Connecting…")
-                        else
-                            msg = net.msg or I18N.tr("Could not join.")
-                        end
-                        msgT = 6
+                    if not code then SHARED:GetSharedSound("Cancel"):Play(); return true end
+                    if MO.join(code) then
+                        JB.stopAll()   -- our own music stays home; the host's jukebox takes over
+                        msg = net.msg or I18N.tr("Connecting…")
+                    else
+                        msg = net.msg or I18N.tr("Could not join.")
                     end
+                    msgT = 6
                 end)
                 end
             elseif v == "stophost" then
                 MO.leave(); closePhone(); msg = I18N.tr("You closed the room."); msgT = 4
             else
+                SHARED:GetSharedSound("Cancel"):Play()
                 closePhone()
+                return true
             end
         end,
     }
@@ -794,7 +799,8 @@ function update(ts)
             if phoneJustOpened then
                 phoneJustOpened = false                 -- consume the edge that opened My Room
             elseif playerSelUI:update(ts) == "cancel" then
-                closePlayerSelect(); MO.leave(); GLOBALCAMERA:Reset(); return Exit("stage", "_title")
+                closePlayerSelect(); MO.leave(); GLOBALCAMERA:Reset(); SHARED:GetSharedSound("Cancel"):Play()
+                return Exit("stage", "_title")
             end
         else
             mode = "play"
@@ -814,6 +820,7 @@ function update(ts)
             if phoneJustOpened then
                 phoneJustOpened = false      -- consume the keypress edge that opened the phone
             elseif phoneUI:update(ts) == "cancel" then
+                SHARED:GetSharedSound("Cancel"):Play()
                 closePhone()
             end
         else
@@ -838,6 +845,7 @@ function update(ts)
     end
 
     if NavInput.p[playerIndex + 1].cancel() then
+        SHARED:GetSharedSound("Cancel").Play()
         if MO.isGuest() then backToOwnRoom(I18N.tr("You left the room.")); return nil end
         MO.leave(); GLOBALCAMERA:Reset(); saveRoom(); return Exit("stage", "_title")
     end
@@ -905,6 +913,7 @@ function update(ts)
             local idx = 1
             for i, e in ipairs(inter) do if e.key == focusKey then idx = i; break end end
             focusKey = inter[idx % #inter + 1].key
+            SHARED:GetSharedSound("Skip"):Play()
         elseif not net.online then       -- no room editing while online (hosting or visiting)
             local pc, pr = world:worldToCell(px, pz)
             -- remember the full camera to restore on exit, then reset to a clean, framed editing view
@@ -915,7 +924,9 @@ function update(ts)
             fit = math.min(world.cam.maxDist or fit, math.max(world.cam.minDist or fit, fit))
             world.cam:setRig{ yaw = 45, pitch = -40, fov = FOV, dist = fit }
             world.cam:setTarget(room:gridW() * 0.5, FY + 0.4, room:gridH() * 0.5)
-            edit:enter(pc, pr); mode = "edit"; return nil
+            edit:enter(pc, pr); mode = "edit"
+            SHARED:GetSharedSound("Decide"):Play()
+            return nil
         end
     end
 
@@ -926,21 +937,28 @@ function update(ts)
     interactGlow(focused)
     if focused and (NavInput.p[playerIndex + 1].decide() or kp("Space")) then
         if focused.kind == "exit" then
+            SHARED:GetSharedSound("Cancel"):Play()
             if MO.isGuest() then backToOwnRoom(I18N.tr("You left the room.")); return nil end
-            MO.leave(); GLOBALCAMERA:Reset(); saveRoom(); return Exit("stage", "_title")
+            MO.leave(); GLOBALCAMERA:Reset(); saveRoom()
+            return Exit("stage", "_title")
         elseif focused.kind == "computer" then
             JB.setDuck(true)               -- jukebox fades down first; the PC BGM fades in after it
+            SHARED:GetSharedSound("Decide"):Play()
             pcScreen:openScreen(); mode = "pc"
         elseif focused.kind == "phone" then
+            SHARED:GetSharedSound("Decide"):Play()
             openPhone()
         elseif focused.kind == "lamp" then
+            SHARED:GetSharedSound("Move"):Play()
             focused.it.lit = (focused.it.lit == false) and true or false   -- toggle on/off
             rebuild(); saveRoom(); MO.onRoomChanged()
         elseif focused.kind == "pod" then
+            SHARED:GetSharedSound("Decide"):Play()
             mode = "dialogue"; phoneFlow = nil
             dlg:start({ { name = "", text = dlgLoc("pod", "locked",
                 "You press the panel on the Mysterious pod. It hums, but nothing opens. Not yet.") } })
         elseif focused.kind == "jukebox" then
+            SHARED:GetSharedSound("Decide"):Play()
             JB.openFor(focused.it, Room.displayName("jukebox"), playerIndex)
             mode = "jukebox"
         end

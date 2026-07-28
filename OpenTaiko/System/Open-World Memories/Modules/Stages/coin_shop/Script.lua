@@ -2,6 +2,7 @@
 local DBItems = require("DBControllers/dbItems")
 local PopUI = require("PopUI")
 local NavInput = require("NavInput")
+local Util = require("Util")
 
 local save = nil
 local playerIndex = 0          -- which of the 5 local saves' shop we're browsing (chosen on entry)
@@ -59,49 +60,6 @@ end
 
 local function markSoldOut(mask, slot)
 	return mask | (1 << (slot - 1))
-end
-
--- Clone a C# Dictionary into a Lua table safely
-local function cloneTable(t)
-	local copy = {}
-
-	-- Get enumerator from the dictionary
-	local enumerator = t:GetEnumerator()
-	while enumerator:MoveNext() do
-		local kvp = enumerator.Current
-		local key = kvp.Key
-		local value = kvp.Value
-
-		-- Recursively clone if it's another Dictionary
-		if value ~= nil and type(value) == "userdata" and value.GetEnumerator then
-			copy[key] = cloneTable(value)
-		else
-			copy[key] = value
-		end
-	end
-
-	return copy
-end
-
--- Deep copy Lua table
-local function deepcopy(o, seen)
-  seen = seen or {}
-  if o == nil then return nil end
-  if seen[o] then return seen[o] end
-
-  local no
-  if type(o) == 'table' then
-	no = {}
-	seen[o] = no
-
-	for k, v in next, o, nil do
-	  no[deepcopy(k, seen)] = deepcopy(v, seen)
-	end
-	setmetatable(no, deepcopy(getmetatable(o), seen))
-  else -- number, string, boolean, etc
-	no = o
-  end
-  return no
 end
 
 
@@ -183,8 +141,8 @@ local _cachedPools = nil
 local function ensureCachedPools()
 	if _cachedPools == nil then
 		_cachedPools = {
-			normal = cloneTable(DBItems:GetItems("regular")),
-			big    = cloneTable(DBItems:GetItems("major"))
+			normal = Util.cloneTable(DBItems:GetItems("regular")),
+			big    = Util.cloneTable(DBItems:GetItems("major"))
 		}
 	end
 end
@@ -209,7 +167,7 @@ end
 
 local function setupItem(entry, iconIdx)
 	if entry == nil then return nil end
-	local item = deepcopy(entry)
+	local item = Util.deepcopy(entry)
 	item.LocalizedName = LANG:FromString(item.Name):GetString("")
 	item.NameTx = text:GetText(item.LocalizedName, true, 380)
 	item.SoldOut = false

@@ -627,8 +627,8 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 				if (bIsFinishedPlaying) {
 					if (OpenTaiko.ConfigIni.bTokkunMode) {
 						bIsFinishedPlaying = false;
-						OpenTaiko.Skin.soundTrainingStopSound.tPlay();
 						actTokkun.tPausePlay();
+						OpenTaiko.Skin.soundTrainingStopSound.tPlay();
 
 						actTokkun.tMatchWithTheChartDisplayPosition(true);
 					} else if (LuaNetworking.Active?.PlaySyncActive == true) {

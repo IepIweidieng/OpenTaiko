@@ -286,7 +286,7 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 		this.actLaneTaiko.ResetPlayStates();
 
 		for (int i = 0; i < 5; i++)
-			PuchiChara.ChangeBPM(CTja.TjaDurationToGameDuration(60.0 / OpenTaiko.stageGameScreen.actPlayInfo.dbBPM[i]));
+			PuchiChara.ChangeBPM(OpenTaiko.stageGameScreen.actPlayInfo.secPerGameBeatAbs(i));
 
 		//dbUnit = Math.Ceiling( dbUnit * 1000.0 );
 		//dbUnit = dbUnit / 1000.0;

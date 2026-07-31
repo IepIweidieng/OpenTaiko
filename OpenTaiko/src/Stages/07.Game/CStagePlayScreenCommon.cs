@@ -931,8 +931,8 @@ internal abstract class CStagePlayScreenCommon : CStage {
 	}
 
 	private void UpdateCharaCounter(int nPlayer) {
-		ctChipAnime[nPlayer] = new CCounter(0, 3, CTja.TjaDurationToGameDuration(60.0 / OpenTaiko.stageGameScreen.actPlayInfo.dbBPM[nPlayer] * 1 / 4), SoundManager.PlayTimer);
-		OpenTaiko.stageGameScreen.PuchiChara.ChangeBPM(CTja.TjaDurationToGameDuration(60.0 / OpenTaiko.stageGameScreen.actPlayInfo.dbBPM[nPlayer]));
+		ctChipAnime[nPlayer] = new CCounter(0, 3, OpenTaiko.stageGameScreen.actPlayInfo.secPerGameBeatAbs(nPlayer) * 1 / 4, SoundManager.PlayTimer);
+		OpenTaiko.stageGameScreen.PuchiChara.ChangeBPM(OpenTaiko.stageGameScreen.actPlayInfo.secPerGameBeatAbs(nPlayer));
 	}
 
 	public void AddMixer(CSound cs, bool _bPlayEndAfterPlaybackContinuesChip) {

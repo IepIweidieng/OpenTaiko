@@ -171,7 +171,7 @@ internal class CActImplBackground : CActivity {
 		this.ctSlideAnimation = new CCounter();
 		this.ctClimbDuration = new CCounter();
 		//this.ctStandingAnimation = new CCounter(0, 1000, (60000f / (float)CTja.TjaBeatSpeedToGameBeatSpeed(OpenTaiko.stageGameScreen.actPlayInfo.dbBPM[0])) * OpenTaiko.Skin.Characters_Beat_Tower_Standing[currentCharacter] / OpenTaiko.Skin.Characters_Tower_Standing_Ptn[currentCharacter], OpenTaiko.Timer);
-		this.ctStandingAnimation = new CCounter(0, 1000, (60000f / (float)CTja.TjaBeatSpeedToGameBeatSpeed(OpenTaiko.stageGameScreen.actPlayInfo.dbBPM[0])) * 1 / 1, OpenTaiko.Timer);
+		this.ctStandingAnimation = new CCounter(0, 1000, OpenTaiko.stageGameScreen.actPlayInfo.msPerGameBeatAbs(0) * 1 / 1, OpenTaiko.Timer);
 		this.ctClimbingAnimation = new CCounter();
 		this.ctRunningAnimation = new CCounter();
 		this.ctClearAnimation = new CCounter();
@@ -364,7 +364,7 @@ internal class CActImplBackground : CActivity {
 			float nextPositionMax140 = Math.Min((OpenTaiko.stageGameScreen.actPlayInfo.NowMeasure[0] + 1) / (float)nightTime, 1f);
 
 			if (bFloorChanged == true)
-				ctSlideAnimation.Start(0, 1000, 120f / CTja.TjaBeatSpeedToGameBeatSpeed((float)OpenTaiko.stageGameScreen.actPlayInfo.dbBPM[0]), OpenTaiko.Timer);
+				ctSlideAnimation.Start(0, 1000, OpenTaiko.stageGameScreen.actPlayInfo.msPerGameBeatAbs(0) / 500, OpenTaiko.Timer);
 
 			float progressFactor = (nextPositionMax140 - currentFloorPositionMax140) * (ctSlideAnimation.CurrentValue / 1000f);
 
@@ -453,8 +453,8 @@ internal class CActImplBackground : CActivity {
 			bool stageEnded = OpenTaiko.stageGameScreen.IsStageCompleted() || OpenTaiko.stageGameScreen.FloorManagement.CurrentNumberOfLives == 0;
 
 			if (bFloorChanged == true) {
-				float floorBPM = (float)CTja.TjaBeatSpeedToGameBeatSpeed(OpenTaiko.stageGameScreen.actPlayInfo.dbBPM[0]);
-				ctClimbDuration.Start(0, 1500, 120f / floorBPM, OpenTaiko.Timer);
+				// float floorBPM = (float)CTja.TjaBeatSpeedToGameBeatSpeed(OpenTaiko.stageGameScreen.actPlayInfo.dbBPM[0]);
+				ctClimbDuration.Start(0, 1500, OpenTaiko.stageGameScreen.actPlayInfo.msPerGameBeatAbs(0) / 500, OpenTaiko.Timer);
 				//character.TowerNextFloor();
 				/*
 				ctStandingAnimation.Start(0, 1000, (60000f / floorBPM) * OpenTaiko.Skin.Characters_Beat_Tower_Standing[currentCharacter] / OpenTaiko.Skin.Characters_Tower_Standing_Ptn[currentCharacter], OpenTaiko.Timer);

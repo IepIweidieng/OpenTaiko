@@ -34,12 +34,13 @@ public class CCounter {
 		set;
 	}
 
+	public const double msIntervalMin = 1e-6;
 	public double _msInterval {
 		get {
 			return this.msInterval;
 		}
 		set {
-			this.msInterval = Math.Max(1e-6, Math.Abs(value));
+			this.msInterval = Math.Max(msIntervalMin, Math.Abs(double.IsNaN(value) ? 0 : value));
 		}
 	}
 

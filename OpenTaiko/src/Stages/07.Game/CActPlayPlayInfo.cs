@@ -6,6 +6,10 @@ internal class CActPlayPlayInfo : CActivity {
 	// Properties
 
 	public double[] dbBPM = new double[5];
+	public double dbGameBPM(int iPlayer) => CTja.TjaBeatSpeedToGameBeatSpeed(dbBPM[iPlayer]);
+	public double dbGameBPS(int iPlayer) => CTja.TjaBeatSpeedToGameBeatSpeed(dbBPM[iPlayer] / 60.0);
+	public double secPerGameBeatAbs(int iPlayer) => Math.Abs(CTja.TjaDurationToGameDuration(60.0 / dbBPM[iPlayer]));
+	public double msPerGameBeatAbs(int iPlayer) => Math.Abs(CTja.TjaDurationToGameDuration(60000.0 / dbBPM[iPlayer]));
 	public readonly int[] NowMeasure = new int[5];
 	public double dbSCROLL;
 	public int[] _chipCounts = new int[2];

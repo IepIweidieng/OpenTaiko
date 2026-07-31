@@ -1429,6 +1429,7 @@ internal class CStageResult : CStage {
 						bool _modalsProcessed = OpenTaiko.ModalManager.InputManagement();
 						if (_modalsProcessed) {
 							#region [ Return to song select screen ]
+							OpenTaiko.Skin.soundDecideSFX.tPlay();
 							actFO.tFadeOutStart();
 							tPostprocessing();
 							base.ePhaseID = CStage.EPhase.Common_FADEOUT;

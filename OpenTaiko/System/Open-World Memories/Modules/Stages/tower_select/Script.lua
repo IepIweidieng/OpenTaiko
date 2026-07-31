@@ -264,6 +264,9 @@ function update()
 end
 
 function activate()
+    CONFIG.PlayerCount = 1
+    CONFIG.SongSpeed   = 20   -- reset speed (other modes may have changed it)
+
     tex_tower = TEXTURE:CreateTexture("Textures/Tower.png")
     tex_tower:SetWrapMode("Border")
     tex_bg = TEXTURE:CreateTexture("Textures/BG.png")

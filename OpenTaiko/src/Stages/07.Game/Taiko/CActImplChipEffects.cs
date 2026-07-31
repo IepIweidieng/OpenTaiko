@@ -15,16 +15,15 @@ internal class CActImplChipEffects : CActivity {
 	// メソッド
 	public virtual void Start(int nPlayer, NotesManager.ENoteType Lane, EGameType gameType) {
 		if (OpenTaiko.Tx.Gauge_Soul_Explosion != null && OpenTaiko.ConfigIni.nPlayerCount <= 2 && !OpenTaiko.ConfigIni.bAIBattleMode) {
-			for (int i = 0; i < 128; i++) {
-				if (!st[i].bUse) {
-					st[i].bUse = true;
-					st[i].ctProgress = new CCounter(0, OpenTaiko.Skin.Game_Effect_NotesFlash[2], OpenTaiko.Skin.Game_Effect_NotesFlash_Timer, OpenTaiko.Timer);
-					st[i].ctChipEffect = new CCounter(0, 24, 17, OpenTaiko.Timer);
-					st[i].nPlayer = nPlayer;
-					st[i].Lane = Lane;
-					st[i].GameType = gameType;
-					break;
-				}
+			ref var st = ref states[StateTail];
+			if (!st.bUse) {
+				StateTail = (StateTail + 1) % STATE_COUNT;
+				st.bUse = true;
+				st.ctProgress = new CCounter(0, OpenTaiko.Skin.Game_Effect_NotesFlash[2], OpenTaiko.Skin.Game_Effect_NotesFlash_Timer, OpenTaiko.Timer);
+				st.ctChipEffect = new CCounter(0, 24, 17, OpenTaiko.Timer);
+				st.nPlayer = nPlayer;
+				st.Lane = Lane;
+				st.GameType = gameType;
 			}
 		}
 	}
@@ -32,73 +31,83 @@ internal class CActImplChipEffects : CActivity {
 	// CActivity 実装
 
 	public override void Activate() {
-		for (int i = 0; i < 128; i++) {
-			st[i] = new STChipEffect {
+		for (int i = 0; i < STATE_COUNT; i++) {
+			states[i] = new STChipEffect {
 				bUse = false,
 				ctProgress = new CCounter(),
 				ctChipEffect = new CCounter()
 			};
 		}
+		StateHead = StateTail = 0;
 		base.Activate();
 	}
 	public override void DeActivate() {
-		for (int i = 0; i < 128; i++) {
-			st[i].ctProgress = null;
-			st[i].ctChipEffect = null;
-			st[i].bUse = false;
+		for (int i = 0; i < STATE_COUNT; i++) {
+			ref var st = ref states[i];
+			st.ctProgress = null;
+			st.ctChipEffect = null;
+			st.bUse = false;
 		}
 		base.DeActivate();
 	}
 	public override int Draw() {
-		for (int i = 0; i < 128; i++) {
-			if (st[i].bUse) {
-				st[i].ctProgress.Tick();
-				st[i].ctChipEffect.Tick();
-				if (st[i].ctProgress.IsEnded) {
-					st[i].ctProgress.Stop();
-					st[i].bUse = false;
+		var prevHead = StateHead;
+		for (int i = 0; i < STATE_COUNT; i++) {
+			var iState = (prevHead + i) % STATE_COUNT;
+			ref var st = ref states[iState];
+			if (!st.bUse) {
+				if (iState == StateTail)
+					break;
+			} else {
+				st.ctProgress.Tick();
+				st.ctChipEffect.Tick();
+				if (st.ctProgress.IsEnded) {
+					st.ctProgress.Stop();
+					st.bUse = false;
+					if (iState == StateHead)
+						StateHead = (StateHead + 1) % STATE_COUNT;
 				}
 
-				switch (st[i].nPlayer) {
+				switch (st.nPlayer) {
 					case 0:
-						OpenTaiko.Tx.Gauge_Soul_Explosion[OpenTaiko.P1IsBlue() ? 1 : 0]?.t2DCenterBasedDraw(OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_X[0], OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_Y[0], new Rectangle(st[i].ctProgress.CurrentValue * OpenTaiko.Skin.Game_Effect_NotesFlash[0], 0, OpenTaiko.Skin.Game_Effect_NotesFlash[0], OpenTaiko.Skin.Game_Effect_NotesFlash[1]));
+						OpenTaiko.Tx.Gauge_Soul_Explosion[OpenTaiko.P1IsBlue() ? 1 : 0]?.t2DCenterBasedDraw(OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_X[0], OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_Y[0], new Rectangle(st.ctProgress.CurrentValue * OpenTaiko.Skin.Game_Effect_NotesFlash[0], 0, OpenTaiko.Skin.Game_Effect_NotesFlash[0], OpenTaiko.Skin.Game_Effect_NotesFlash[1]));
 
-						if (this.st[i].ctChipEffect.CurrentValue < 13)
+						if (st.ctChipEffect.CurrentValue < 13)
 							NotesManager.DisplayNote(
-								st[i].nPlayer,
+								st.nPlayer,
 								OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_X[0],
 								OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_Y[0],
-								st[i].Lane,
-								st[i].GameType);
+								st.Lane,
+								st.GameType);
 						break;
 
 					case 1:
-						OpenTaiko.Tx.Gauge_Soul_Explosion[1]?.t2DCenterBasedDraw(OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_X[1], OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_Y[1], new Rectangle(st[i].ctProgress.CurrentValue * OpenTaiko.Skin.Game_Effect_NotesFlash[0], 0, OpenTaiko.Skin.Game_Effect_NotesFlash[0], OpenTaiko.Skin.Game_Effect_NotesFlash[1]));
-						if (this.st[i].ctChipEffect.CurrentValue < 13)
+						OpenTaiko.Tx.Gauge_Soul_Explosion[1]?.t2DCenterBasedDraw(OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_X[1], OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_Y[1], new Rectangle(st.ctProgress.CurrentValue * OpenTaiko.Skin.Game_Effect_NotesFlash[0], 0, OpenTaiko.Skin.Game_Effect_NotesFlash[0], OpenTaiko.Skin.Game_Effect_NotesFlash[1]));
+						if (st.ctChipEffect.CurrentValue < 13)
 							NotesManager.DisplayNote(
-								st[i].nPlayer,
+								st.nPlayer,
 								OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_X[1],
 								OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_Y[1],
-								st[i].Lane,
-								st[i].GameType);
+								st.Lane,
+								st.GameType);
 						break;
 				}
 
 				if (OpenTaiko.Tx.ChipEffect != null) {
 					// TODO: Generate chip effect from note image?
-					int laneXOffset = NotesManager.IsPurpleNoteTaiko(st[i].Lane, st[i].GameType) ? NotesManager.NoteTextureColumnFast(NotesManager.ENoteType.DonBig)
-						: (st[i].GameType is EGameType.Konga || st[i].Lane > NotesManager.ENoteType.KaBig) ? NotesManager.NoteTextureColumnFast(NotesManager.ENoteType.Don)
-						: NotesManager.NoteTextureColumnFast(st[i].Lane);
+					int laneXOffset = NotesManager.IsPurpleNoteTaiko(st.Lane, st.GameType) ? NotesManager.NoteTextureColumnFast(NotesManager.ENoteType.DonBig)
+						: (st.GameType is EGameType.Konga || st.Lane > NotesManager.ENoteType.KaBig) ? NotesManager.NoteTextureColumnFast(NotesManager.ENoteType.Don)
+						: NotesManager.NoteTextureColumnFast(st.Lane);
 
-					if (this.st[i].ctChipEffect.CurrentValue < 12) {
+					if (st.ctChipEffect.CurrentValue < 12) {
 						OpenTaiko.Tx.ChipEffect.color4 = new Color4(1.0f, 1.0f, 0.0f, 1.0f);
-						OpenTaiko.Tx.ChipEffect.Opacity = (int)(this.st[i].ctChipEffect.CurrentValue * (float)(225 / 11));
-						OpenTaiko.Tx.ChipEffect.t2DCenterBasedDraw(OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_X[st[i].nPlayer], OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_Y[st[i].nPlayer], new Rectangle(laneXOffset * OpenTaiko.Skin.Game_Notes_Size[0], 0, OpenTaiko.Skin.Game_Notes_Size[0], OpenTaiko.Skin.Game_Notes_Size[1]));
+						OpenTaiko.Tx.ChipEffect.Opacity = (int)(st.ctChipEffect.CurrentValue * (float)(225 / 11));
+						OpenTaiko.Tx.ChipEffect.t2DCenterBasedDraw(OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_X[st.nPlayer], OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_Y[st.nPlayer], new Rectangle(laneXOffset * OpenTaiko.Skin.Game_Notes_Size[0], 0, OpenTaiko.Skin.Game_Notes_Size[0], OpenTaiko.Skin.Game_Notes_Size[1]));
 					}
-					if (this.st[i].ctChipEffect.CurrentValue > 12 && this.st[i].ctChipEffect.CurrentValue < 24) {
+					if (st.ctChipEffect.CurrentValue > 12 && st.ctChipEffect.CurrentValue < 24) {
 						OpenTaiko.Tx.ChipEffect.color4 = new Color4(1.0f, 1.0f, 1.0f, 1.0f);
-						OpenTaiko.Tx.ChipEffect.Opacity = 255 - (int)((this.st[i].ctChipEffect.CurrentValue - 10) * (float)(255 / 14));
-						OpenTaiko.Tx.ChipEffect.t2DCenterBasedDraw(OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_X[st[i].nPlayer], OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_Y[st[i].nPlayer], new Rectangle(laneXOffset * OpenTaiko.Skin.Game_Notes_Size[0], 0, OpenTaiko.Skin.Game_Notes_Size[0], OpenTaiko.Skin.Game_Notes_Size[1]));
+						OpenTaiko.Tx.ChipEffect.Opacity = 255 - (int)((st.ctChipEffect.CurrentValue - 10) * (float)(255 / 14));
+						OpenTaiko.Tx.ChipEffect.t2DCenterBasedDraw(OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_X[st.nPlayer], OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_Y[st.nPlayer], new Rectangle(laneXOffset * OpenTaiko.Skin.Game_Notes_Size[0], 0, OpenTaiko.Skin.Game_Notes_Size[0], OpenTaiko.Skin.Game_Notes_Size[1]));
 					}
 				}
 
@@ -123,7 +132,10 @@ internal class CActImplChipEffects : CActivity {
 		public NotesManager.ENoteType Lane;
 		public EGameType GameType;
 	}
-	private STChipEffect[] st = new STChipEffect[128];
+	private const int STATE_COUNT = 128; // circular queue
+	private readonly STChipEffect[] states = new STChipEffect[STATE_COUNT];
+	private int StateHead;
+	private int StateTail;
 
 	//-----------------
 	#endregion

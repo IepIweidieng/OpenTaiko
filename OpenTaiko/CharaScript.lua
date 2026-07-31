@@ -380,12 +380,14 @@ function animation_builder.animation(animation_def)
 		animation_data.frame_index = 0
 		animation_data.update = function(self, delta, looping)
 			local speed = 1000 / self.duration / self.beat
-
-			self.value = self.value + (speed * delta)
+			local value = self.value + (speed * delta)
 			if looping then
-				self.value = self.value - math.floor(self.value)
+				value = math.fmod(value, 1)
 			else
-				self.value = math.min(self.value, 1)
+				value = math.min(value, 1)
+			end
+			if 0 * value == 0 * value then  -- finite
+				self.value = value
 			end
 
 			local length = #self.motion

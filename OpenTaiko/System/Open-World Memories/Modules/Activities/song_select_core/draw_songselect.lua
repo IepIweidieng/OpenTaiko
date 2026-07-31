@@ -515,7 +515,7 @@ function M.drawPanel()
         local ssCharaX = x0 + G.bgtx["nameplate_info"].Width / 2
         G.bgtx["nameplate_info"]:Draw(x0, y0)
         G.drawPlayerChara(G.highlightedPlayer, ssCharaX, y0 + NAMEPLATE_OFFSET_Y, 1, 1, opacityNorm, false)
-        G.drawPlayerPuchi(G.highlightedPlayer, ssCharaX - PUCHI_OFFSET_X, y0 + NAMEPLATE_OFFSET_Y + G.puchiSineY, 1, 1, opacityNorm)
+        G.drawPlayerPuchi(G.highlightedPlayer, ssCharaX - PUCHI_OFFSET_X, y0 + NAMEPLATE_OFFSET_Y + G.puchiSineY, 1, 1, opacityNorm, false, G.puchiIdxFrame)
         NAMEPLATE:DrawPlayerNameplate(x0 + NAMEPLATE_OFFSET_X, y0 + NAMEPLATE_OFFSET_Y, G.songSelectElemOpacity, G.highlightedPlayer)
 
         -- Perfect / FC / Clear counts for the highlighted player at the displayed difficulty

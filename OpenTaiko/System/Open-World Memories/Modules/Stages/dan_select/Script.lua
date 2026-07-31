@@ -25,6 +25,7 @@ local BG_ZOOM_END   = 1.0
 local BG_ZOOM_SEC   = 4.0
 
 local PUCHI_FLOAT_AMP = 6.0
+local PUCHI_N_FRAMES = 2
 
 -- ── Forward declarations ──────────────────────────────────────────────────────
 
@@ -63,10 +64,6 @@ local menu_sel    = 1
 local menu_exit_y = 0.0
 local menu_exit_target = nil   -- "standard_dan" | "pagoda"
 
--- Puchi sine bob
-local puchi_sine_y       = 0.0
-local puchi_sine_counter = nil
-
 -- ── Textures / sounds ─────────────────────────────────────────────────────────
 
 local tx_bg   = nil
@@ -93,14 +90,34 @@ stopBGM = function()
     if snd_bgm ~= nil and snd_bgm.IsPlaying then snd_bgm:Stop() end
 end
 
-local shared_callbacks = {
+local CB = {
     startBGM = startBGM,
     stopBGM  = stopBGM,
+
+    -- Counters
+    ctx = {},
+
+    -- Preview state
+    puchiSineY          = 0,
+    puchiIdxFrame       = 0,
 }
+
+-- ── Shared utility functions (stored in CB so every module can call them) ──────
+
+-- Counter helper — wraps COUNTER:CreateCounter and stores in CB.ctx to prevent GC.
+function CB.startCounter(key, startVal, endVal, interval, mode, updateCallback, onFinish)
+    local c = COUNTER:CreateCounter(startVal, endVal, interval, onFinish)
+    if mode == "loop"   then c:SetLoop(true)
+    elseif mode == "bounce" then c:SetBounce(true) end
+    if updateCallback then c:Listen(updateCallback) end
+    c:Start()
+    CB.ctx[key] = c
+    return c
+end
 
 -- ── Draw helpers ──────────────────────────────────────────────────────────────
 
-local function drawPlayerChara(x, y, opacity)
+function CB.drawPlayerChara(x, y, opacity)
     local chara = GetSaveFile(0):GetCharacter()
     if chara ~= nil and chara.IsValid then
         chara:Update(CHARACTER.ANIM_MENU_NORMAL, true)
@@ -108,13 +125,14 @@ local function drawPlayerChara(x, y, opacity)
     end
 end
 
-local function drawPlayerPuchi(x, y, opacity)
+function CB.drawPlayerPuchi(x, y, opacity, idxFrame)
     local puchi = GetSaveFile(0):GetPuchichara()
     if puchi == nil or puchi.tx == nil or not puchi.tx.Loaded then return end
-    local frameW = math.floor(puchi.tx.Width / 2)
+    local frameW = math.floor(puchi.tx.Width / PUCHI_N_FRAMES)
+    idxFrame = idxFrame or 0
     puchi.tx:SetScale(1.0, 1.0)
     puchi.tx:SetOpacity(opacity)
-    puchi.tx:DrawRectAtAnchor(x, y, 0, 0, frameW, puchi.tx.Height, "bottom")
+    puchi.tx:DrawRectAtAnchor(x, y, idxFrame * frameW, 0, frameW, puchi.tx.Height, "bottom")
     puchi.tx:SetOpacity(1.0)
 end
 
@@ -149,17 +167,19 @@ function activate()
     snd_entry = SOUND:CreateSFX(SND .. "Entry.ogg")
     snd_bgm   = SOUND:CreateBGM(SND .. "BGM.ogg")
 
-    -- Puchi sine bob
-    puchi_sine_counter = COUNTER:CreateCounter(0, 360, 1 / 120)
-    puchi_sine_counter:SetLoop(true)
-    puchi_sine_counter:Start()
+    CB.startCounter("puchi_sine", 0, 360, 1/120, "loop", function(val)  -- 1/3 cycles/s
+        CB.puchiSineY = math.sin(val * math.pi / 180) * PUCHI_FLOAT_AMP
+    end)
+    CB.startCounter("puchi_frame", 0, 1, 4.8, "loop", function(val)  -- 1/4.8 cycles/s
+        CB.puchiIdxFrame = math.floor(val * PUCHI_N_FRAMES)
+    end)
 
     -- ── Returning from pagoda play ─────────────────────────────────────────────
     if pagoda.is_returning_from_play() then
         door_done = true
         state     = "pagoda"
-        pagoda.activate(shared_callbacks)
-        pagoda.on_return(shared_callbacks)
+        pagoda.activate(CB)
+        pagoda.on_return(CB)
         startBGM()
         return
     end
@@ -168,7 +188,7 @@ function activate()
     if standard_dan.is_returning_from_play() then
         door_done = true
         state     = "standard_dan"
-        standard_dan.enter(shared_callbacks, true)
+        standard_dan.enter(CB, true)
         startBGM()
         return
     end
@@ -197,13 +217,14 @@ function deactivate()
         pagoda.deactivate()
     end
 
+    for k in pairs(CB.ctx) do CB.ctx[k] = COUNTER:EmptyCounter() end
+
     if tx_bg   ~= nil then tx_bg:Dispose()   ; tx_bg   = nil end
     if tx_door ~= nil then tx_door:Dispose()  ; tx_door = nil end
 
     if snd_entry ~= nil then snd_entry:Dispose() ; snd_entry = nil end
     if snd_bgm   ~= nil then snd_bgm:Dispose()   ; snd_bgm   = nil end
 
-    puchi_sine_counter = nil
     bg_zoom_counter    = nil
     menu_exit_counter  = nil
 end
@@ -224,12 +245,7 @@ end
 
 function update()
     local dt = fps.deltaTime
-
-    -- Puchi sine bob (drives menu + any state that needs it)
-    if puchi_sine_counter ~= nil then
-        puchi_sine_counter:Tick()
-        puchi_sine_y = math.sin(puchi_sine_counter.Value * math.pi / 180) * PUCHI_FLOAT_AMP
-    end
+    for _, c in pairs(CB.ctx) do c:Tick() end
 
     -- F3 auto toggle (always available)
 	local navPn = NavInput.p[1]
@@ -364,10 +380,10 @@ function update()
                 menu_exit_counter = nil
                 if menu_exit_target == "standard_dan" then
                     state = "standard_dan"
-                    standard_dan.enter(shared_callbacks, false)
+                    standard_dan.enter(CB, false)
                 elseif menu_exit_target == "pagoda" then
                     state = "pagoda"
-                    pagoda.enter(shared_callbacks)
+                    pagoda.enter(CB)
                 end
                 menu_exit_target = nil
             end
@@ -463,7 +479,7 @@ function draw()
         end
 
         NAMEPLATE:DrawPlayerNameplate(NP_X, NP_Y, 255, 0)
-        drawPlayerChara(NP_X + 140, NP_Y - 6,            1.0)
-        drawPlayerPuchi(NP_X + 220, NP_Y + puchi_sine_y, 1.0)
+        CB.drawPlayerChara(NP_X + 140, NP_Y - 6,            1.0)
+        CB.drawPlayerPuchi(NP_X + 220, NP_Y + CB.puchiSineY, 1.0, CB.puchiIdxFrame)
     end
 end

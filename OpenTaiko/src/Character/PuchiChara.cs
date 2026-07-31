@@ -10,9 +10,11 @@ class PuchiChara : CActivity {
 	}
 
 	public override void Activate() {
-		Counter = new CCounter(0, OpenTaiko.Skin.Game_PuchiChara[2] - 1, OpenTaiko.Skin.Game_PuchiChara_Timer * 0.5f, OpenTaiko.Timer);
-		SineCounter = new CCounter(0, 360, OpenTaiko.Skin.Game_PuchiChara_SineTimer, SoundManager.PlayTimer);
-		SineCounterIdle = new CCounter(1, 360, (float)OpenTaiko.Skin.Game_PuchiChara_SineTimer * 2f, OpenTaiko.Timer);
+		Counter = new CCounter(0, OpenTaiko.Skin.Game_PuchiChara[2] - 1, OpenTaiko.Skin.Game_PuchiChara_Timer / (float)OpenTaiko.Skin.Game_PuchiChara[2], OpenTaiko.Timer); // 1 / (Timer/1000 = 4.8), cycles/s
+		// SineCounter = new CCounter(0, 360, OpenTaiko.Skin.Game_PuchiChara_SineTimer, SoundManager.PlayTimer); // 1 / (SineTimer = 2), degrees/s
+		SineCounter = new CCounter(0, 360, OpenTaiko.Skin.Game_PuchiChara_SineTimer / 180.0f, SoundManager.PlayTimer); // (1/2) / (SineTimer = 2), cycles/s
+		// SineCounterIdle = new CCounter(1, 360, (float)OpenTaiko.Skin.Game_PuchiChara_SineTimer * 2f, OpenTaiko.Timer); // (25/18 = 1.3888...) / (SineTimer = 2), cycles/s
+		SineCounterIdle = new CCounter(1, 360, 1000 * OpenTaiko.Skin.Game_PuchiChara_SineTimer / 180.0f, OpenTaiko.Timer); // (1/2) / (SineTimer = 2), cycles/s
 		this.inGame = false;
 		base.Activate();
 	}
@@ -30,8 +32,8 @@ class PuchiChara : CActivity {
 	}
 
 	public void ChangeBPM(double secPerBeat) {
-		Counter.ChangeInterval(OpenTaiko.Skin.Game_PuchiChara_Timer * secPerBeat / OpenTaiko.Skin.Game_PuchiChara[2]);
-		SineCounter.ChangeInterval(1000 * OpenTaiko.Skin.Game_PuchiChara_SineTimer * secPerBeat / 180);
+		Counter.ChangeInterval(OpenTaiko.Skin.Game_PuchiChara_Timer * secPerBeat / OpenTaiko.Skin.Game_PuchiChara[2]); // 1 / (Timer/1000 = 4.8) = 25/120, cycles/beat
+		SineCounter.ChangeInterval(1000 * OpenTaiko.Skin.Game_PuchiChara_SineTimer * secPerBeat / 180); // (1/2) / (SineTimer = 2), cycles/beat
 		if (!this.inGame) { // initialize value
 			Counter.CurrentValue = 0;
 			SineCounter.CurrentValue = 1;

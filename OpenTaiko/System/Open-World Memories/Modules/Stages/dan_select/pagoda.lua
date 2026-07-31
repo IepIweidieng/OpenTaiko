@@ -232,12 +232,10 @@ local _preview_speed   = 20     -- current slider value
 
 -- ── Per-activation state ──────────────────────────────────────────────────────
 
-local _callbacks          = nil
+local _CB                 = nil
 local _font_title         = nil
 local _font_body          = nil
 local _font_hint          = nil
-local _puchi_sine_y       = 0.0
-local _puchi_sine_counter = nil
 local _status_msg         = ""
 local _status_timer       = 0.0
 local _menu_sel           = 1
@@ -247,7 +245,6 @@ local _btn_timer          = 0.0
 
 local NP_X            = 20
 local NP_Y            = 980
-local PUCHI_FLOAT_AMP = 6.0
 
 -- ── Song list ────────────────────────────────────────────────────────────────
 
@@ -491,24 +488,6 @@ end
 
 -- ── Draw helpers ─────────────────────────────────────────────────────────────
 
-local function _draw_player_chara(x, y, opacity)
-    local chara = GetSaveFile(0):GetCharacter()
-    if chara ~= nil and chara.IsValid then
-        chara:Update(CHARACTER.ANIM_MENU_NORMAL, true)
-        chara:DrawAtAnchor(x, y, CHARACTER.ANIM_MENU_NORMAL, "bottom", 1.0, 1.0, math.floor(opacity * 255))
-    end
-end
-
-local function _draw_player_puchi(x, y, opacity)
-    local puchi = GetSaveFile(0):GetPuchichara()
-    if puchi == nil or puchi.tx == nil or not puchi.tx.Loaded then return end
-    local frameW = math.floor(puchi.tx.Width / 2)
-    puchi.tx:SetScale(1.0, 1.0)
-    puchi.tx:SetOpacity(opacity)
-    puchi.tx:DrawRectAtAnchor(x, y, 0, 0, frameW, puchi.tx.Height, "bottom")
-    puchi.tx:SetOpacity(1.0)
-end
-
 local function _ensure_fonts()
     if _font_title ~= nil then return end
     _font_title = TEXT:Create(44, "regular")
@@ -528,8 +507,8 @@ function M.is_returning_from_play()
 end
 
 -- Called when the player selects Pagoda from the 3-way menu
-function M.enter(shared)
-    _callbacks    = shared
+function M.enter(CB)
+    _CB    = CB
     _btn_timer    = 0.15
     _status_msg   = ""
     _status_timer = 0.0
@@ -548,10 +527,6 @@ function M.enter(shared)
 
     local chara = GetSaveFile(0):GetCharacter()
     if chara ~= nil and chara.IsValid then chara:LoadAnimation(CHARACTER.ANIM_MENU_NORMAL) end
-
-    _puchi_sine_counter = COUNTER:CreateCounter(0, 360, 1 / 120)
-    _puchi_sine_counter:SetLoop(true)
-    _puchi_sine_counter:Start()
 end
 
 -- Called when the player returns to the 3-way menu
@@ -563,30 +538,25 @@ function M.leave()
 end
 
 -- Called from Script.lua's activate() whenever the pagoda module is active
-function M.activate(shared)
-    _callbacks = shared
+function M.activate(CB)
+    _CB = CB
     _btn_timer = 0.15
     _ensure_fonts()
 
     local chara = GetSaveFile(0):GetCharacter()
     if chara ~= nil and chara.IsValid then chara:LoadAnimation(CHARACTER.ANIM_MENU_NORMAL) end
-
-    _puchi_sine_counter = COUNTER:CreateCounter(0, 360, 1 / 120)
-    _puchi_sine_counter:SetLoop(true)
-    _puchi_sine_counter:Start()
 end
 
 -- Called from Script.lua's deactivate()
 function M.deactivate()
     local chara = GetSaveFile(0):GetCharacter()
     if chara ~= nil and chara.IsValid then chara:DisposeAnimation(CHARACTER.ANIM_MENU_NORMAL) end
-    _puchi_sine_counter = nil
 end
 
 -- Called in Script.lua's activate() after activate(), only when is_returning_from_play() is true.
 -- PLAYSTATE still holds valid data from the just-completed dan at this point.
-function M.on_return(shared)
-    _callbacks = shared
+function M.on_return(CB)
+    _CB = CB
     local passed = not PLAYSTATE:WasPlayAborted() and PLAYSTATE:IsPass()
     _result_was_clear = passed
 
@@ -623,13 +593,12 @@ end
 
 -- Returns: nil | "back" (return to 3-way menu) | "play" (exit to play)
 function M.update(dt)
+    if _CB then
+        for _, c in pairs(_CB.ctx) do c:Tick() end
+    end
+
     _btn_timer    = math.max(0, _btn_timer - dt)
     _status_timer = math.max(0, _status_timer - dt)
-
-    if _puchi_sine_counter ~= nil then
-        _puchi_sine_counter:Tick()
-        _puchi_sine_y = math.sin(_puchi_sine_counter.Value * math.pi / 180) * PUCHI_FLOAT_AMP
-    end
 
     local navPn = NavInput.p[1]
     if INPUT:Pressed("ToggleAutoP1") then
@@ -741,7 +710,7 @@ function M.update(dt)
             local ok = _build_dan(_challenge_level)
             if ok then
                 _in_challenge = true
-                if _callbacks ~= nil then _callbacks.stopBGM() end
+                if _CB ~= nil then _CB.stopBGM() end
                 SHARED:GetSharedSound("SongDecide"):Play()
                 return "play"
             else
@@ -770,7 +739,7 @@ function M.update(dt)
             else
                 _pagoda_state = "main_menu" ; _menu_sel = 1
                 SHARED:GetSharedSound("Cancel"):Play()
-                if _callbacks ~= nil then _callbacks.startBGM() end
+                if _CB ~= nil then _CB.startBGM() end
             end
         end
         return nil
@@ -796,7 +765,7 @@ function M.update(dt)
             else
                 _pagoda_state = "main_menu" ; _menu_sel = 1
                 SHARED:GetSharedSound("Cancel"):Play()
-                if _callbacks ~= nil then _callbacks.startBGM() end
+                if _CB ~= nil then _CB.startBGM() end
             end
         end
         return nil
@@ -844,7 +813,7 @@ function M.update(dt)
                 local ok = _build_dan(_practice_level)
                 if ok then
                     _in_practice = true
-                    if _callbacks ~= nil then _callbacks.stopBGM() end
+                    if _CB ~= nil then _CB.stopBGM() end
                     SHARED:GetSharedSound("SongDecide"):Play()
                     return "play"
                 else
@@ -864,7 +833,7 @@ function M.update(dt)
         if ok_p or back_p then
             _pagoda_state = "practice_select"
             SHARED:GetSharedSound("Cancel"):Play()
-            if _callbacks ~= nil then _callbacks.startBGM() end
+            if _CB ~= nil then _CB.startBGM() end
         end
         return nil
     end
@@ -1083,8 +1052,10 @@ function M.draw()
 
     -- Nameplate + character
     NAMEPLATE:DrawPlayerNameplate(NP_X, NP_Y, 255, 0)
-    _draw_player_chara(NP_X + 140, NP_Y - 6,            1.0)
-    _draw_player_puchi(NP_X + 220, NP_Y + _puchi_sine_y, 1.0)
+    if _CB then
+        _CB.drawPlayerChara(NP_X + 140, NP_Y - 6,            1.0)
+        _CB.drawPlayerPuchi(NP_X + 220, NP_Y + _CB.puchiSineY, 1.0, _CB.puchiIdxFrame)
+    end
 end
 
 return M

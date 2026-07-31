@@ -374,7 +374,7 @@ function M.drawPanel()
             local y      = oy + r * gy
             G.drawCharaWithNameplate(i, x, y, s, s, opacityNorm, true)
             local charaX = x + G.bgtx["nameplate_info"].Width / 2 - NAMEPLATE_OFFSET_X
-            G.drawPlayerPuchi(i, charaX - PUCHI_OFFSET_X * s, y + G.puchiSineY * s, s, s, opacityNorm)
+            G.drawPlayerPuchi(i, charaX - PUCHI_OFFSET_X * s, y + G.puchiSineY * s, s, s, opacityNorm, false, G.puchiIdxFrame)
             if G.modicons_ro ~= nil then
                 G.modicons_ro:Draw(x, y + NAMEPLATE_HEIGHT + 4, i, nil, G.difficultySelectElemOpacity)
             end

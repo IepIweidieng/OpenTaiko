@@ -49,13 +49,12 @@ local HOLD_REPEAT_SEC   = 0.08
 local BAR_STAGGER_SEC   = 0.05
 local CONTENT_SLIDE_SEC = 0.25
 local BAR_SLIDE_SEC     = 0.15
-local PUCHI_FLOAT_AMP   = 6.0
 
 -- ── State persistent across activate/deactivate ───────────────────────────────
 
 local _song_list = nil
 local _in_play   = false
-local _callbacks = nil
+local _CB        = nil
 
 -- ── Per-activation resources ──────────────────────────────────────────────────
 
@@ -96,8 +95,6 @@ local hold_dir              = 0
 local hold_phase            = 0
 local hold_elapsed          = 0.0
 local confirm_sel           = 0
-local puchi_sine_y          = 0.0
-local puchi_sine_counter    = nil
 
 -- ── Internals ─────────────────────────────────────────────────────────────────
 
@@ -228,24 +225,6 @@ local function _draw_content(node, y_offset)
     tx_content:DrawAtAnchor(CONTENT_X, CONTENT_Y + (y_offset or 0), "topleft")
 end
 
-local function _draw_player_chara(x, y, opacity)
-    local chara = GetSaveFile(0):GetCharacter()
-    if chara ~= nil and chara.IsValid then
-        chara:Update(CHARACTER.ANIM_MENU_NORMAL, true)
-        chara:DrawAtAnchor(x, y, CHARACTER.ANIM_MENU_NORMAL, "bottom", 1.0, 1.0, math.floor(opacity * 255))
-    end
-end
-
-local function _draw_player_puchi(x, y, opacity)
-    local puchi = GetSaveFile(0):GetPuchichara()
-    if puchi == nil or puchi.tx == nil or not puchi.tx.Loaded then return end
-    local frameW = math.floor(puchi.tx.Width / 2)
-    puchi.tx:SetScale(1.0, 1.0)
-    puchi.tx:SetOpacity(opacity)
-    puchi.tx:DrawRectAtAnchor(x, y, 0, 0, frameW, puchi.tx.Height, "bottom")
-    puchi.tx:SetOpacity(1.0)
-end
-
 local function _load_resources()
     tx_header        = TEXTURE:CreateTexture(TX .. "Header.png")
     tx_content       = TEXTURE:CreateTexture(TX .. "Contents.png")
@@ -273,10 +252,6 @@ local function _load_resources()
     if chara ~= nil and chara.IsValid then
         chara:LoadAnimation(CHARACTER.ANIM_MENU_NORMAL)
     end
-
-    puchi_sine_counter = COUNTER:CreateCounter(0, 360, 1 / 120)
-    puchi_sine_counter:SetLoop(true)
-    puchi_sine_counter:Start()
 
     bar_select_pulse = COUNTER:CreateCounterDuration(0.3, 1.0, 0.6)
     bar_select_pulse:SetBounce(true)
@@ -310,7 +285,6 @@ local function _unload_resources()
         chara:DisposeAnimation(CHARACTER.ANIM_MENU_NORMAL)
     end
 
-    puchi_sine_counter   = nil
     bar_sel_x_counter    = nil
     bar_y_offset_counter = nil
     bar_select_pulse     = nil
@@ -345,8 +319,8 @@ end
 -- or when entering standard dan from the 3-way menu.
 -- is_return = true  → returning from a played dan (resume song list)
 -- is_return = false → first/subsequent entry from menu
-function M.enter(shared, is_return)
-    _callbacks = shared
+function M.enter(CB, is_return)
+    _CB = CB
     _in_play   = false
 
     _load_resources()
@@ -391,6 +365,10 @@ end
 
 -- Returns: nil (continue) | "back" (return to 3-way menu) | "play" (exit to play)
 function M.update(dt)
+    if _CB then
+        for _, c in pairs(_CB.ctx) do c:Tick() end
+    end
+
     -- Activities take full control while active
     local any_active = false
     for k, a in pairs(act) do
@@ -408,12 +386,6 @@ function M.update(dt)
             end
             act_was_active[k] = is_now
         end
-    end
-
-    -- Always tick puchi sine
-    if puchi_sine_counter ~= nil then
-        puchi_sine_counter:Tick()
-        puchi_sine_y = math.sin(puchi_sine_counter.Value * math.pi / 180) * PUCHI_FLOAT_AMP
     end
 
     -- Tick contents drawer scroll
@@ -542,7 +514,7 @@ function M.update(dt)
                 if ssn ~= nil and ssn.IsSong then
                     ssn:Mount(DIFF_DAN)
                     _in_play = true
-                    if _callbacks ~= nil then _callbacks.stopBGM() end
+                    if _CB ~= nil then _CB.stopBGM() end
                     SHARED:GetSharedSound("SongDecide"):Play()
                     return "play"
                 end
@@ -657,8 +629,10 @@ function M.draw()
 
     -- Nameplate + character
     NAMEPLATE:DrawPlayerNameplate(NP_X, NP_Y, 255, 0)
-    _draw_player_chara(NP_X + 140, NP_Y - 6,            1.0)
-    _draw_player_puchi(NP_X + 220, NP_Y + puchi_sine_y, 1.0)
+    if _CB then
+        _CB.drawPlayerChara(NP_X + 140, NP_Y - 6,            1.0)
+        _CB.drawPlayerPuchi(NP_X + 220, NP_Y + _CB.puchiSineY, 1.0, _CB.puchiIdxFrame)
+    end
     if modicons_ro ~= nil then modicons_ro:Draw(NP_X, NP_Y - 50, 0, "menu", 255) end
 
     -- Confirm dialog

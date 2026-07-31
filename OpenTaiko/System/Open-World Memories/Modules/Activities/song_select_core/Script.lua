@@ -83,6 +83,7 @@ local G = {
 
     -- Preview state
     puchiSineY          = 0,
+    puchiIdxFrame       = 0,
     selectedSongNode    = nil,
     previewDemoStartRaw = 0,
     previewDemoStart    = 0,
@@ -180,14 +181,17 @@ G.drawPlayerChara = function(player, x, y, scaleX, scaleY, opacity, flipX)
     end
 end
 
-G.drawPlayerPuchi = function(player, x, y, scaleX, scaleY, opacity)
+local PUCHI_N_FRAMES = 2  -- TODO: Read from PuchiConfig.txt
+G.drawPlayerPuchi = function(player, x, y, scaleX, scaleY, opacity, flipX, idxFrame)
     local puchi = GetSaveFile(player):GetPuchichara()
     if puchi == nil or puchi.tx == nil or not puchi.tx.Loaded then return end
-    local frameW = math.floor(puchi.tx.Width / 2)
+    local frameW = math.floor(puchi.tx.Width / PUCHI_N_FRAMES)
     local frameH = puchi.tx.Height
-    puchi.tx:SetScale(scaleX, scaleY)
+    local esx = (flipX or false) and -scaleX or scaleX
+    idxFrame = idxFrame or 0
+    puchi.tx:SetScale(esx, scaleY)
     puchi.tx:SetOpacity(opacity)
-    puchi.tx:DrawRectAtAnchor(x, y, 0, 0, frameW, frameH, "bottom")
+    puchi.tx:DrawRectAtAnchor(x, y, idxFrame * frameW, 0, frameW, frameH, "bottom")
     puchi.tx:SetOpacity(1); puchi.tx:SetScale(1, 1)
 end
 
@@ -373,8 +377,11 @@ function activate(allowPlayerCount, lockedPlayerCount, mountAISlotToP2, songOnly
     G.startCounter("load_animation", 0, 360, 2/300, "loop", function(val)
         if G.bgtx["load"] ~= nil then G.bgtx["load"]:SetRotation(val) end
     end)
-    G.startCounter("puchi_sine", 0, 360, 1/120, "loop", function(val)
+    G.startCounter("puchi_sine", 0, 360, 1/120, "loop", function(val)  -- 1/3 cycles/s
         G.puchiSineY = math.sin(val * math.pi / 180) * PUCHI_FLOAT_AMP
+    end)
+    G.startCounter("puchi_frame", 0, 1, 4.8, "loop", function(val)  -- 1/4.8 cycles/s
+        G.puchiIdxFrame = math.floor(val * PUCHI_N_FRAMES)
     end)
     -- Difficulty-select Note float/rotation phase (0..360, ~8s loop). Ticks in G.ctx every frame regardless of
     -- activeScreen, so the Note animates during the songselect→diffselect transition too. diffselect reads it.

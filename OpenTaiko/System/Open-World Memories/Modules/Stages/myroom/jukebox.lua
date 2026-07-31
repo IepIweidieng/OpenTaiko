@@ -906,6 +906,7 @@ end
 
 -- stop + release everything (edit mode entry, room leave, stage teardown)
 function JB.stopAll(keepState)
+    pendingRestore = nil  -- prevent resuming playing after stop
     pbStop()
     if not keepState then pb.src, pb.item, pb.cell = nil, nil, nil end
     if glowItem then setScreenGlow(glowItem, IDLE_GLOW[1], IDLE_GLOW[2], IDLE_GLOW[3]); glowItem = nil end

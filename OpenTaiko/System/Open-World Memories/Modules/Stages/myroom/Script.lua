@@ -95,7 +95,7 @@ local function jukeboxKey() return (saveKey():gsub("^room_", "jukebox_")) end
 local persistLocked = false    -- deactivate snapshots the live state, then LOCKS so the teardown
                                -- stopAll (which fires onState with an empty state) can't wipe it
 local function persistJukebox()
-    if persistLocked then return end
+    if persistLocked or (IsSongsEnumDone and not IsSongsEnumDone()) then return end
     if net.online and not net.isHost then return end   -- never persist a host's song into a guest save
     if store == nil then return end
     local st = JB.persistState()
@@ -118,7 +118,6 @@ local function loadRoom()
     JB.stopAll()
     if jbSaved then
         JB.restoreState(jbSaved)
-        persistJukebox()               -- re-persist right away (stopAll just wrote the empty state)
     end
 end
 saveRoom = function()
@@ -655,12 +654,15 @@ local function closePlayerSelect()
 end
 -- commit to a player: read THAT save (coins/unlocks via GetSaveFile(playerIndex)) and load its room
 local function pickPlayer(i)
-    playerIndex = i
     MO.playerIndex = i
     if pcScreen then pcScreen.playerIndex = i end
     if edit then edit.playerIndex = i end
-    loadRoom()
-    rebuild()
+    if i ~= playerIndex then
+        persistJukebox()
+        playerIndex = i
+        loadRoom()
+        rebuild()
+    end
     spawnAtEntrance()
     closePlayerSelect()
     mode = "play"

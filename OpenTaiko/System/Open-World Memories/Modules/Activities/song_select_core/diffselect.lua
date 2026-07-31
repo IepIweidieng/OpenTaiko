@@ -160,10 +160,12 @@ function M.updateTransitionVisuals(val)
     G.difficultySelectElemOpacity = math.max(0, math.min(255, diffOpacity))
 end
 
+function M.resetTransitionVisuals()
+    M.updateTransitionVisuals(0)
+end
+
 function M.resetToSongSelect()
-    G.songSelectElemOpacity      = 255
-    G.difficultySelectElemOpacity = 0
-    G.songSelectShift = 0
+    M.resetTransitionVisuals()
     G.activeScreen    = "songselect"
     Replay.reset()
 end
@@ -465,7 +467,7 @@ function M.handleUpdate(ts)
         G.sounds.Cancel:Play()
         G.activeScreen = "transition"
         G.startCounter("screen_transition", 1920, 0, -0.5/1920, "none", M.updateTransitionVisuals, function()
-            G.activeScreen = "songselect"
+            M.resetToSongSelect()
         end)
     elseif allDiffsSelected then
         local success = G.selectedSongNode:Mount(

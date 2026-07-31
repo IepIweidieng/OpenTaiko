@@ -400,6 +400,7 @@ function deactivate()
     G.lastSignal = nil
 
     for k in pairs(G.ctx) do G.ctx[k] = COUNTER:EmptyCounter() end
+    Diff.resetTransitionVisuals()
 
     SHARED:GetSharedSound("presound"):Stop()
     G.previewFadeVol    = 0

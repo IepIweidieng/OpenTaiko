@@ -113,8 +113,9 @@ internal class CActImplRunner : CActivity {
 					stRunners[i].ctProgress.Stop();
 					stRunners[i].bUse = false;
 				}
-				for (int n = stRunners[i].nOldValue; n < stRunners[i].ctProgress.CurrentValue; n++) {
-					stRunners[i].fX += (float)CTja.TjaBeatSpeedToGameBeatSpeed(OpenTaiko.stageGameScreen.actPlayInfo.dbBPM[stRunners[i].nPlayer]) / 18;
+				int progress = stRunners[i].ctProgress.CurrentValue - stRunners[i].nOldValue;
+				if (progress > 0) {
+					stRunners[i].fX += progress * (float)(OpenTaiko.Skin.ScaleX * CTja.TjaBeatSpeedToGameBeatSpeed(OpenTaiko.stageGameScreen.actPlayInfo.dbBPM[stRunners[i].nPlayer]) / 18);
 					int Width = OpenTaiko.Skin.Resolution[0] / Ptn;
 					stRunners[i].nNowPtn = (int)stRunners[i].fX / Width;
 				}

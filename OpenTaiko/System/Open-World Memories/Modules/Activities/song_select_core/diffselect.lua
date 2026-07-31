@@ -438,17 +438,18 @@ function M.handleUpdate(ts)
                 G.diffIndex[i] = (G.diffIndex[i] - 1) % (3 + #G.diffBars)
             elseif navPn.decide(i == uniNavPlayer) then
                 if G.diffIndex[i] == 0 then
-                    G.sounds.Cancel:Play(); canceled = true
+                    canceled = true
                 elseif G.diffIndex[i] == 1 then
+                    G.sounds.Decide:Play()
                     G.act_inner["mod_select_dialog"]:Activate(i - 1); return nil
                 elseif G.diffIndex[i] == 2 then
+                    G.sounds.Decide:Play()
                     G.act_inner["customize_dialog"]:Activate(i - 1); return nil
                 else
                     decided = true; G.diffSelected[i] = true
                 end
             elseif navPn.cancel(i == uniNavPlayer) then
-                G.sounds.Cancel:Play()
-                if G.diffSelected[i] then G.diffSelected[i] = false
+                if G.diffSelected[i] then G.diffSelected[i] = false; G.sounds.Cancel:Play()
                 else canceled = true end
             end
                 
@@ -461,7 +462,7 @@ function M.handleUpdate(ts)
     end
 
     if canceled or G.NavInput.cancel() then
-        G.sounds.Decide:Play()
+        G.sounds.Cancel:Play()
         G.activeScreen = "transition"
         G.startCounter("screen_transition", 1920, 0, -0.5/1920, "none", M.updateTransitionVisuals, function()
             G.activeScreen = "songselect"

@@ -845,7 +845,7 @@ function update(ts)
     end
 
     if NavInput.p[playerIndex + 1].cancel() then
-        SHARED:GetSharedSound("Cancel").Play()
+        SHARED:GetSharedSound("Cancel"):Play()
         if MO.isGuest() then backToOwnRoom(I18N.tr("You left the room.")); return nil end
         MO.leave(); GLOBALCAMERA:Reset(); saveRoom(); return Exit("stage", "_title")
     end

@@ -211,6 +211,11 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 		base.tValueInitialize(bPlayRecord, bPlayState);
 		for (int i = 0; i < 5; i++) { replayCursor[i] = 0; msReplayTjaTime[i] = double.NegativeInfinity; }
 
+		if (bPlayRecord) {
+			for (int i = 0; i < OpenTaiko.MAX_PLAYERS; ++i)
+				OpenTaiko.ReplayInstances[i]?.tStartRegisterInput();
+		}
+
 		if (bPlayState) {
 			this.actGame.tTatakikiriShow_Initialize();
 
@@ -835,7 +840,7 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 		}
 
 		var rep = OpenTaiko.ReplayPlayback[0];
-		if (!this.IsReplayValid(0, rep)) {
+		if (!this.IsReplayValid(0, rep?.replay)) {
 			var tx2 = TitleTextureKey.ResolveTitleTexture(this.ttkReplayInvalid);
 			if (tx2 != null) {
 				tx2.Opacity = 255;
@@ -844,7 +849,7 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 		}
 	}
 
-	private bool IsReplayValid(int iPlayer, CSongReplay rep) {
+	private bool IsReplayValid(int iPlayer, CSongReplay? rep) {
 		if (rep == null)
 			return false;
 		if (rep.WarnChecksumMismatch)
@@ -891,15 +896,20 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 			var rep = OpenTaiko.ReplayPlayback[p];
 			CTja tja = OpenTaiko.GetTJA(p);
 			if (rep == null || tja == null) continue;
-			var inputs = rep.Inputs;
+			var inputs = rep.Value.replay.Inputs;
+			var pumpTimes = rep.Value.msInputPumpTjaTimes;
 			// warp-aware chart time: recorded timestamps are in WARPED tja time (see tInputProcess_Drums), so
 			// releasing them against the raw clock desynced Dynamic Beat replays once the factor left 1.0
 			long nowTja = this.GetChartTimeNow(p);
 			this.msReplayTjaTime[p] = nowTja;
-			while (replayCursor[p] < inputs.Count && inputs[replayCursor[p]].Item1 <= nowTja) {
+			for (; replayCursor[p] < inputs.Count; ++replayCursor[p]) {
+				var msPumpTjaTime = pumpTimes[replayCursor[p]];
+				if (double.IsNaN(msPumpTjaTime)) // invalid timestamp
+					continue;
+				if (msPumpTjaTime > nowTja) // future
+					break;
 				long tHit = (long)inputs[replayCursor[p]].Item1;
 				this.ProcessPadInput(p, (EPad)inputs[replayCursor[p]].Item2, tHit);
-				replayCursor[p]++;
 			}
 		}
 	}

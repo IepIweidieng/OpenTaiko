@@ -42,7 +42,7 @@ namespace OpenTaiko {
 			if (!CSongReplay.tIsReplayWatchable(rep.ModFlags, rep.RandomSeed, rep.GameVersion)) return false;
 			rep.tEvaluateWarnings(chartPath);
 			rep.tApplyVirtualMods();              // snapshot the real mods + apply the replay's, and set ReplaySeed[0]
-			OpenTaiko.PendingReplay = rep;
+			OpenTaiko.PendingReplay = new(rep, rep.GetInputPumpTjaTimes());
 			OpenTaiko.ReplayWatchArmed = true;    // song loading consumes this → sets bReplayMode for exactly this play
 			return true;
 		}

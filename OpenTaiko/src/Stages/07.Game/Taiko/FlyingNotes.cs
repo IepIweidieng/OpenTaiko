@@ -98,21 +98,34 @@ internal class FlyingNotes : CActivity {
 						OpenTaiko.stageGameScreen.actGauge.Start(state.Lane, state.GameType, ENoteJudge.Perfect, state.Player);
 						OpenTaiko.stageGameScreen.actChipEffects.Start(state.Player, state.Lane, state.GameType);
 					}
-					for (int n = state.OldValue; n < state.Counter.CurrentValue; n += 16) {
-						int endX;
-						int endY;
 
-						if (OpenTaiko.ConfigIni.bAIBattleMode) {
-							endX = OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_X_AI[state.Player];
-							endY = OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_Y_AI[state.Player];
-						} else {
-							endX = OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_X[state.Player];
-							endY = OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_Y[state.Player];
+					int endX;
+					int endY;
+
+					if (OpenTaiko.ConfigIni.bAIBattleMode) {
+						endX = OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_X_AI[state.Player];
+						endY = OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_Y_AI[state.Player];
+					} else {
+						endX = OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_X[state.Player];
+						endY = OpenTaiko.Skin.Game_Effect_FlyingNotes_EndPoint_Y[state.Player];
+					}
+
+					int movingDistanceX = endX - StartPointX[state.Player];
+					int movingDistanceY = endY - OpenTaiko.Skin.Game_Effect_FlyingNotes_StartPoint_Y[state.Player];
+
+					static IEnumerable<(int mid, bool onStep)> midValues(int old, int current, int step, bool needMid) {
+						if (needMid) {
+							int mid = (int)Math.Ceiling((double)old / step) * step;
+							for (; mid <= current; mid += step)
+								yield return (mid, true);
+							if (mid == current)
+								yield break;
 						}
+						yield return (current, false);
+					}
 
-						int movingDistanceX = endX - StartPointX[state.Player];
-						int movingDistanceY = endY - OpenTaiko.Skin.Game_Effect_FlyingNotes_StartPoint_Y[state.Player];
-
+					bool needFireWork = state.ForceFirework ?? NotesManager.IsBigNoteTaiko(state.Lane, state.GameType);
+					foreach ((int mid, bool onStep) in midValues(state.OldValue, state.Counter.CurrentValue, OpenTaiko.Skin.Game_Effect_FireWorks_Timing, needFireWork)) {
 						/*
                         if (TJAPlayer3.Skin.Game_Effect_FlyingNotes_IsUsingEasing)
                         {
@@ -125,25 +138,23 @@ internal class FlyingNotes : CActivity {
                         }
                         */
 
-						double value = (state.Counter.CurrentValue / 140.0);
+						double movingRate = (mid / 140.0);
 
-						state.X = StartPointX[state.Player] + OpenTaiko.stageGameScreen.GetJPOSCROLLX(state.Player) + (movingDistanceX * value);
-						state.Y = OpenTaiko.Skin.Game_Effect_FlyingNotes_StartPoint_Y[state.Player] + OpenTaiko.stageGameScreen.GetJPOSCROLLY(state.Player) + (int)(movingDistanceY * value);
+						state.X = StartPointX[state.Player] + OpenTaiko.stageGameScreen.GetJPOSCROLLX(state.Player) + (movingDistanceX * movingRate);
+						state.Y = OpenTaiko.Skin.Game_Effect_FlyingNotes_StartPoint_Y[state.Player] + OpenTaiko.stageGameScreen.GetJPOSCROLLY(state.Player) + (int)(movingDistanceY * movingRate);
 
 						if (OpenTaiko.ConfigIni.bAIBattleMode) {
-							state.Y += Math.Sin(value * Math.PI) * ((state.Player == 0 ? -OpenTaiko.Skin.Game_Effect_FlyingNotes_Sine : OpenTaiko.Skin.Game_Effect_FlyingNotes_Sine) / 3.0);
+							state.Y += Math.Sin(movingRate * Math.PI) * ((state.Player == 0 ? -OpenTaiko.Skin.Game_Effect_FlyingNotes_Sine : OpenTaiko.Skin.Game_Effect_FlyingNotes_Sine) / 3.0);
 						} else {
-							state.Y += Math.Sin(value * Math.PI) * (state.Player == 0 ? -OpenTaiko.Skin.Game_Effect_FlyingNotes_Sine : OpenTaiko.Skin.Game_Effect_FlyingNotes_Sine);
+							state.Y += Math.Sin(movingRate * Math.PI) * (state.Player == 0 ? -OpenTaiko.Skin.Game_Effect_FlyingNotes_Sine : OpenTaiko.Skin.Game_Effect_FlyingNotes_Sine);
 						}
 
 						if (OpenTaiko.Skin.Game_Effect_FlyingNotes_IsUsingEasing) {
 						} else {
 						}
 
-						if (n % OpenTaiko.Skin.Game_Effect_FireWorks_Timing == 0 && state.Counter.CurrentValue > 18) {
-							if (state.ForceFirework ?? NotesManager.IsBigNoteTaiko(state.Lane, state.GameType)) {
-								OpenTaiko.stageGameScreen.FireWorks.Start(state.Lane, state.GameType, state.Player, state.X, state.Y);
-							}
+						if (needFireWork && onStep && mid > 8) {
+							OpenTaiko.stageGameScreen.FireWorks.Start(state.Lane, state.GameType, state.Player, state.X, state.Y);
 						}
 
 						/*

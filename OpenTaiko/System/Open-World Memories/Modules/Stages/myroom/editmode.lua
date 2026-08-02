@@ -867,7 +867,7 @@ end
 
 -- ── input ─────────────────────────────────────────────────────────────────────────────────────────
 -- returns "exit" when the editor should close, else nil
-function Edit:update(ts)
+function Edit:update(ts, editCameraFuncs)
     if INPUT:KeyboardPressed("Tab") then
         self:leave()
         SHARED:GetSharedSound("Cancel"):Play()
@@ -880,6 +880,7 @@ function Edit:update(ts)
     end
 
     local mx, my = INPUT:GetMouseXY()
+    local dmx, dmy = INPUT:GetMouseDelta()
     local _, sdy = INPUT:GetScrollDelta()
     local lpressed  = INPUT:MousePressed("left")
     local lpressing = INPUT:MousePressing("left")
@@ -888,6 +889,9 @@ function Edit:update(ts)
     self.mx, self.my, self.overBar = mx, my, overBar
 
     self.ui:update(ts)
+
+    editCameraFuncs.pan(dmx, dmy)
+    editCameraFuncs.move()
 
     -- inline selection buttons: repositioned every frame, updated before the 3D interactions
     -- (a click on them must never reach the room). A press-drag that STARTED on the item itself
@@ -913,17 +917,21 @@ function Edit:update(ts)
     if not overBar and not overSel then
         local key = self:catKey()
         if self.hold then
-            self:updateHold(mx, my, sdy, lpressed, lreleased)
+            self:updateHold(mx, my, sdy, lpressed, lreleased, editCameraFuncs.zoom)
         elseif key == "door" then
+            editCameraFuncs.zoom(sdy)
             self:updateDoor(mx, my, lpressed)
         elseif key == "eraser" then
+            editCameraFuncs.zoom(sdy)
             self:updateEraser(mx, my, lpressed, lpressing)
         elseif self.sel then
-            self:updatePlace(mx, my, sdy, lpressed, lpressing)
+            self:updatePlace(mx, my, sdy, lpressed, lpressing, editCameraFuncs.zoom)
         else
+            editCameraFuncs.zoom(sdy)
             self:updateBrowse(mx, my, lpressed, lpressing, lreleased)
         end
     else
+        editCameraFuncs.zoom(sdy)
         self.hoverC, self.hoverR, self.hoverSlot, self.hoverTile, self.hoverExitC = nil, nil, nil, nil, nil
         self.hoverItem, self.hoverWallItem, self.hoverExit = nil, nil, false
         if lreleased then self.pressItem = nil end
@@ -934,11 +942,14 @@ function Edit:update(ts)
 end
 
 -- place mode: ghost follows the hover; click/swipe to place
-function Edit:updatePlace(mx, my, sdy, lpressed, lpressing)
+function Edit:updatePlace(mx, my, sdy, lpressed, lpressing, zoomCamera)
     local room = self.room
     local key = self:catKey()
     if key == "furn" then
-        if sdy ~= 0 then self.facing = (self.facing + (sdy > 0 and 1 or 3)) % 4 end   -- wheel rotates
+        if sdy ~= 0 then  -- wheel rotates
+            self.facing = (self.facing + (sdy > 0 and 1 or 3)) % 4
+            SHARED:GetSharedSound("Skip"):Play()
+        end
         local c, r = self:pickGround(mx, my)
         if c and r and (self.hoverC ~= c or self.hoverR ~= r) then
             SHARED:GetSharedSound("Move"):Play()
@@ -960,6 +971,7 @@ function Edit:updatePlace(mx, my, sdy, lpressed, lpressing)
             self.mount = mount
             local alt = room:wallItemSlots()
             for _, o in ipairs(alt) do if o.c == s.c and o.r == s.r and o.mount == mount then s = o; break end end
+            SHARED:GetSharedSound("Skip"):Play()
         end
         if s and (not self.hoverSlot or self.hoverSlot.key ~= s.key) then
             SHARED:GetSharedSound("Move"):Play()
@@ -973,6 +985,7 @@ function Edit:updatePlace(mx, my, sdy, lpressed, lpressing)
             self.sel = nil; self._barDirty = true
         end
     elseif key == "floor" then
+        zoomCamera(sdy)
         local c, r = self:pickGround(mx, my)
         if c and r and (self.hoverC ~= c or self.hoverR ~= r) then
             SHARED:GetSharedSound("Move"):Play()
@@ -990,6 +1003,7 @@ function Edit:updatePlace(mx, my, sdy, lpressed, lpressing)
             if remain <= 0 then self.sel = nil end  -- out of stock → back to select
         end
     elseif key == "paint" then
+        zoomCamera(sdy)
         local s = self:pickWallTile(mx, my)
         if s and (not self.hoverTile or self.hoverTile.key ~= s.key) then
             SHARED:GetSharedSound("Move"):Play()
@@ -1018,10 +1032,11 @@ function Edit:updateDoor(mx, my, lpressed)
 end
 
 -- in-hand move (Move button or press-drag): the ghost is the live candidate at the hover
-function Edit:updateHold(mx, my, sdy, lpressed, lreleased)
+function Edit:updateHold(mx, my, sdy, lpressed, lreleased, zoomCamera)
     local h = self.hold
     local room = self.room
     if h.kind == "wall" then
+        zoomCamera(sdy)
         local s = self:pickWallSlot(mx, my)
         if s and (not self.hoverSlot or self.hoverSlot.key ~= s.key) then
             SHARED:GetSharedSound("Move"):Play()
@@ -1030,7 +1045,10 @@ function Edit:updateHold(mx, my, sdy, lpressed, lreleased)
         self.hoverC, self.hoverR = nil, nil
         if s and room:canPlaceWall(h.it.id, s.c, s.r, s.mount) then h.lastSlot = s end   -- remember last valid target
     else
-        if sdy ~= 0 then h.it.facing = ((h.it.facing or 0) + (sdy > 0 and 1 or 3)) % 4 end
+        if sdy ~= 0 then
+            h.it.facing = ((h.it.facing or 0) + (sdy > 0 and 1 or 3)) % 4
+            SHARED:GetSharedSound("Skip"):Play()
+        end
         local c, r = self:pickGround(mx, my)
         if c and r and (self.hoverC ~= c or self.hoverR ~= r) then
             SHARED:GetSharedSound("Move"):Play()

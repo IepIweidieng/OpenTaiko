@@ -742,21 +742,28 @@ local function clampCamera()
     if cam.pitch > -15 then cam.pitch = -15 elseif cam.pitch < -50 then cam.pitch = -50 end
 end
 
--- edit-mode camera: RMB drag rotates, wheel zooms, WASD/arrows PAN the look-at target on the ground
--- plane (the player character does not move while editing). Same clamps as play mode.
-local function editCamera(dt)
+-- getting mouse deltas clears the deltas, so passed by the caller instead of getting here
+local function panCamera(dmx, dmy)
     local cam = world.cam
-    local dmx, dmy = INPUT:GetMouseDelta()
-    if INPUT:MousePressing("Right") then cam:orbit(dmx * YAW_SENS, -dmy * PITCH_SENS) end
+    if INPUT:MousePressing("Right") then
+        cam:orbit(dmx * YAW_SENS, -dmy * PITCH_SENS)
+    end
     if kd("Q") then cam:orbit(-90 * dt) end
     if kd("E") then cam:orbit(90 * dt) end
     clampCamera()
-    local _, scrollY = INPUT:GetScrollDelta()
+end
+
+local function zoomCamera(scrollY)
     if scrollY ~= 0 then
+        local cam = world.cam
         local d = cam.dist * (1 - scrollY * 0.12)
         local lo, hi = cam.minDist or 6, cam.maxDist or 60
         cam.dist = (d < lo) and lo or ((d > hi) and hi or d)
     end
+end
+
+local function getMoveUnitIsoXZ()
+    local cam = world.cam
     local fy = rad(cam.yaw)
     local fwdX, fwdZ = sin(fy), cos(fy)
     local rgtX, rgtZ = cos(fy), -sin(fy)
@@ -765,11 +772,22 @@ local function editCamera(dt)
     if kd("S") or kd("DownArrow")  then mx = mx - fwdX; mz = mz - fwdZ end
     if kd("D") or kd("RightArrow") then mx = mx + rgtX; mz = mz + rgtZ end
     if kd("A") or kd("LeftArrow")  then mx = mx - rgtX; mz = mz - rgtZ end
-    if mx ~= 0 or mz ~= 0 then
-        local sp = 7 * dt
-        cam:setTarget((cam.tx or 0) + mx * sp, cam.ty or (FY + 0.4), (cam.tz or 0) + mz * sp)
-    end
+    return mx, mz
 end
+
+-- edit-mode camera: RMB drag rotates, wheel zooms, WASD/arrows PAN the look-at target on the ground
+-- plane (the player character does not move while editing). Same clamps as play mode.
+local function getEditCameraFuncs(dt) return {
+    pan = panCamera,
+    zoom = zoomCamera,
+    move = function()
+        local ix, iz = getMoveUnitIsoXZ()
+        if ix ~= 0 or iz ~= 0 then
+            local sp = 7 * dt
+            cam:setTarget((cam.tx or 0) + ix * sp, cam.ty or (FY + 0.4), (cam.tz or 0) + iz * sp)
+        end
+    end,
+} end
 
 function update(ts)
     local dt = (ts - lastTs) / 1000.0
@@ -831,8 +849,7 @@ function update(ts)
         if jbRes == "closed" or not JB.isOpen() then mode = "play" end
         settlePlayer(dt); world:update(dt, px, py, pz); return nil
     elseif mode == "edit" then
-        editCamera(dt)                 -- RMB rotate, WASD pan the target, wheel zoom (player is parked)
-        if edit:update(ts) == "exit" then
+        if edit:update(ts, getEditCameraFuncs(dt)) == "exit" then
             mode = "play"; pmoving = false
             if editSavedCam then       -- restore the exact camera the player had before editing
                 local s = editSavedCam
@@ -853,30 +870,12 @@ function update(ts)
 
     -- camera orbit / zoom (iso_demo2 parity), wall-clamped so both walls always face the camera
     local dmx, dmy = INPUT:GetMouseDelta()
-    if INPUT:MousePressing("Right") then
-        world.cam:orbit(dmx * YAW_SENS, -dmy * PITCH_SENS)
-    end
-    if kd("Q") then world.cam:orbit(-90 * dt) end
-    if kd("E") then world.cam:orbit(90 * dt) end
-    clampCamera()
+    panCamera(dmx, dmy)
     local _, scrollY = INPUT:GetScrollDelta()
-    if scrollY ~= 0 then
-        local d = world.cam.dist * (1 - scrollY * 0.12)
-        local lo = world.cam.minDist or 6
-        local hi = world.cam.maxDist or 60
-        if d < lo then d = lo elseif d > hi then d = hi end
-        world.cam.dist = d
-    end
+    zoomCamera(scrollY)
 
     -- movement on the physics character, camera-relative like iso_demo2 (wish dir from cam yaw)
-    local fy = rad(world.cam.yaw)
-    local fwdX, fwdZ = sin(fy), cos(fy)
-    local rgtX, rgtZ = cos(fy), -sin(fy)
-    local ix, iz = 0, 0
-    if kd("W") or kd("UpArrow")    then ix = ix + fwdX; iz = iz + fwdZ end
-    if kd("S") or kd("DownArrow")  then ix = ix - fwdX; iz = iz - fwdZ end
-    if kd("D") or kd("RightArrow") then ix = ix + rgtX; iz = iz + rgtZ end
-    if kd("A") or kd("LeftArrow")  then ix = ix - rgtX; iz = iz - rgtZ end
+    local ix, iz = getMoveUnitIsoXZ()
     player:move(dt, ix, iz, moveSpeed, false)
     px, py, pz = player:pos()
 

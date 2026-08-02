@@ -473,7 +473,7 @@ function M.handleUpdate(ts)
     end
     if hoverW ~= M._hoverW then
         if M._hoverW then M._hoverW:setHover(false) end
-        if hoverW and hoverW.enabled then hoverW:setHover(true); G.sounds.Skip:Play() end
+        if hoverW and hoverW.enabled then hoverW:setHover(true) end
         M._hoverW = hoverW
     end
     if INPUT:MousePressed("Left") and hoverW and hoverW.enabled then hoverW:press(); M._pressW = hoverW end

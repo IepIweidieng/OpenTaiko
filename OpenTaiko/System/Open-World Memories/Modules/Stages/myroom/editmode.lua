@@ -1389,10 +1389,10 @@ function Edit:draw()
     local hint = I18N.tr("Edit Mode  —  pick a tab, choose an item, click to place.  [Tab] done")
     if self.hold then
         if self.hold.kind == "wall" then
-            hint = I18N.trf("Moving %s   ·   point at a wall slot (low/high) · %s · right-click cancels",
+            hint = I18N.trf("Moving %s   ·   point at a wall slot (low/high) · %s · [Esc] cancels",
                 Room.displayName(self.hold.it.id), I18N.tr(self.hold.drag and "release to drop" or "click to drop"))
         else
-            hint = I18N.trf("Moving %s   ·   wheel rotates · %s · right-click cancels",
+            hint = I18N.trf("Moving %s   ·   wheel rotates · %s · [Esc] cancels",
                 Room.displayName(self.hold.it.id), I18N.tr(self.hold.drag and "release to drop" or "click to drop"))
         end
     elseif key == "door" then
@@ -1400,9 +1400,9 @@ function Edit:draw()
     elseif key == "eraser" then
         hint = I18N.tr("Eraser  —  click a placed item, rug or paint to remove it (back to stock)")
     elseif self.sel then
-        if key == "furn" then hint = I18N.trf("Placing %s   ·   wheel rotates · click a green spot · right-click cancels", Room.displayName(self.sel))
-        elseif key == "wall" then hint = I18N.trf("Placing %s   ·   wheel flips low/high mount · click a green spot · right-click cancels", Room.displayName(self.sel))
-        else hint = I18N.trf("Painting %s   ·   click & drag to apply many · right-click cancels", Room.displayName(self.sel)) end
+        if key == "furn" then hint = I18N.trf("Placing %s   ·   wheel rotates · click a green spot · [Esc] cancels", Room.displayName(self.sel))
+        elseif key == "wall" then hint = I18N.trf("Placing %s   ·   wheel flips low/high mount · click a green spot · [Esc] cancels", Room.displayName(self.sel))
+        else hint = I18N.trf("Painting %s   ·   click & drag to apply many · [Esc] cancels", Room.displayName(self.sel)) end
     elseif self.selected then
         hint = I18N.trf("%s  —  use the buttons under it, drag it to move, or click elsewhere to dismiss", Room.displayName(self.selected.it.id))
     elseif self.dragExit then hint = I18N.tr("Sliding the door along the front")

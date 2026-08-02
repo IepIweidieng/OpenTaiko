@@ -721,7 +721,7 @@ class CSongReplay {
 	/// In case of incorrectness, <see cref="CStagePlayDrumsScreen.IsReplayValid"/> verifies the replay using the judgement counts
 	public IReadOnlyList<double> GetInputPumpTjaTimes() {
 		// a safe heuristic value
-		var msTjaMaxResyncRewind = 10 * OpenTaiko.ConfigIni.tzLevels[0].nBadZone * CConfigIni.SongSpeedToActual(this.SongSpeedValue);
+		var msTjaMaxResyncRewind = 2 * OpenTaiko.ConfigIni.tzLevels[0].nBadZone * CConfigIni.SongSpeedToActual(this.SongSpeedValue);
 
 		var res = Inputs.Select(tp => tp.Item1).ToList();
 		double next = double.PositiveInfinity;

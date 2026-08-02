@@ -925,7 +925,7 @@ function Edit:update(ts, editCameraFuncs)
             editCameraFuncs.zoom(sdy)
             self:updateEraser(mx, my, lpressed, lpressing)
         elseif self.sel then
-            self:updatePlace(mx, my, sdy, lpressed, lpressing, editCameraFuncs.zoom)
+            self:updatePlace(mx, my, sdy, lpressed, lpressing, editCameraFuncs.zoom, dmx, dmy)
         else
             editCameraFuncs.zoom(sdy)
             self:updateBrowse(mx, my, lpressed, lpressing, lreleased)
@@ -942,7 +942,7 @@ function Edit:update(ts, editCameraFuncs)
 end
 
 -- place mode: ghost follows the hover; click/swipe to place
-function Edit:updatePlace(mx, my, sdy, lpressed, lpressing, zoomCamera)
+function Edit:updatePlace(mx, my, sdy, lpressed, lpressing, zoomCamera, dmx, dmy)
     local room = self.room
     local key = self:catKey()
     if key == "furn" then
@@ -965,7 +965,7 @@ function Edit:updatePlace(mx, my, sdy, lpressed, lpressing, zoomCamera)
     elseif key == "wall" then
         -- point at the LOW or HIGH band of a tile to place on that layer (both coexist per tile);
         -- the wheel still nudges the preferred mount for when two bands project close together
-        local s = self:pickWallSlot(mx, my)
+        local s = (dmx ~= 0 or dmy ~= 0) and self:pickWallSlot(mx, my) or self.hoverSlot
         if sdy ~= 0 and s then
             local mount = (self.mount == "low") and "high" or "low"
             self.mount = mount

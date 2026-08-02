@@ -65,6 +65,7 @@ local tabs            -- the category tabs + keys tab + trailing exit tab
 -- tabs.n             -- #tabs
 -- tabs.idxKeysTab    -- index of the keys tab (exit is the last tab)
 -- tabs.idxActive
+-- tabs.idxFocused
 local pages
 -- pages.cats         -- pages.cats[catId]  = page
 -- pages.keysTab      -- the keys tab page (lists the key-config rows)
@@ -329,6 +330,7 @@ end
 function switchTab(i)
     if tabs[i] and tabs[i]._exit then requestExit(); return end   -- never switch to the exit tab; it just leaves
     tabs.idxActive = i
+    tabs.idxFocused = i
     mode = "main"
     keysBack:setVisible(false); keysTitle:setVisible(false)
     setTabsVisible(true)
@@ -426,18 +428,22 @@ end
 -- focus a tab: category/keys tabs switch their page on focus; the exit tab only highlights (decide/click on it
 -- exits), so cycling onto it never exits by accident
 local function focusTab(i, silence)
-    if tabs[i]._exit then setFocusTo(tabs[i])
+    if tabs[i]._exit then
+        setFocusTo(tabs[i]); tabs.idxFocused = i
+        if silence then ui:clearPrevFocus() end
     else
         switchTab(i)
-        if not silence then SHARED:GetSharedSound("Skip"):Play() end
+        if silence then ui:clearPrevFocus()
+        else SHARED:GetSharedSound("Skip"):Play()
+        end
     end
 end
 
 -- horizontal arrows (or LBlue/RBlue) move between tabs, only while a tab is focused, and wrap both ways across
 -- all tabs including the exit tab
 local function setupHandleTabKeys(tab)
-    function tab:onNavRight() focusTab((tabs.idxActive or 1) % tabs.n + 1); return true end
-    function tab:onNavLeft() focusTab(((tabs.idxActive or 1) - 2) % tabs.n + 1); return true end
+    function tab:onNavRight() focusTab((tabs.idxFocused or 1) % tabs.n + 1); return true end
+    function tab:onNavLeft() focusTab(((tabs.idxFocused or 1) - 2) % tabs.n + 1); return true end
 end
 
 -- ── gradient background ───────────────────────────────────────────────────────────
@@ -583,6 +589,7 @@ function reload(model)
     -- (their old glyph textures are disposed with them — nothing stacks across switches).
     PopUI.flushSharedFonts()
     local keepTab   = tabs.idxActive or 1
+    local keepTabFocus = tabs.idxFocused or keepTab
     local keepFocus = ui and ui.focusIdx or 1
     local keepCapturing = ui and ui.focusables[ui.focusIdx] and ui.focusables[ui.focusIdx].capturing or false
     local keepST, keepSC = scrollTarget, scrollCur
@@ -590,6 +597,7 @@ function reload(model)
     if ui then ui:disposeWidgets(); ui:clear() end
     activate(model)
     if keepTab > 1 and keepTab <= tabs.n then switchTab(keepTab) end
+    if keepTabFocus ~= keepTab and keepTabFocus > 1 and keepTabFocus <= tabs.n then focusTab(keepTab, silence) end
     if keepPageKeys and keepPageKeys[1] == "binds" then enterKeys(keepPageKeys[2]) end
     scrollTarget, scrollCur = keepST, keepSC
     ui.focusIdx = clamp(keepFocus, 1, math.max(1, #ui.focusables))

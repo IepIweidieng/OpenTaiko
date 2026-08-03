@@ -1007,8 +1007,9 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 				return ENoteJudge.ADLIB; // here for "empty hit but not a miss"
 			} else if (chipNoHit.eNoteState == ENoteState.Wait) {
 				bool _isExpected = NotesManager.IsExpectedPadMultiHit(chipNoHit.padStoredHit, nPad, chipNoHit, gameType);
+				var msMaxWaitTime = CTja.GameDurationToTjaDuration(OpenTaiko.ConfigIni.nBigNoteWaitTimems);
 				var msWaitedTime = msHitTjaTime - chipNoHit.msFirstMultiHit;
-				if (_isExpected && msWaitedTime < OpenTaiko.ConfigIni.nBigNoteWaitTimems) {
+				if (_isExpected && msWaitedTime < msMaxWaitTime) {
 					if (skipHit)
 						return ENoteJudge.Perfect;
 					chipNoHit.eNoteState = ENoteState.None;
@@ -1464,7 +1465,7 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 		EGameType _gt = NotesManager.GetChipGameType(chip, iPlayer);
 		bool _isSwapNote = NotesManager.IsSwapNote(chip, _gt);
 
-		int msMaxWaitTime = OpenTaiko.ConfigIni.nBigNoteWaitTimems;
+		var msMaxWaitTime = CTja.GameDurationToTjaDuration(OpenTaiko.ConfigIni.nBigNoteWaitTimems);
 		var msJudgeTjaTime = Math.Min(msTjaNowTime, msMaxPlayedTjaTime);
 		var msWaitedTime = msJudgeTjaTime - (float)chip.msFirstMultiHit;
 		if (chip.eNoteState == ENoteState.Wait && msWaitedTime >= msMaxWaitTime) {

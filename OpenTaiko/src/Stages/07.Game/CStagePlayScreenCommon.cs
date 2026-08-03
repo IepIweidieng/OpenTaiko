@@ -1046,7 +1046,8 @@ internal abstract class CStagePlayScreenCommon : CStage {
 			if (NotesManager.IsRoll(nt)) {
 				return (msTjaTime >= pChip.nSoundTimems && msTjaTime < pChip.end.nSoundTimems) ? ENoteJudge.Perfect : ENoteJudge.Miss;
 			} else if (NotesManager.IsGenericBalloon(nt)) {
-				return (msTjaTime >= pChip.nSoundTimems - 17 && msTjaTime < pChip.end.nSoundTimems) ? ENoteJudge.Perfect : ENoteJudge.Miss;
+				var msHeadWindowTja = (int)CTja.GameDurationToTjaDuration(17);
+				return (msTjaTime >= pChip.nSoundTimems - msHeadWindowTja && msTjaTime < pChip.end.nSoundTimems) ? ENoteJudge.Perfect : ENoteJudge.Miss;
 			}
 
 			CConfigIni.CTimingZones tz = this.timingZones[player];

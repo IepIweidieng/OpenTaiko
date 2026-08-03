@@ -980,6 +980,12 @@ internal abstract class CStagePlayScreenCommon : CStage {
 		return eJudge;
 	}
 
+	public static bool IsAcceptMultiHit(CChip chip, double msTjaHitTime) {
+		var msMaxWaitTime = CTja.GameDurationToTjaDuration(OpenTaiko.ConfigIni.nBigNoteWaitTimems);
+		var msWaitedTime = msTjaHitTime - chip.msFirstMultiHit;
+		return (msWaitedTime < msMaxWaitTime);
+	}
+
 	private bool tEasyTimeZones(int nPlayer) {
 		bool _timingzonesAreEasy = false;
 
@@ -2094,7 +2100,9 @@ internal abstract class CStagePlayScreenCommon : CStage {
 		#endregion
 
 		#region [ search for the first past note chips (ignore rolls) ]
-		var firstWaitingTime = this.chipNowProcessingMultiHitNotes[nPlayer].FirstOrDefault()?.nSoundTimems ?? msTjaTime;
+		var firstWaitingTime = this.chipNowProcessingMultiHitNotes[nPlayer]
+			.FirstOrDefault(chip => IsAcceptMultiHit(chip, msTjaTime))
+			?.nSoundTimems ?? msTjaTime;
 		int idxPastFirstNonMissZone = getIdxChipAtOrBefore(Math.Min(firstWaitingTime, msTjaTime - badZone));
 		(CChip? chip, ENoteJudge judge) pastFirstUnhit = (null, ENoteJudge.Miss);
 		(CChip? chip, ENoteJudge judge) pastFirstUnhitNotBad = (null, ENoteJudge.Miss);
@@ -2103,7 +2111,8 @@ internal abstract class CStagePlayScreenCommon : CStage {
 			CChip chip = listChip[nPlayer][i];
 			if (!(chip.bVisible && NotesManager.IsHittableNote(chip) && !NotesManager.IsRollEnd(chip)))
 				continue;
-			var judge = (chip.eNoteState is ENoteState.Wait) ? ENoteJudge.Perfect : this.eGetChipJudgeAtTime(msTjaTime, chip, nPlayer);
+			var judge = (chip.eNoteState == ENoteState.Wait && IsAcceptMultiHit(chip, msTjaTime)) ? ENoteJudge.Perfect
+				: this.eGetChipJudgeAtTime(msTjaTime, chip, nPlayer);
 			if (judge is ENoteJudge.Miss && (chip.nSoundTimems < firstWaitingTime)) // search over waiting notes
 				break; // not in judgement window or after a roll
 			if (!chip.IsMissed && !chip.bHit && this.IsInputPadConsumedByChip(nPlayer, chip, pad, msTjaTime, judge)) {

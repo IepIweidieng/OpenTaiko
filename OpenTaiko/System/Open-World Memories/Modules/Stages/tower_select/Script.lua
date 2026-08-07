@@ -1,4 +1,6 @@
-﻿local songlist = nil
+﻿local NavInput = require("NavInput")
+
+local songlist = nil
 
 local tex_tower = TEXTURE:CreateTexture()
 local tex_bg = TEXTURE:CreateTexture()
@@ -94,6 +96,7 @@ local function refresh()
     end
 end
 
+-- returns success, entered ("song"/"folder"/nil)
 local function handleDecide()
     if songlist == nil then return false end
     local node = songlist:GetSelectedSongNode()
@@ -102,14 +105,14 @@ local function handleDecide()
     if node.IsFolder then
         local success = songlist:OpenFolder()
         refresh()
+        return success, "folder"
     elseif node.IsReturn then
         local success = songlist:CloseFolder()
         refresh()
+        return success
     elseif node.IsSong then
         local success = node:Mount(5)
-        if success then
-            return true
-        end
+        return success, "song"
     end
 
     return false
@@ -224,28 +227,35 @@ function draw()
 end
 
 function update()
+    local navPn = NavInput.p[1]
     if songlist ~= nil then
-        if (INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow")) then
+        if navPn.right() then
             move(1)
             SHARED:GetSharedSound("Move"):Play()
-        elseif (INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("LeftArrow")) then
+        elseif navPn.left() then
             move(-1)
             SHARED:GetSharedSound("Move"):Play()
-        elseif INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return") then
-            if handleDecide() then
+        elseif navPn.decide() then
+            local success, entered = handleDecide()
+            if entered == "song" and success then
+                SHARED:GetSharedSound("SongDecide"):Play()
                 return Exit("play", nil)
             end
-            SHARED:GetSharedSound("Decide"):Play()
-        elseif INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+            if success then
+                SHARED:GetSharedSound(entered and "Decide" or "Cancel"):Play()
+            else
+                SHARED:GetSharedSound("Error"):Play()
+            end
+        elseif navPn.cancel() then
             if closeFolder() then
-                SHARED:GetSharedSound("Decide"):Play()
+                SHARED:GetSharedSound("Cancel"):Play()
             else
                 SHARED:GetSharedSound("Cancel"):Play()
                 return Exit("title", nil)
             end
         end
     else
-        if INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+        if navPn.cancel() then
             SHARED:GetSharedSound("Cancel"):Play()
             return Exit("title", nil)
         end
@@ -254,6 +264,9 @@ function update()
 end
 
 function activate()
+    CONFIG.PlayerCount = 1
+    CONFIG.SongSpeed   = 20   -- reset speed (other modes may have changed it)
+
     tex_tower = TEXTURE:CreateTexture("Textures/Tower.png")
     tex_tower:SetWrapMode("Border")
     tex_bg = TEXTURE:CreateTexture("Textures/BG.png")

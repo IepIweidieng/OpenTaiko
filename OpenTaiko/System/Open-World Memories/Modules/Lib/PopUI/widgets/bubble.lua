@@ -91,7 +91,7 @@ function Bubble:_popIn()
 end
 
 function Bubble:restyle()
-    self.eff = self.mgr:resolveTheme(self.style)
+    self:resolveStyle()
     self._scaleC = self._scaleC or COUNTER:EmptyCounter()
     local c = self.eff.colors
     local sh = self.eff.shadow

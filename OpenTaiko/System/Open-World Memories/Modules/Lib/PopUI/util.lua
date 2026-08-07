@@ -2,11 +2,13 @@
 -- PopUI/util.lua — tiny math/color/geometry helpers. Engine globals are touched only inside functions
 -- (never at load) so the module imports cleanly even under a headless test harness.
 
+local Util = require("Util")
+
 local U = {}
 
-function U.clamp(v, lo, hi) if v < lo then return lo elseif v > hi then return hi else return v end end
-function U.lerp(a, b, t) return a + (b - a) * t end
-function U.round(v) return math.floor(v + 0.5) end
+U.clamp = Util.clamp
+U.lerp = Util.lerp
+U.round = Util.round
 
 -- lerp two {r,g,b,a} colors
 function U.lerpColor(a, b, t)

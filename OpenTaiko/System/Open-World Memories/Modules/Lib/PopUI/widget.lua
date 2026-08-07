@@ -6,32 +6,38 @@
 
 local U     = require("PopUI.util")
 local Shape = require("PopUI.shape")
+local Sfx   = require("PopUI.sfx")
 
 local Widget = {}
 Widget.__index = Widget
 
 function Widget.new(o)
     local self = setmetatable(o or {}, Widget)
+    self.userTheme = o.theme or o.style or {}
+    self.userSfx = o.sfx or {}
     self.x = self.x or 0; self.y = self.y or 0
     self.w = self.w or 160; self.h = self.h or 64
     if self.enabled == nil then self.enabled = true end
     if self.visible == nil then self.visible = true end
     if self.focusable == nil then self.focusable = true end
-    self.hovered, self.focused, self.pressed = false, false, false
+    self.hovered, self.focused, self.pressed, self.capturing = false, false, false, false
     self._scaleCur, self._scaleFrom, self._scaleTo = 1.0, 1.0, 1.0
     self._hiCur, self._hiFrom, self._hiTo = 0.0, 0.0, 0.0
+    self._hiCapCur, self._hiCapFrom, self._hiCapTo = 0.0, 0.0, 0.0
     return self
 end
 
 -- called by the manager right after creation
 function Widget:init(mgr)
     self.mgr = mgr
-    self.eff = mgr:resolveTheme(self.style)
     self._scaleC = COUNTER:EmptyCounter()
     self._hiC = COUNTER:EmptyCounter()
+    self._hiCapC = COUNTER:EmptyCounter()
     self:restyle()
     return self
 end
+
+function Widget:playSfx(name) return Sfx.playSfx(self.sfx, name) end
 
 -- ── geometry ────────────────────────────────────────────────────────────────────
 function Widget:centerX() return self.x + self.w * 0.5 end
@@ -43,6 +49,7 @@ function Widget:hitTest(px, py)
 end
 
 function Widget:isHighlighted() return self.enabled and (self.hovered or self.focused) end
+function Widget:isCapturingHighlighted() return self.enabled and (self.capturing) end
 
 -- ── baking (only place canvases are built; called on construct + restyle) ──────────
 -- a transparent canvas sized to the body + a shadow margin, REUSING `old` when the size matches (no leak)
@@ -81,9 +88,14 @@ function Widget:bakeRing()
     self._ring = { canvas = cv, m = m }
 end
 
+function Widget:resolveStyle()
+    self.eff = self.mgr:resolveTheme(self.userTheme)
+    self.sfx = self.mgr:resolveSfx(self.userSfx)
+end
+
 -- subclasses override to (re)build their canvases + cached text. Default = a plain body + ring.
 function Widget:restyle()
-    self.eff = self.mgr:resolveTheme(self.style)
+    self:resolveStyle()
     self:bakeBody()
     self:bakeRing()
 end
@@ -112,20 +124,42 @@ function Widget:_tweenHighlight(target)
     c:ClearEasing(); c:Start()
 end
 
-function Widget:setHover(b)
+function Widget:_tweenCapturingHighlight(target)
+    self._hiCapFrom, self._hiCapTo = self._hiCapCur, target
+    local c = self._hiCapC
+    c.Begin, c.End, c.Interval = 0, 1, math.max(0.0001, self.eff.anim.highlightTime)
+    c:ClearEasing(); c:Start()
+end
+
+function Widget:setHover(b, silent)
     if self.hovered == b then return end
     self.hovered = b
     self:_refreshHighlight()
-    if b then if self.onHover then self.onHover(self) end
-    else if self.onUnhover then self.onUnhover(self) end end
+    if b then
+        if self.onHover then self.onHover(self, silent)
+        elseif not silent then self:playSfx("hover")
+        end
+    elseif self.onUnhover then self.onUnhover(self, silent) end
 end
 
-function Widget:setFocus(b)
+function Widget:setFocus(b, silent)
     if self.focused == b then return end
     self.focused = b
     self:_refreshHighlight()
-    if b then if self.onFocus then self.onFocus(self) end
-    else if self.onBlur then self.onBlur(self) end end
+    if b then
+        if self.onFocus then self.onFocus(self, silent)
+        elseif not silent then self:playSfx("move")
+        end
+    elseif self.onBlur then self.onBlur(self, silent)
+    end
+end
+
+function Widget:setCapturing(b, silence)
+    if self.capturing == b then return end
+    self.capturing = b
+    self:_refreshCapturingHighlight()
+    if b then if self.onCapturing then self.onCapturing(self, silence) end
+    else if self.onEndCapturing then self.onEndCapturing(self, silence) end end
 end
 
 function Widget:_refreshHighlight()
@@ -134,6 +168,11 @@ function Widget:_refreshHighlight()
     if self.noPop then return end                  -- text widgets don't zoom (DrawDirect text can't scale to match)
     if hi and not self.pressed then self:_tweenScale(self.eff.anim.hoverScale)
     elseif not self.pressed then self:_tweenScale(1.0) end
+end
+
+function Widget:_refreshCapturingHighlight()
+    local hi = self:isCapturingHighlighted()
+    self:_tweenCapturingHighlight(hi and 1 or 0)
 end
 
 function Widget:press()
@@ -167,11 +206,11 @@ end
 
 -- default activation: buttons override or rely on onClick
 function Widget:onActivate()
-    if self.onClick then self.onClick(self) end
-    if self.mgr then self.mgr:playSfx("click") end
+    if self.onClick and self.onClick(self) then return end
+    self:playSfx("click")
 end
 
-function Widget:setEnabled(b) self.enabled = b; self.focusable = b and (self._focusableWant ~= false); self:_refreshHighlight() end
+function Widget:setEnabled(b) self.enabled = b; self.focusable = b and (self._focusableWant ~= false); self:_refreshHighlight(); self:_refreshCapturingHighlight() end
 function Widget:setVisible(b) self.visible = b end
 
 -- free the GPU canvases this widget baked (LuaCanvas has no finalizer). Every baked surface is stored as a
@@ -187,9 +226,10 @@ end
 
 -- ── per-frame ───────────────────────────────────────────────────────────────────
 function Widget:update(ctx)
-    self._scaleC:Tick(); self._hiC:Tick()
+    self._scaleC:Tick(); self._hiC:Tick(); self._hiCapC:Tick()
     self._scaleCur = U.lerp(self._scaleFrom, self._scaleTo, self._scaleC.Value)
     self._hiCur    = U.lerp(self._hiFrom, self._hiTo, self._hiC.Value)
+    self._hiCapCur = U.lerp(self._hiCapFrom, self._hiCapTo, self._hiCapC.Value)
 end
 
 function Widget:draw()

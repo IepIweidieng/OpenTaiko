@@ -6,6 +6,7 @@
 -- Game.update() returns "exit" when the player leaves the result screen.
 
 local I18N = require("i18n")
+local NavInput = require("NavInput")
 
 local M = {}
 
@@ -63,36 +64,23 @@ local highScores = {}
 -- Single-song egg mode (Endurance with exactly 1 song in scope)
 local singleSongMode = false
 
--- ── Per-player input sets ─────────────────────────────────────────────────────
-
-local INPUT_SETS = {
-    { right = "RightChange", left = "LeftChange", decide1 = "Decide",  decide2 = "Decide"  },
-    { right = "RBlue2P",     left = "LBlue2P",    decide1 = "RRed2P",  decide2 = "LRed2P"  },
-    { right = "RBlue3P",     left = "LBlue3P",    decide1 = "RRed3P",  decide2 = "LRed3P"  },
-    { right = "RBlue4P",     left = "LBlue4P",    decide1 = "RRed4P",  decide2 = "LRed4P"  },
-    { right = "RBlue5P",     left = "LBlue5P",    decide1 = "RRed5P",  decide2 = "LRed5P"  },
-}
-
 -- Enter = universal decide for any player; Escape = universal cancel.
 local function pDecide(p)
-    local inp = INPUT_SETS[p]
+    local inp = NavInput.p[p]
     if inp == nil then return false end
-    return INPUT:Pressed(inp.decide1) or INPUT:Pressed(inp.decide2)
-        or INPUT:KeyboardPressed("Return")
+    return inp.decide()
 end
 
 local function pRight(p)
-    local inp = INPUT_SETS[p]
+    local inp = NavInput.p[p]
     if inp == nil then return false end
-    return INPUT:Pressed(inp.right)
-        or (p == 1 and INPUT:KeyboardPressed("RightArrow"))
+    return inp.right(p == 1)
 end
 
 local function pLeft(p)
-    local inp = INPUT_SETS[p]
+    local inp = NavInput.p[p]
     if inp == nil then return false end
-    return INPUT:Pressed(inp.left)
-        or (p == 1 and INPUT:KeyboardPressed("LeftArrow"))
+    return inp.left(p == 1)
 end
 
 -- ── Helpers ───────────────────────────────────────────────────────────────────
@@ -562,8 +550,8 @@ function M.update()
     -- Also skip during wait
     if waitCounter ~= nil then return nil end
 
-    local decide = INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return")
-    local cancel = INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape")
+    local decide = NavInput.decide()
+    local cancel = NavInput.cancel()
 
     -- ── Result / gameover ─────────────────────────────────────────────────────
 
@@ -586,8 +574,8 @@ function M.update()
         end
 
     elseif state == "e_answer" then
-        if INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow") then moveList(1)
-        elseif INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("LeftArrow") then moveList(-1)
+        if pRight(1) then moveList(1)
+        elseif pLeft(1) then moveList(-1)
         end
         if clockMs <= 0 or decide then
             clockActive = false

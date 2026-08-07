@@ -1,5 +1,7 @@
 -- pagoda.lua  —  Pagoda of the Unknown sub-module for dan_select
 
+local NavInput = require("NavInput")
+
 local M = {}
 
 -- ── Song pools (loaded from pagoda_pools.json) ────────────────────────────────
@@ -230,12 +232,10 @@ local _preview_speed   = 20     -- current slider value
 
 -- ── Per-activation state ──────────────────────────────────────────────────────
 
-local _callbacks          = nil
+local _CB                 = nil
 local _font_title         = nil
 local _font_body          = nil
 local _font_hint          = nil
-local _puchi_sine_y       = 0.0
-local _puchi_sine_counter = nil
 local _status_msg         = ""
 local _status_timer       = 0.0
 local _menu_sel           = 1
@@ -245,7 +245,6 @@ local _btn_timer          = 0.0
 
 local NP_X            = 20
 local NP_Y            = 980
-local PUCHI_FLOAT_AMP = 6.0
 
 -- ── Song list ────────────────────────────────────────────────────────────────
 
@@ -337,9 +336,10 @@ end
 local DIFF_NAMES = { [0] = "Easy", [1] = "Normal", [2] = "Hard", [3] = "Oni", [4] = "Edit" }
 
 local function _spd_range(level)
-    local min = (level >= 33) and (20 + (level - 32)) or 20
-    local max = min + 20
-    return min, max
+    local SPEED = CONFIG.SONGSPEED
+    local min = (level >= 33) and (1 + (level - 32) / SPEED.ScaleFromActual) or 1
+    local max = min + 1
+    return SPEED:FromActual(min), SPEED:FromActual(max)
 end
 
 -- Roll and cache the songs that will be used for the given challenge level.
@@ -459,7 +459,7 @@ local function _build_dan(level)
         end
 
         -- Use default speed when no preview (practice, or missing cache)
-        _preview_speed = (level >= 33) and (20 + (level - 32)) or 20
+        _preview_speed = _spd_range(level)
     end
 
     if added_count == 0 then return false end
@@ -488,24 +488,6 @@ end
 
 -- ── Draw helpers ─────────────────────────────────────────────────────────────
 
-local function _draw_player_chara(x, y, opacity)
-    local chara = GetSaveFile(0):GetCharacter()
-    if chara ~= nil and chara.IsValid then
-        chara:Update(CHARACTER.ANIM_MENU_NORMAL, true)
-        chara:DrawAtAnchor(x, y, CHARACTER.ANIM_MENU_NORMAL, "bottom", 1.0, 1.0, math.floor(opacity * 255))
-    end
-end
-
-local function _draw_player_puchi(x, y, opacity)
-    local puchi = GetSaveFile(0):GetPuchichara()
-    if puchi == nil or puchi.tx == nil or not puchi.tx.Loaded then return end
-    local frameW = math.floor(puchi.tx.Width / 2)
-    puchi.tx:SetScale(1.0, 1.0)
-    puchi.tx:SetOpacity(opacity)
-    puchi.tx:DrawRectAtAnchor(x, y, 0, 0, frameW, puchi.tx.Height, "bottom")
-    puchi.tx:SetOpacity(1.0)
-end
-
 local function _ensure_fonts()
     if _font_title ~= nil then return end
     _font_title = TEXT:Create(44, "regular")
@@ -525,8 +507,8 @@ function M.is_returning_from_play()
 end
 
 -- Called when the player selects Pagoda from the 3-way menu
-function M.enter(shared)
-    _callbacks    = shared
+function M.enter(CB)
+    _CB    = CB
     _btn_timer    = 0.15
     _status_msg   = ""
     _status_timer = 0.0
@@ -545,10 +527,6 @@ function M.enter(shared)
 
     local chara = GetSaveFile(0):GetCharacter()
     if chara ~= nil and chara.IsValid then chara:LoadAnimation(CHARACTER.ANIM_MENU_NORMAL) end
-
-    _puchi_sine_counter = COUNTER:CreateCounter(0, 360, 1 / 120)
-    _puchi_sine_counter:SetLoop(true)
-    _puchi_sine_counter:Start()
 end
 
 -- Called when the player returns to the 3-way menu
@@ -560,30 +538,25 @@ function M.leave()
 end
 
 -- Called from Script.lua's activate() whenever the pagoda module is active
-function M.activate(shared)
-    _callbacks = shared
+function M.activate(CB)
+    _CB = CB
     _btn_timer = 0.15
     _ensure_fonts()
 
     local chara = GetSaveFile(0):GetCharacter()
     if chara ~= nil and chara.IsValid then chara:LoadAnimation(CHARACTER.ANIM_MENU_NORMAL) end
-
-    _puchi_sine_counter = COUNTER:CreateCounter(0, 360, 1 / 120)
-    _puchi_sine_counter:SetLoop(true)
-    _puchi_sine_counter:Start()
 end
 
 -- Called from Script.lua's deactivate()
 function M.deactivate()
     local chara = GetSaveFile(0):GetCharacter()
     if chara ~= nil and chara.IsValid then chara:DisposeAnimation(CHARACTER.ANIM_MENU_NORMAL) end
-    _puchi_sine_counter = nil
 end
 
 -- Called in Script.lua's activate() after activate(), only when is_returning_from_play() is true.
 -- PLAYSTATE still holds valid data from the just-completed dan at this point.
-function M.on_return(shared)
-    _callbacks = shared
+function M.on_return(CB)
+    _CB = CB
     local passed = not PLAYSTATE:WasPlayAborted() and PLAYSTATE:IsPass()
     _result_was_clear = passed
 
@@ -620,42 +593,58 @@ end
 
 -- Returns: nil | "back" (return to 3-way menu) | "play" (exit to play)
 function M.update(dt)
+    if _CB then
+        for _, c in pairs(_CB.ctx) do c:Tick() end
+    end
+
     _btn_timer    = math.max(0, _btn_timer - dt)
     _status_timer = math.max(0, _status_timer - dt)
 
-    if _puchi_sine_counter ~= nil then
-        _puchi_sine_counter:Tick()
-        _puchi_sine_y = math.sin(_puchi_sine_counter.Value * math.pi / 180) * PUCHI_FLOAT_AMP
-    end
-
-    if INPUT:KeyboardPressed("F3") then
+    local navPn = NavInput.p[1]
+    if INPUT:Pressed("ToggleAutoP1") then
         CONFIG:SetAutoStatus(0, not CONFIG:GetAutoStatus(0))
+        SHARED:GetSharedSound("Move"):Play()
     end
 
     if _btn_timer > 0 then return nil end
 
-    local up_p   = INPUT:Pressed("LeftChange")  or INPUT:KeyboardPressed("UpArrow")
-    local down_p = INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("DownArrow")
-    local ok_p   = INPUT:Pressed("Decide")      or INPUT:KeyboardPressed("Return")
-    local back_p = INPUT:Pressed("Cancel")      or INPUT:KeyboardPressed("Escape")
+    local up_p   = navPn.upOrPadLeft()
+    local down_p = navPn.downOrPadRight()
+    local ok_p   = navPn.decide()
+    local back_p = navPn.cancel()
 
     -- ── MISSING SONGS ──────────────────────────────────────────────────────────
     if _pagoda_state == "missing_songs" then
-        if ok_p or back_p then return "back" end
+        if ok_p or back_p then
+            SHARED:GetSharedSound("Cancel"):Play()
+            return "back"
+        end
         return nil
     end
 
     -- ── MAIN MENU ──────────────────────────────────────────────────────────────
     if _pagoda_state == "main_menu" then
-        if up_p   then _menu_sel = math.max(1, _menu_sel - 1) end
-        if down_p then _menu_sel = math.min(3, _menu_sel + 1) end
-        if back_p then return "back" end
+        if up_p   then
+            _menu_sel = math.max(1, _menu_sel - 1)
+            SHARED:GetSharedSound("Move"):Play()
+        end
+        if down_p then
+            _menu_sel = math.min(3, _menu_sel + 1)
+            SHARED:GetSharedSound("Move"):Play()
+        end
+        if back_p then
+            SHARED:GetSharedSound("Cancel"):Play()
+            return "back"
+        end
         if ok_p then
             if _menu_sel == 1 then
                 _pagoda_state = "start_choice" ; _menu_sel = 1
+                SHARED:GetSharedSound("Decide"):Play()
             elseif _menu_sel == 2 then
                 _practice_sel = 1 ; _pagoda_state = "practice_select"
+                SHARED:GetSharedSound("Decide"):Play()
             elseif _menu_sel == 3 then
+                SHARED:GetSharedSound("Cancel"):Play()
                 return "back"
             end
         end
@@ -666,16 +655,28 @@ function M.update(dt)
     if _pagoda_state == "start_choice" then
         local opts = _start_options()
         local n    = #opts + 1  -- +1 for Cancel
-        if up_p   then _menu_sel = math.max(1, _menu_sel - 1) end
-        if down_p then _menu_sel = math.min(n, _menu_sel + 1) end
-        if back_p then _pagoda_state = "main_menu" ; _menu_sel = 1 ; return nil end
+        if up_p   then
+            _menu_sel = math.max(1, _menu_sel - 1)
+            SHARED:GetSharedSound("Move"):Play()
+        end
+        if down_p then
+            _menu_sel = math.min(n, _menu_sel + 1)
+            SHARED:GetSharedSound("Move"):Play()
+        end
+        if back_p then
+            _pagoda_state = "main_menu"; _menu_sel = 1
+            SHARED:GetSharedSound("Cancel"):Play()
+            return nil
+        end
         if ok_p then
             if _menu_sel <= #opts then
                 _challenge_level = opts[_menu_sel]
                 _build_preview(_challenge_level)
                 _pagoda_state = "level_preview"
+                SHARED:GetSharedSound("Decide"):Play()
             else
                 _pagoda_state = "main_menu" ; _menu_sel = 1
+                SHARED:GetSharedSound("Cancel"):Play()
             end
         end
         return nil
@@ -689,26 +690,31 @@ function M.update(dt)
 
         -- Speed slider (left/right), only for already-cleared levels
         if is_past then
-            if INPUT:KeyboardPressed("LeftArrow")  or INPUT:Pressed("LeftChange")  then
+            if navPn.left()  then
                 _preview_speed = math.max(spd_min, _preview_speed - 1)
+                SHARED:GetSharedSound("Move"):Play()
             end
-            if INPUT:KeyboardPressed("RightArrow") or INPUT:Pressed("RightChange") then
+            if navPn.right() then
                 _preview_speed = math.min(spd_max, _preview_speed + 1)
+                SHARED:GetSharedSound("Move"):Play()
             end
         end
 
         if back_p then
             _clear_preview()
             _pagoda_state = "main_menu" ; _menu_sel = 1
+            SHARED:GetSharedSound("Cancel"):Play()
             return nil
         end
         if ok_p then
             local ok = _build_dan(_challenge_level)
             if ok then
                 _in_challenge = true
-                if _callbacks ~= nil then _callbacks.stopBGM() end
+                if _CB ~= nil then _CB.stopBGM() end
+                SHARED:GetSharedSound("SongDecide"):Play()
                 return "play"
             else
+                SHARED:GetSharedSound("Error"):Play()
                 _set_status("Failed to load songs!", 3.0)
             end
         end
@@ -717,19 +723,23 @@ function M.update(dt)
 
     -- ── LEVEL CLEAR ────────────────────────────────────────────────────────────
     if _pagoda_state == "level_clear" then
-        if up_p or INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("LeftArrow") then
+        if up_p or navPn.left() then
             _menu_sel = math.max(1, _menu_sel - 1)
+            SHARED:GetSharedSound("Move"):Play()
         end
-        if down_p or INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow") then
+        if down_p or navPn.right() then
             _menu_sel = math.min(2, _menu_sel + 1)
+            SHARED:GetSharedSound("Move"):Play()
         end
         if ok_p or back_p then
             if _menu_sel == 1 and not back_p then
                 _build_preview(_challenge_level)
                 _pagoda_state = "level_preview"
+                SHARED:GetSharedSound("Decide"):Play()
             else
                 _pagoda_state = "main_menu" ; _menu_sel = 1
-                if _callbacks ~= nil then _callbacks.startBGM() end
+                SHARED:GetSharedSound("Cancel"):Play()
+                if _CB ~= nil then _CB.startBGM() end
             end
         end
         return nil
@@ -737,11 +747,13 @@ function M.update(dt)
 
     -- ── GAME OVER ──────────────────────────────────────────────────────────────
     if _pagoda_state == "game_over" then
-        if up_p or INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("LeftArrow") then
+        if up_p or navPn.left() then
             _menu_sel = math.max(1, _menu_sel - 1)
+            SHARED:GetSharedSound("Move"):Play()
         end
-        if down_p or INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow") then
+        if down_p or navPn.right() then
             _menu_sel = math.min(2, _menu_sel + 1)
+            SHARED:GetSharedSound("Move"):Play()
         end
         if ok_p or back_p then
             if _menu_sel == 1 and not back_p then
@@ -749,9 +761,11 @@ function M.update(dt)
                 _challenge_level = cp
                 _build_preview(cp)
                 _pagoda_state = "level_preview"
+                SHARED:GetSharedSound("Decide"):Play()
             else
                 _pagoda_state = "main_menu" ; _menu_sel = 1
-                if _callbacks ~= nil then _callbacks.startBGM() end
+                SHARED:GetSharedSound("Cancel"):Play()
+                if _CB ~= nil then _CB.startBGM() end
             end
         end
         return nil
@@ -760,34 +774,55 @@ function M.update(dt)
     -- ── PRACTICE SELECT ────────────────────────────────────────────────────────
     if _pagoda_state == "practice_select" then
         local highest = math.max(_highest_level(), 6)
-        if up_p   then _practice_sel = math.max(1,       _practice_sel - 1) end
-        if down_p then _practice_sel = math.min(highest, _practice_sel + 1) end
-        if back_p then _pagoda_state = "main_menu" ; _menu_sel = 1 ; return nil end
-        if ok_p   then _practice_level = _practice_sel ; _pagoda_state = "practice_preview" ; _menu_sel = 1 end
+        if up_p   then
+            _practice_sel = math.max(1,       _practice_sel - 1)
+            SHARED:GetSharedSound("Move"):Play()
+        end
+        if down_p then
+            _practice_sel = math.min(highest, _practice_sel + 1)
+            SHARED:GetSharedSound("Move"):Play()
+        end
+        if back_p then
+            _pagoda_state = "main_menu" ; _menu_sel = 1
+            SHARED:GetSharedSound("Cancel"):Play()
+            return nil
+        end
+        if ok_p   then
+            _practice_level = _practice_sel ; _pagoda_state = "practice_preview" ; _menu_sel = 1
+            SHARED:GetSharedSound("Decide"):Play()
+        end
         return nil
     end
 
     -- ── PRACTICE PREVIEW ───────────────────────────────────────────────────────
     if _pagoda_state == "practice_preview" then
-        if up_p or INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("LeftArrow") then
+        if up_p or navPn.left() then
             _menu_sel = math.max(1, _menu_sel - 1)
+            SHARED:GetSharedSound("Move"):Play()
         end
-        if down_p or INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow") then
+        if down_p or navPn.right() then
             _menu_sel = math.min(2, _menu_sel + 1)
+            SHARED:GetSharedSound("Move"):Play()
         end
-        if back_p then _pagoda_state = "practice_select" ; return nil end
+        if back_p then
+            SHARED:GetSharedSound("Cancel"):Play()
+            _pagoda_state = "practice_select" ; return nil
+        end
         if ok_p then
             if _menu_sel == 1 then
                 local ok = _build_dan(_practice_level)
                 if ok then
                     _in_practice = true
-                    if _callbacks ~= nil then _callbacks.stopBGM() end
+                    if _CB ~= nil then _CB.stopBGM() end
+                    SHARED:GetSharedSound("SongDecide"):Play()
                     return "play"
                 else
+                    SHARED:GetSharedSound("Error"):Play()
                     _set_status("Failed to load songs!", 3.0)
                 end
             else
                 _pagoda_state = "practice_select"
+                SHARED:GetSharedSound("Cancel"):Play()
             end
         end
         return nil
@@ -797,7 +832,8 @@ function M.update(dt)
     if _pagoda_state == "practice_result" then
         if ok_p or back_p then
             _pagoda_state = "practice_select"
-            if _callbacks ~= nil then _callbacks.startBGM() end
+            SHARED:GetSharedSound("Cancel"):Play()
+            if _CB ~= nil then _CB.startBGM() end
         end
         return nil
     end
@@ -896,8 +932,9 @@ function M.draw()
         -- Speed slider — only for levels the player has already passed
         if is_past then
             local spd_min, spd_max = _spd_range(lv)
+            local SPEED = CONFIG.SONGSPEED
             local spd_label = string.format("◄  Speed  x%.2f  ►      min x%.2f  /  max x%.2f",
-                _preview_speed / 20.0, spd_min / 20.0, spd_max / 20.0)
+                SPEED:ToActual(_preview_speed), SPEED:ToActual(spd_min), SPEED:ToActual(spd_max))
             _font_hint:GetText(spd_label, false, 800, C_SEL):DrawAtAnchor(cx, base_y - 50, "center")
         end
 
@@ -1015,8 +1052,10 @@ function M.draw()
 
     -- Nameplate + character
     NAMEPLATE:DrawPlayerNameplate(NP_X, NP_Y, 255, 0)
-    _draw_player_chara(NP_X + 140, NP_Y - 6,            1.0)
-    _draw_player_puchi(NP_X + 220, NP_Y + _puchi_sine_y, 1.0)
+    if _CB then
+        _CB.drawPlayerChara(NP_X + 140, NP_Y - 6,            1.0)
+        _CB.drawPlayerPuchi(NP_X + 220, NP_Y + _CB.puchiSineY, 1.0, _CB.puchiIdxFrame)
+    end
 end
 
 return M

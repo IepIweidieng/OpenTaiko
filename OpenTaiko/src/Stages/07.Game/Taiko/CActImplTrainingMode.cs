@@ -95,11 +95,11 @@ class CActImplTrainingMode : CActivity {
 
 			if (OpenTaiko.ConfigIni.KeyAssign.Taiko.TrainingPause.IsPressedExcludePlayer(this.bTrainingPAUSE ? null : 0)) {
 				if (this.bTrainingPAUSE) {
-					OpenTaiko.Skin.soundTrainingPlaybackSound.tPlay();
 					this.tResumePlay();
+					OpenTaiko.Skin.soundTrainingPlaybackSound.tPlay();
 				} else {
-					OpenTaiko.Skin.soundTrainingStopSound.tPlay();
 					this.tPausePlay();
+					OpenTaiko.Skin.soundTrainingStopSound.tPlay();
 				}
 			}
 			if (OpenTaiko.ConfigIni.KeyAssign.Taiko.TrainingSkipForwardMeasure.IsPressed()) {

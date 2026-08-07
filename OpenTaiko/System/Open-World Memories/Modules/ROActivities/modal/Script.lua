@@ -2,6 +2,8 @@
 -- Ported from Modules/Modal/Script.lua to the new Lua API.
 -- Textures and sounds are loaded from the original Modules/Modal/ location.
 
+local NavInput = require("NavInput")
+
 local TEXTURES_DIR = "Textures/"
 local SOUNDS_DIR   = "Sounds/"
 
@@ -104,13 +106,13 @@ end
 --   2 (Puchichara) : CPuchichara (legacy)
 --   3 (Nameplate)  : LuaNameplateInfo
 --   4 (Song)       : LuaSongNode
-function activate(player, rarity, modal_type, modal_asset_informations, modal_asset_secondary)
+function activate(player1to, rarity, modal_type, modal_asset_informations, modal_asset_secondary)
 	local header_str = ""
 	local body_str   = ""
 
 	modal_current_type   = modal_type
 	modal_current_rarity = rarity
-	modal_current_player = player
+	modal_current_player = player1to
 	modal_current_info   = modal_asset_informations
 
 	modal_counter          = 0
@@ -180,7 +182,7 @@ function update()
 			modal_loopanim_counter = 0
 		end
 
-		if INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return") then
+		if NavInput.p[modal_current_player + 1].decide() then
 			DEACTIVATE()
 		end
 	end

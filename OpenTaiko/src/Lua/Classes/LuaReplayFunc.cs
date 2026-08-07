@@ -42,10 +42,27 @@ namespace OpenTaiko {
 			if (!CSongReplay.tIsReplayWatchable(rep.ModFlags, rep.RandomSeed, rep.GameVersion)) return false;
 			rep.tEvaluateWarnings(chartPath);
 			rep.tApplyVirtualMods();              // snapshot the real mods + apply the replay's, and set ReplaySeed[0]
-			OpenTaiko.PendingReplay = rep;
+			OpenTaiko.PendingReplay = new(rep, rep.GetInputPumpTjaTimes());
 			OpenTaiko.ReplayWatchArmed = true;    // song loading consumes this → sets bReplayMode for exactly this play
 			return true;
 		}
 		public bool Watch(string filepath) => Watch(filepath, null);
+
+		// bit values mirror CSongReplay.EModFlag
+		public class ModFlag {
+			public const long None = (long)CSongReplay.EModFlag.None;
+			public const long Mirror = (long)CSongReplay.EModFlag.Mirror;
+			public const long Random = (long)CSongReplay.EModFlag.Random;
+			public const long SuperRandom = (long)CSongReplay.EModFlag.SuperRandom;
+			public const long Invisible = (long)CSongReplay.EModFlag.Invisible;
+			public const long PerfectMemory = (long)CSongReplay.EModFlag.PerfectMemory;
+			public const long Avalanche = (long)CSongReplay.EModFlag.Avalanche;
+			public const long Minesweeper = (long)CSongReplay.EModFlag.Minesweeper;
+			public const long Just = (long)CSongReplay.EModFlag.Just;
+			public const long Safe = (long)CSongReplay.EModFlag.Safe;
+			public const long DynamicBeat = (long)CSongReplay.EModFlag.DynamicBeat;
+		}
+
+		public readonly ModFlag MODFLAG = new();
 	}
 }

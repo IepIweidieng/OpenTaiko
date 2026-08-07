@@ -554,7 +554,7 @@ public static class ImGuiDebugWindow {
 						if (ImGui.TreeNodeEx($"Player {i + 1} {(modifiedstats ? "*" : "")}###TREE_SONGSELECT_PLAYER_{i}", ImGuiTreeNodeFlags.Framed | ImGuiTreeNodeFlags.DefaultOpen)) {
 
 							ImGui.TextColored(OpenTaiko.ConfigIni.nScrollSpeed[i] == 9 ? normal : diff,
-								String.Format("Scroll Speed: {0:0.0}", (OpenTaiko.ConfigIni.nScrollSpeed[i] + 1) / 10.0f));
+								String.Format("Scroll Speed: {0:0.0}", CConfigIni.ScrollSpeedToActual(OpenTaiko.ConfigIni.nScrollSpeed[i])));
 
 							ImGui.TextColored(OpenTaiko.ConfigIni.eSTEALTH[i] == EStealthMode.Off ? normal : diff,
 								"Stealth: " + OpenTaiko.ConfigIni.eSTEALTH[i].ToString());
@@ -864,7 +864,7 @@ public static class ImGuiDebugWindow {
 			if (ImGui.BeginItemTooltip()) {
 				if (sound?.bLoadedSuccessfuly ?? false) {
 					DrawForImGui(sound, shouldPlay);
-					ImGui.Text($"Length: {sound.nLength_CurrentSound:0.###},{sound.nLength_NextPlaySound:0.###}");
+					ImGui.Text($"Length: {sound.nLength_of(0):0.###},{sound.nLength_of(1):0.###}");
 					ImGui.Text("Memory allocated: " + String.Format("{0:0.###}", GetMemAllocationInMegabytes(GetResourceMemAllocation(sound))) + "MB");
 				} else {
 					ImGui.TextDisabled("Sound is not loaded.");
@@ -961,7 +961,7 @@ public static class ImGuiDebugWindow {
 	private static long GetResourceMemAllocation(CSkin.CSystemSound? sound, long orDefault = 0) {
 		if (sound == null || !sound.bLoadedSuccessfuly)
 			return orDefault;
-		return (long)Math.Ceiling((sound.nLength_CurrentSound + sound.nLength_CurrentSound) * SoundManager.nBytesPerSec / 1000);
+		return (long)Math.Ceiling((sound.nLength_of(0) + sound.nLength_of(1)) * SoundManager.nBytesPerSec / 1000);
 	}
 	private static long GetResourceMemAllocation<T>(T? resource, long orDefault = 0) {
 		return resource switch {

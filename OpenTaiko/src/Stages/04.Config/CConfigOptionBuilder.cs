@@ -47,8 +47,8 @@ public static class CConfigOptionBuilder {
 	}
 
 	public sealed class Hooks {
-		public Action Relocalize = () => { };     // language changed → rebuild model + push reload to Lua
-		public Action Calibration = () => { };    // launch the C# calibration tap-test
+		public Action Refresh = () => { }; // any other settings or texts changed → rebuild model + push reload to Lua
+		public Action<Action?> Calibration = onDone => { }; // launch the C# calibration tap-test
 		public Action ReloadSongs = () => { };
 		public Action HardReloadSongs = () => { };
 		public Action ImportScore = () => { };
@@ -101,7 +101,7 @@ public static class CConfigOptionBuilder {
 			CLangManager.Languages, CLangManager.langToInt(cfg.sLang), idx => {
 				cfg.sLang = CLangManager.intToLang(idx);
 				CLangManager.langAttach(cfg.sLang);
-				hooks.Relocalize();
+				hooks.Refresh();
 			}));
 
 		// Display & Window
@@ -222,7 +222,7 @@ public static class CConfigOptionBuilder {
 		O.Add(CLuaConfigOption.Toggle_(SYS, secIntegr,L("SETTINGS_SYSTEM_LOG"), L("SETTINGS_SYSTEM_LOG_DESC"), cfg.bOutputLogs, v => cfg.bOutputLogs = v));
 
 		// Input
-		O.Add(CLuaConfigOption.KeyConfig_(SYS, secInput,L("SETTINGS_KEYASSIGN_SYSTEM"), L("SETTINGS_KEYASSIGN_SYSTEM_DESC"), "System", "system", () => { }));
+		O.Add(CLuaConfigOption.KeyConfig_(SYS, secInput,L("SETTINGS_KEYASSIGN_SYSTEM"), L("SETTINGS_KEYASSIGN_SYSTEM_DESC"), "System", "system"));
 
 		// ── GAME ────────────────────────────────────────────────────────────────────
 		const string GAME = "Game";
@@ -250,7 +250,7 @@ public static class CConfigOptionBuilder {
 
 		// Timing & Input
 		O.Add(CLuaConfigOption.Int_(GAME, secTiming,L("SETTINGS_GAME_GLOBALOFFSET"), L("SETTINGS_GAME_GLOBALOFFSET_DESC"), cfg.nGlobalOffsetMs, -9999, 9999, 1, v => cfg.nGlobalOffsetMs = v));
-		O.Add(CLuaConfigOption.Action_(GAME, secTiming,L("SETTINGS_GAME_CALIBRATION"), L("SETTINGS_GAME_CALIBRATION_DESC"), hooks.Calibration));
+		O.Add(CLuaConfigOption.Action_(GAME, secTiming,L("SETTINGS_GAME_CALIBRATION"), L("SETTINGS_GAME_CALIBRATION_DESC"), hooks.Calibration, hooks.Refresh));
 		O.Add(CLuaConfigOption.Int_(GAME, secTiming,L("SETTINGS_GAME_CONTROLLERDEADZONE"), L("SETTINGS_GAME_CONTROLLERDEADZONE_DESC"), cfg.nControllerDeadzone, 10, 90, 1,
 			v => { cfg.nControllerDeadzone = v; OpenTaiko.InputManager.Deadzone = v / 100.0f; }));
 
@@ -267,8 +267,8 @@ public static class CConfigOptionBuilder {
 		O.Add(CLuaConfigOption.Int_(GAME, secTraining,L("SETTINGS_TRAINING_JUMPINTERVAL"), L("SETTINGS_TRAINING_JUMPINTERVAL_DESC"), cfg.TokkunMashInterval, 1, 9999, 1, v => cfg.TokkunMashInterval = v));
 
 		// Input
-		O.Add(CLuaConfigOption.KeyConfig_(GAME, secInput,L("SETTINGS_KEYASSIGN_GAME"), L("SETTINGS_KEYASSIGN_GAME_DESC"), "Taiko", "drums", () => { }));
-		O.Add(CLuaConfigOption.KeyConfig_(GAME, secInput,L("SETTINGS_KEYASSIGN_TRAINING"), L("SETTINGS_KEYASSIGN_TRAINING_DESC"), "Taiko", "training", () => { }));
+		O.Add(CLuaConfigOption.KeyConfig_(GAME, secInput,L("SETTINGS_KEYASSIGN_GAME"), L("SETTINGS_KEYASSIGN_GAME_DESC"), "Taiko", "drums"));
+		O.Add(CLuaConfigOption.KeyConfig_(GAME, secInput,L("SETTINGS_KEYASSIGN_TRAINING"), L("SETTINGS_KEYASSIGN_TRAINING_DESC"), "Taiko", "training"));
 
 		// ── THEME (dynamic, per-skin) ────────────────────────────────────────────────
 		BuildThemeOptions(O);

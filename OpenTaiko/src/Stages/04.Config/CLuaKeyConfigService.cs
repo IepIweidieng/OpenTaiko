@@ -164,9 +164,7 @@ public sealed class CLuaKeyConfigService {
 	public void ClearBinding(CLuaKeyAction a, int slot) {
 		if (slot < 0 || slot > 15) return;
 		var part = ParsePart(a.Part);
-		Keys[(int)part][a.Pad][slot].InputDevice = InputDeviceType.Unknown;
-		Keys[(int)part][a.Pad][slot].ID = 0;
-		Keys[(int)part][a.Pad][slot].Code = 0;
+		Keys[(int)part][a.Pad][slot] = new();
 		OpenTaiko.Pad.InvalidateInputToPadCache();
 		OpenTaiko.Skin.soundCancelSFX.tPlay();
 	}
@@ -175,7 +173,7 @@ public sealed class CLuaKeyConfigService {
 	// Takes LuaFunction instead of not Action<bool> to prevent NLua from calling Reflection.Emit,
 	// which is unavailable under iOS AOT.
 	public void StartCapture(CLuaKeyAction a, int slot, NLua.LuaFunction onDone) {
-		var cb = LuaDelegate.AsAction<bool>(onDone);
+		var cb = onDone.AsAction<bool>();
 		if (IsCapturing || slot < 0 || slot > 15) { cb?.Invoke(false); return; }
 		_capPart = ParsePart(a.Part); _capPad = a.Pad; _capSlot = slot; _onDone = cb;
 		IsCapturing = true;
@@ -189,68 +187,64 @@ public sealed class CLuaKeyConfigService {
 		cb?.Invoke(false);
 	}
 
-	/// <summary>One capture poll, driven by the stage while IsCapturing. Returns true when it resolved.</summary>
-	public bool PollCaptureFrame() {
-		if (!IsCapturing) return false;
-		if (OpenTaiko.InputManager.Keyboard.KeyPressed((int)SlimDXKeys.Key.Escape)) {
-			OpenTaiko.Skin.soundCancelSFX.tPlay();
-			Finish(false); return true;
-		}
-		if (CheckKeyboard() || CheckMidi() || CheckJoystick() || CheckGamepad() || CheckMouse()) {
+	/// <summary>One capture poll, driven by the stage while IsCapturing. Returns (true, ...) when it resolved.</summary>
+	[NLua.LuaHide]
+	public (bool done, bool needRefresh) PollCaptureFrame() {
+		if (!IsCapturing)
+			return (false, false);
+
+		var validPresseds = GetAllKeysEvents(
+			de => de.ev.Pressed && Enum.IsDefined(de.type) && de.type is not (InputDeviceType.Total or InputDeviceType.Unknown));
+		foreach (var (type, id, ev) in validPresseds) {
+			if (type is InputDeviceType.Keyboard) {
+				switch ((SlimDXKeys.Key)ev.nKey) {
+					case SlimDXKeys.Key.Escape:
+						OpenTaiko.Skin.soundCancelSFX.tPlay();
+						this.Finish(false);
+						return (true, false);
+					case SlimDXKeys.Key.Return:
+						OpenTaiko.Skin.soundError.tPlay();
+						goto nextKey;
+				}
+			}
+			OpenTaiko.Skin.soundDecideSFX.tPlay();
+			var anyOtherReset = this.Bind(type, id, ev.nKey);
 			OpenTaiko.Pad.InvalidateInputToPadCache();
-			Finish(true); return true;
+			this.Finish(true);
+			return (true, anyOtherReset);
+
+		nextKey:
+			continue;
 		}
-		return false;
+		return (false, false);
 	}
+
+	private static IEnumerable<(InputDeviceType type, int id, STInputEvent ev)> GetAllKeysEvents(Func<(InputDeviceType type, int id, STInputEvent ev), bool> predicate)
+		=> OpenTaiko.InputManager.InputDevices
+			.SelectMany(device => (device.InputEvents ?? [])
+				.Select(ev => (type: device.CurrentType, id: device.ID, ev))
+				.Where(predicate))
+			.OrderBy(de => de.ev.nTimeStamp);
+
 	private void Finish(bool ok) {
 		IsCapturing = false; var cb = _onDone; _onDone = null;
 		OpenTaiko.InputManager.Polling();
 		cb?.Invoke(ok);
 	}
 
-	private void Bind(InputDeviceType dev, int id, int code) {
-		if ((EKeyConfigPad)_capPad < EKeyConfigPad.Capture)
-			OpenTaiko.ConfigIni.RemoveDuplicateKeyAssignments(dev, id, code, (EKeyConfigPad)_capPad);
+	private bool Bind(InputDeviceType dev, int id, int code) {
+		bool anyOtherRemoved = false;
+		if ((EKeyConfigPad)_capPad <= (EKeyConfigPad)EPad.Max) {
+			foreach (var (part, pad, slot) in OpenTaiko.ConfigIni.GetDuplicateKeyAssignments(dev, id, code, (EKeyConfigPad)_capPad)) {
+				if ((part, pad) != (_capPart, (EKeyConfigPad)_capPad))
+					anyOtherRemoved = true;
+				Keys[(int)part][(int)pad][slot] = new();
+			}
+		}
 		Keys[(int)_capPart][_capPad][_capSlot].InputDevice = dev;
 		Keys[(int)_capPart][_capPad][_capSlot].ID = id;
 		Keys[(int)_capPart][_capPad][_capSlot].Code = code;
-	}
-
-	private bool CheckKeyboard() {
-		for (int i = 0; i < 144; i++) {
-			if (i != (int)SlimDXKeys.Key.Escape && i != (int)SlimDXKeys.Key.Return && OpenTaiko.InputManager.Keyboard.KeyPressed(i)) {
-				OpenTaiko.Skin.soundDecideSFX.tPlay();
-				Bind(InputDeviceType.Keyboard, 0, i);
-				return true;
-			}
-		}
-		return false;
-	}
-	private bool CheckMidi() => CheckDevice(InputDeviceType.MidiIn);
-	private bool CheckJoystick() => CheckDevice(InputDeviceType.Joystick);
-	private bool CheckGamepad() => CheckDevice(InputDeviceType.Gamepad);
-	private bool CheckDevice(InputDeviceType type) {
-		foreach (CInputButtonsBase device in OpenTaiko.InputManager.InputDevices) {
-			if (device.CurrentType != type) continue;
-			for (int i = 0; i < device.ButtonStates.Length; i++) {
-				if (device.KeyPressed(i)) {
-					OpenTaiko.Skin.soundDecideSFX.tPlay();
-					Bind(type, device.ID, i);
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-	private bool CheckMouse() {
-		for (int i = 0; i < 8; i++) {
-			if (OpenTaiko.InputManager.Mouse.KeyPressed(i)) {
-				OpenTaiko.Skin.soundDecideSFX.tPlay();
-				Bind(InputDeviceType.Mouse, 0, i);
-				return true;
-			}
-		}
-		return false;
+		return anyOtherRemoved;
 	}
 
 	// keyboard code → label (copied from CActConfigKeyAssign.KeyLabel)

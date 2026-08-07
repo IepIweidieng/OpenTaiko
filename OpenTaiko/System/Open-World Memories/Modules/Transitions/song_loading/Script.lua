@@ -265,7 +265,8 @@ function onStart()
 	local dir_name = SKIN_DIR .. TL.BASE .. TL.TOWERRESULT .. "Tower"
 	if STORAGE:DirectoryExists(dir_name) then
 		local files = STORAGE:GetFiles(dir_name, "*.png")
-		for k, v in pairs(files) do
+		for i = 0, files.Length - 1, 1 do
+			local v = files[i]
 			local file_path = dir_name.."/"..tostring(v)..".png"
 			if STORAGE:FileExists(file_path) then
 				tx_towers[v] = TEXTURE:CreateTexture(file_path)

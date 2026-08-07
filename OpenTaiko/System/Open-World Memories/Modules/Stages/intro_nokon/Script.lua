@@ -6,6 +6,7 @@ local Setup     = require("setup")
 local Dialogue  = require("nokon_dialogue")   -- stage chrome over the shared Lib/dialogue typewriter
 local Stage     = require("stage")
 local Game      = require("game")
+local NavInput  = require("NavInput")
 
 local text  = nil
 local texts = {}
@@ -255,7 +256,13 @@ end
 ---------------------------------------
 
 local function handleWaitingEnum()
+    -- While songs are loading or unavailable, only allow Cancel/Escape to exit.
+    if NavInput.cancel() then
+        SHARED:GetSharedSound("Cancel"):Play()
+        return true
+    end
     -- afterSongEnum handles transition
+    return false
 end
 
 local function handleOpening()
@@ -321,7 +328,7 @@ function update()
     local quitted = false
 
     if state == "waiting_enum" then
-        handleWaitingEnum()
+        quitted = handleWaitingEnum()
     elseif state == "opening" then
         quitted = handleOpening()
     elseif state == "setup" then

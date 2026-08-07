@@ -35,11 +35,14 @@ function Chooser:setIndex(i, silent)
     if i == self.index then return end
     self.index = i
     if not silent and self.onChange then self.onChange(self.index, self.options[self.index], self) end
-    self.mgr:playSfx("move")
+    self:playSfx("skip")
 end
 
+-- silence click sound
+function Chooser:onActivate() end
+
 function Chooser:restyle()
-    self.eff = self.mgr:resolveTheme(self.style)
+    self:resolveStyle()
     local c = self.eff.colors
     self:bakeBody()       -- rounded surface body + shadow
     self:bakeRing()
@@ -66,27 +69,59 @@ function Chooser:restyle()
     self._capR = cap(self._capR and self._capR.canvas, 1)
 end
 
--- consume Left/Right so focus stays on the chooser
-function Chooser:onNavLeft() if self.focused then self:setIndex(self.index - 1); return true end return false end
-function Chooser:onNavRight() if self.focused then self:setIndex(self.index + 1); return true end return false end
+function Chooser:onCapturing(silence)
+    if not silence then self:playSfx("click") end
+end
+function Chooser:onEndCapturing(silence)
+    if not silence then self:playSfx("cancel") end
+end
+
+-- consume Left/Right (also for pad Left/Right in capturing mode), so focus stays on the chooser
+-- consume Cancel to quit capturing mode
+function Chooser:onDecide() self:setCapturing(not self.capturing); return true end
+function Chooser:onCancel()
+    if self.capturing then self:setCapturing(false); return true end
+    return false
+end
+function Chooser:onNavLeft(forPad)
+    if not forPad or self.capturing then self:setCapturing(true, true); self:setIndex(self.index - 1); return true end
+    return false
+end
+function Chooser:onNavRight(forPad)
+    if not forPad or self.capturing then self:setCapturing(true, true); self:setIndex(self.index + 1); return true end
+    return false
+end
 
 function Chooser:update(ctx)
     Widget.update(self, ctx)
-    if self.focused then
-        if ctx.navLeft then self:setIndex(self.index - 1) end
-        if ctx.navRight then self:setIndex(self.index + 1) end
-    end
+    local capturing, silence = self.capturing, false
+    local hoverThird = self._hoverThird
+    if not self.focused then capturing = false end
     -- which arrow is the mouse over? (left / right third) — drives hover/press visual feedback
-    self._hoverThird = nil
-    if self.hovered and ctx.inside then
+    if not (self.hovered and ctx.inside or self.pressed) then
+        hoverThird = nil
+    elseif ctx.moved or not self._wasHovered or self.pressed then
         local third = self.w / 3
-        if ctx.mx < self.x + third then self._hoverThird = "left"
-        elseif ctx.mx > self.x + self.w - third then self._hoverThird = "right" end
+        if ctx.mx < self.x + third then hoverThird = "left";
+        elseif ctx.mx > self.x + self.w - third then hoverThird = "right"
+        else hoverThird = nil
+        end
+        if ctx.mPressed then self._pressThird = hoverThird end
     end
-    if self.hovered and ctx.mPressed and self._hoverThird then
-        self._pressThird = self._hoverThird
-        if self._hoverThird == "left" then self:setIndex(self.index - 1) else self:setIndex(self.index + 1) end
+    if self._wasHovered and hoverThird and hoverThird ~= self._hoverThird then
+        self:playSfx("hover")
     end
+    self._wasHovered = self.hovered
+    self._hoverThird = hoverThird
+    if ctx.mPressed then
+        capturing = self.pressed
+        if self._hoverThird and self._hoverThird == self._pressThird then
+            if self._hoverThird == "left" then capturing = true; self:setIndex(self.index - 1); silence = true
+            else capturing = true; self:setIndex(self.index + 1); silence = true
+            end
+        end
+    end
+    self:setCapturing(capturing, silence)
     if not ctx.mPressing then self._pressThird = nil end
 end
 
@@ -116,8 +151,11 @@ function Chooser:draw()
     local txt = tostring(self:value() or "")
     local sz = self.eff.font.button
     local avail = math.max(20, self.w - 2 * self._arrowW - 24)
+    local textColor = self._hiCapCur > 0.01
+        and U.lerpColor(self.eff.colors.text, self.eff.colors.primary2, self._hiCapCur)
+        or self.eff.colors.text
     self.mgr:drawTextEx(sz, txt, math.floor(cx), math.floor(cy + self.mgr:textNudge(sz)),
-        self.eff.colors.text, U.withAlpha({ 255, 255, 255 }, 0), self.enabled and 1 or 0.5, 1, avail, "center")
+        textColor, U.withAlpha({ 255, 255, 255 }, 0), self.enabled and 1 or 0.5, 1, avail, "center")
 end
 
 return Chooser

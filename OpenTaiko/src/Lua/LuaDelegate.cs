@@ -7,12 +7,12 @@ namespace OpenTaiko {
 	// convert here via ordinary lambdas (compiled at build time, so AOT-safe).
 	internal static class LuaDelegate {
 		// Wrap a Lua function as an Action<T>. Null fn => null (for optional callbacks).
-		public static Action<T>? AsAction<T>(LuaFunction? fn)
+		public static Action<T>? AsAction<T>(this LuaFunction? fn)
 			=> fn == null ? null : (arg) => fn.Call(arg);
 
 		// Wrap a Lua function as a bool predicate. Lua truthiness: a returned value that is neither
 		// nil nor false counts as true.
-		public static Func<T, bool>? AsPredicate<T>(LuaFunction? fn)
+		public static Func<T, bool>? AsPredicate<T>(this LuaFunction? fn)
 			=> fn == null ? null : (arg) => {
 				var r = fn.Call(arg);
 				return r is { Length: > 0 } && r[0] is not (null or false);

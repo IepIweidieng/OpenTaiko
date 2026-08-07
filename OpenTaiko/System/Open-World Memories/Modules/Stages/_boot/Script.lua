@@ -1,5 +1,7 @@
 ---@diagnostic disable: undefined-global, undefined-field
 
+local NavInput = require("NavInput")
+
 local sounds = {}
 
 local video = nil
@@ -30,16 +32,16 @@ local color_yellow = COLOR:CreateColorFromRGBA(255, 255, 50)
 -- First Time Menu --
 
 local function movedUp()
-	return INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("LeftArrow") or INPUT:KeyboardPressed("UpArrow")
+	return NavInput.upOrPadLeft()
 end
 local function movedDown()
-	return INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow") or INPUT:KeyboardPressed("DownArrow")
+	return NavInput.downOrPadRight()
 end
 local function confirmed()
-	return INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return")
+	return NavInput.decide()
 end
 local function cancelled()
-	return INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape")
+	return NavInput.cancel()
 end
 
 local function updateVolText()
@@ -293,6 +295,7 @@ function onStart()
 	SHARED:SetSharedSFX("Cancel", "Sounds/Cancel.ogg")
 	SHARED:SetSharedSFX("Skip", "Sounds/Skip.ogg")
 	SHARED:SetSharedSFX("SongDecide", "Sounds/SongDecide.ogg")
+	SHARED:SetSharedSFX("Error", "../../../Sounds/Error.ogg")
 
 	database = DATABASE:OpenGlobalDatabase("GameStatus")
 	if database:Read("new_user") == nil or CONFIG.ConfigIsNew then
@@ -315,6 +318,7 @@ function onDestroy()
 	SHARED:ClearSharedSound("Cancel")
 	SHARED:ClearSharedSound("Skip")
 	SHARED:ClearSharedSound("SongDecide")
+	SHARED:ClearSharedSound("Error")
 
 	if database ~= nil then database:Dispose() end
 end

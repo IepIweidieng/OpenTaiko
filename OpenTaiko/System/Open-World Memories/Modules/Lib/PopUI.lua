@@ -4,7 +4,7 @@
 --   local ui
 --   function onStart()
 --       ui = PopUI.new{ bg = true, sfx = { hover = SOUND:CreateSFX("Sounds/Move.ogg"),
---                                          click = SOUND:CreateSFX("Sounds/Decide.ogg") } }
+--                                          click = SOUND:CreateSFX("Sounds/Decide.ogg") }, navPlayer = 1 }
 --       ui:button{ text = "Play", x = 810, y = 460, onClick = function() print("hi") end }
 --       ui:toggle{ text = "Fullscreen", x = 120, y = 200, value = true, onChange = function(v) end }
 --   end

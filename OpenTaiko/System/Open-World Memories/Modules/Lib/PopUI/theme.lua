@@ -1,6 +1,8 @@
 ---@diagnostic disable: lowercase-global
 -- PopUI/theme.lua — the look of the UI in one table. Colors are {r,g,b,a} 0-255 (the form the canvas
--- pixel ops want directly). Everything is tweakable; per-widget `style` tables override per-field.
+-- pixel ops want directly). Everything is tweakable; per-widget `theme/style` tables override per-field.
+
+local Util = require "Util"
 
 local Theme = {}
 
@@ -41,37 +43,14 @@ Theme.DEFAULT = {
     },
 }
 
--- deep-ish clone (one level into the known nested tables, plus arbitrary nesting via recursion)
-local function deepcopy(t)
-    if type(t) ~= "table" then return t end
-    local o = {}
-    for k, v in pairs(t) do o[k] = deepcopy(v) end
-    return o
-end
-Theme.clone = deepcopy
+Theme.clone = Util.deepcopy
+Theme.merge = Util.merge
 
--- merge `over` onto a clone of `base` (recursive for sub-tables; color arrays / scalars replaced whole).
--- A color is an array {r,g,b,a}; we replace it wholesale rather than merging indices.
-local function isColor(v) return type(v) == "table" and type(v[1]) == "number" end
-
-local function merge(base, over)
-    if type(over) ~= "table" then return over end
-    local out = deepcopy(base)
-    for k, v in pairs(over) do
-        if isColor(v) or type(v) ~= "table" or type(out[k]) ~= "table" or isColor(out[k]) then
-            out[k] = deepcopy(v)
-        else
-            out[k] = merge(out[k], v)
-        end
-    end
-    return out
-end
-Theme.merge = merge
-
--- resolve an effective theme = DEFAULT < user theme < per-widget style
+-- resolve an effective theme = DEFAULT < manager theme < per-widget theme/style.
+-- NOTICE: colors defined in {r,g,b} have the alpha inherited from base styles
 function Theme.resolve(userTheme, style)
-    local t = merge(Theme.DEFAULT, userTheme or {})
-    if style then t = merge(t, style) end
+    local t = Util.merge(Theme.DEFAULT, userTheme or {})
+    if style then t = Util.merge(t, style) end
     return t
 end
 

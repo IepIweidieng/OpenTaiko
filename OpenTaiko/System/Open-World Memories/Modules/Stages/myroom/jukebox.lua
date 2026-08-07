@@ -13,7 +13,7 @@
 -- LuaSound gotchas honoured here (see song_select_core): there is NO pause — pause = remember
 -- GetTimestampMs then Stop, resume = Play THEN SetTimestamp (Play always restarts at 0); always
 -- Stop before re-Play (double-buffered sound would play twice); SetTimestamp takes timeline ms →
--- divide source ms by the current speed; SetLoop is only read at Play time.
+-- divide source ms by the current speed
 --
 -- Multiplayer: the HOST's jukebox state travels over the "jukebox" net channel as a full state
 -- table (online.lua). Guests resolve the song against their OWN folders — UniqueId first, then
@@ -340,19 +340,9 @@ local function pbSetRepeat(b)
     if pb.rep == b then return end
     pb.rep = b
     if pb.snd == nil then return end
+    pcall(function() pb.snd:SetLoop(b) end)
     if pb.playing then
-        -- SetLoop is read at Play time: restart in place with the new flag
-        local pos = pbPos()
-        pcall(function()
-            pb.snd:Stop()
-            pb.snd:SetLoop(b)
-            pb.snd:SetSpeed(pb.speed)
-            pb.snd:Play()
-            pb.snd:SetTimestamp(math.floor(pos / pb.speed))
-        end)
         pb.grace = 1.0
-    else
-        pcall(function() pb.snd:SetLoop(b) end)
     end
 end
 
@@ -634,8 +624,8 @@ end
 
 local function speedText() return tr("Speed") .. string.format("  ×%.2f", pb.speed) end
 
-local function buildUI(itemName)
-    ui = PopUI.new{ theme = ctx and ctx.theme or nil }
+local function buildUI(itemName, playerIndex)
+    ui = PopUI.new{ theme = ctx and ctx.theme or nil, navPlayer = (playerIndex or 0) + 1 }
     W = {}
     ui:panel{ x = PANEL.x, y = PANEL.y, w = PANEL.w, h = PANEL.h, title = itemName or tr("Jukebox") }
     W.tabBgm = ui:button{ x = TAB.x, y = TAB.y, w = TAB.w, h = TAB.h, text = tr("BGM"),
@@ -648,7 +638,8 @@ local function buildUI(itemName)
     W.backBtn = ui:button{ x = LIST.x + LIST.w - 96, y = TAB.y, w = 96, h = TAB.h, icon = "back",
                            onClick = function()
                                if navGenre ~= nil then navGenre = nil; JB._rebuildList() end
-                           end }
+                           end,
+                           sfx = { click = "cancel" } }
     W.backBtn:setVisible(false)
     -- right pane: NOW-PLAYING title/subtitle + transport (centered labels take their CENTER x;
     -- both sit clear above the jacket box at JACKET_Y)
@@ -729,13 +720,13 @@ function JB.init(c) ctx = c end
 function JB.isOpen() return isOpen end
 function JB.isActive() return pb.playing or pb.paused end   -- pc.lua BGM suppression probe
 
-function JB.openFor(item, displayName)
+function JB.openFor(item, displayName, playerIndex)
     if isOpen then return end
     isOpen, justOpened = true, true
     tab, navGenre, selEntry = "bgm", nil, nil
     openItem = item
     if item and not (pb.playing or pb.paused) then pb.item = item; pb.cell = { c = item.c, r = item.r } end
-    buildUI(displayName)
+    buildUI(displayName, playerIndex)
     if pb.snd then applyVolumeNow(100) end
 end
 
@@ -759,6 +750,7 @@ function JB.close()
     W = {}
     setJacket(nil)
     seekDrag = nil
+    SHARED:GetSharedSound("Cancel"):Play()
 end
 
 -- end-of-track probe, defined ONCE (no per-frame closure churn) and polled at 4 Hz. NOTE:
@@ -836,6 +828,7 @@ function JB.update(dt, ts)
     if r == "cancel" then
         if tab == "songs" and navGenre ~= nil then
             navGenre = nil; JB._rebuildList()          -- Escape backs out of a genre first...
+            SHARED:GetSharedSound("Cancel"):Play()
         else
             JB.close(); return "closed"                -- ...and closes the player from the top level
         end
@@ -913,6 +906,7 @@ end
 
 -- stop + release everything (edit mode entry, room leave, stage teardown)
 function JB.stopAll(keepState)
+    pendingRestore = nil  -- prevent resuming playing after stop
     pbStop()
     if not keepState then pb.src, pb.item, pb.cell = nil, nil, nil end
     if glowItem then setScreenGlow(glowItem, IDLE_GLOW[1], IDLE_GLOW[2], IDLE_GLOW[3]); glowItem = nil end

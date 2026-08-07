@@ -108,10 +108,10 @@ internal class OpenTaiko : Game {
 	// while true, that player's hits come from a recorded replay instead of live input (and the auto modicon is shown)
 	public static bool[] bReplayMode = new bool[5];
 	// the replay being played back for each player (set when bReplayMode is true)
-	public static CSongReplay[] ReplayPlayback = new CSongReplay[5];
+	public static CSongReplay.ReplayWithPumpTimes?[] ReplayPlayback = new CSongReplay.ReplayWithPumpTimes?[5];
 	// set by REPLAY:Watch from song select; the gameplay stage consumes it on activation to enter replay mode
 	public static bool ReplayWatchArmed = false;
-	public static CSongReplay PendingReplay = null;
+	public static CSongReplay.ReplayWithPumpTimes? PendingReplay = null;
 
 	public static CFPS FPS {
 		get;
@@ -1273,10 +1273,10 @@ internal class OpenTaiko : Game {
 			return null;
 		}
 	}
-	public static void tTextureRelease(ref CTexture tx) {
+	public static void tTextureRelease(ref CTexture? tx) {
 		OpenTaiko.tDisposeSafely(ref tx);
 	}
-	public static void tTextureRelease(ref CTextureAf tx) {
+	public static void tTextureRelease(ref CTextureAf? tx) {
 		OpenTaiko.tDisposeSafely(ref tx);
 	}
 	public static CTexture tTextureCreate(SKBitmap bitmap) {

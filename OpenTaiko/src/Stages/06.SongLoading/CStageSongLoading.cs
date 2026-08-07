@@ -177,7 +177,7 @@ internal class CStageSongLoading : CStage {
 			} else {
 				OpenTaiko.Skin.soundSongLoadStartSound.tPlay();
 				this.nBGMPlaybackStartTime = SoundManager.PlayTimer.NowTimeMs;
-				this.nBGMTotalPlaybackTimems = (long)Math.Ceiling(OpenTaiko.Skin.soundSongLoadStartSound.nLength_CurrentSound);
+				this.nBGMTotalPlaybackTimems = (long)Math.Ceiling(OpenTaiko.Skin.soundSongLoadStartSound.nLength);
 			}
 			//this.actFI.tフェードイン開始();							// #27787 2012.3.10 yyagi 曲読み込み画面のフェードインの省略
 			base.ePhaseID = CStage.EPhase.Common_FADEIN;
@@ -190,7 +190,7 @@ internal class CStageSongLoading : CStage {
 		#region [ Cancel loading with esc ]
 		if (tKeyInput()) {
 			if (this.sdLoadSound != null) {
-				this.sdLoadSound.tStopSound();
+				this.sdLoadSound.tStop();
 				this.sdLoadSound.tDispose();
 			}
 			OpenTaiko.stageGameScreen.bPreviousPlayWasEndedNormally = false;

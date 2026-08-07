@@ -7,20 +7,12 @@ namespace OpenTaiko {
 		private Dictionary<string, LuaCounter> _repeatKbCounters = new Dictionary<string, LuaCounter>();
 
 		// General inputs
-		public bool Pressed(string input) {
-			if (Enum.TryParse(typeof(EKeyConfigPad), input, true, out var pad)) {
-				if ((EKeyConfigPad)pad >= EKeyConfigPad.Max) return false;
-				return OpenTaiko.Pad.bPressed(EKeyConfigPart.Taiko, (EKeyConfigPad)pad);
-			}
-			return false;
-		}
-		public bool Pressing(string input) {
-			if (Enum.TryParse(typeof(EKeyConfigPad), input, true, out var pad)) {
-				if ((EKeyConfigPad)pad >= EKeyConfigPad.Max) return false;
-				return OpenTaiko.Pad.IsPressing(EKeyConfigPart.Taiko, (EKeyConfigPad)pad);
-			}
-			return false;
-		}
+		public bool Pressed(string input)
+			=> Enum.TryParse<EKeyConfigPad>(input, true, out var pad)
+				&& OpenTaiko.Pad.bPressed(EKeyConfigPart.Taiko, pad);
+		public bool Pressing(string input)
+			=> Enum.TryParse<EKeyConfigPad>(input, true, out var pad)
+				&& OpenTaiko.Pad.IsPressing(EKeyConfigPart.Taiko, pad);
 
 		public void RepeatWhilePressing(string input, double interval_seconds, LuaFunction predicate) {
 			bool isPressing = Pressing(input);
@@ -42,20 +34,12 @@ namespace OpenTaiko {
 			}
 		}
 
-		public bool Released(string input) {
-			if (Enum.TryParse(typeof(EKeyConfigPad), input, true, out var pad)) {
-				if ((EKeyConfigPad)pad >= EKeyConfigPad.Max) return false;
-				return OpenTaiko.Pad.IsReleased(EKeyConfigPart.Taiko, (EKeyConfigPad)pad);
-			}
-			return false;
-		}
-		public bool Releasing(string input) {
-			if (Enum.TryParse(typeof(EKeyConfigPad), input, true, out var pad)) {
-				if ((EKeyConfigPad)pad >= EKeyConfigPad.Max) return false;
-				return OpenTaiko.Pad.IsReleasing(EKeyConfigPart.Taiko, (EKeyConfigPad)pad);
-			}
-			return false;
-		}
+		public bool Released(string input)
+			=> Enum.TryParse<EKeyConfigPad>(input, true, out var pad)
+				&& OpenTaiko.Pad.IsReleased(EKeyConfigPart.Taiko, pad);
+		public bool Releasing(string input)
+			=> Enum.TryParse<EKeyConfigPad>(input, true, out var pad)
+				&& OpenTaiko.Pad.IsReleasing(EKeyConfigPart.Taiko, pad);
 		// Keyboard inputs
 		public bool KeyboardPressed(string key) {
 			if (Enum.TryParse(typeof(SlimDXKeys.Key), key, true, out var result)) {

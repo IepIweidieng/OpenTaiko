@@ -89,8 +89,10 @@ class CSongReplay {
 		}
 	}
 
+	public void tStartRegisterInput() => allInputs = new();
+
 	public void tRegisterInput(double timestamp, byte keypress) {
-		allInputs.Add(Tuple.Create(timestamp, keypress));
+		allInputs?.Add(Tuple.Create(timestamp, keypress));
 	}
 
 	#region [Dan methods]
@@ -565,7 +567,7 @@ class CSongReplay {
 	private int storedPlayer;
 	private int danAccumulatedScore = 0;
 
-	private List<Tuple<double, byte>> allInputs = new List<Tuple<double, byte>>();
+	private List<Tuple<double, byte>>? allInputs = null;
 
 	#endregion
 
@@ -710,5 +712,30 @@ class CSongReplay {
 	#endregion
 
 	// the recorded inputs (tja time, pad) read by tLoadReplayFile; used to drive replay playback
-	public IReadOnlyList<Tuple<double, byte>> Inputs => allInputs;
+	public IReadOnlyList<Tuple<double, byte>> Inputs => allInputs ?? [];
+
+	public record struct ReplayWithPumpTimes(CSongReplay replay, IReadOnlyList<double> msInputPumpTjaTimes);
+	/// The pump tja time is ordered (ignoring NaNs) to show when to pump the recorded input
+	/// The recorded tja time can be out of order because: 1. older optk kept old inputs before restart, 2. timer resyncs
+	/// It is not always possible to tell whether a small timestamp rewind is 1. or 2.
+	/// In case of incorrectness, <see cref="CStagePlayDrumsScreen.IsReplayValid"/> verifies the replay using the judgement counts
+	public IReadOnlyList<double> GetInputPumpTjaTimes() {
+		// a safe heuristic value
+		var msTjaMaxResyncRewind = 2 * OpenTaiko.ConfigIni.tzLevels[0].nBadZone * CConfigIni.SongSpeedToActual(this.SongSpeedValue);
+
+		var res = Inputs.Select(tp => tp.Item1).ToList();
+		double next = double.PositiveInfinity;
+		for (int i = res.Count; i-- > 0;) {
+			if (double.IsNaN(res[i]))
+				continue;
+			if (res[i] > next + msTjaMaxResyncRewind) { // rewind was likely due to a restart
+				for (int j = 0; j <= i; ++j)
+					res[j] = double.NaN; // mark as invalid
+				break;
+			}
+			// rewind was likely due to timer resyncs
+			next = res[i] = Math.Min(next, res[i]);
+		}
+		return res;
+	}
 }

@@ -38,8 +38,8 @@ function Menu:setSelected(i, fireChange)
     self.selected = i
     self:_ensureVisible()
     if fireChange ~= false then
-        if self.onChange then self.onChange(self.selected, self.items[self.selected], self) end
-        self.mgr:playSfx("move")
+        if self.onChange and self.onChange(self.selected, self.items[self.selected], self) then return end
+        self:playSfx("move")
     end
 end
 
@@ -56,17 +56,17 @@ function Menu:_clampScroll()
     self._scrollTarget = U.clamp(self._scrollTarget, 0, maxScroll)
 end
 
-function Menu:onNavDown() if self.selected < self:_count() then self:setSelected(self.selected + 1); return true end return false end
-function Menu:onNavUp() if self.selected > 1 then self:setSelected(self.selected - 1); return true end return false end
+function Menu:onNavDownOrPadRight() if self.selected < self:_count() then self:setSelected(self.selected + 1); return true end return false end
+function Menu:onNavUpOrPadLeft() if self.selected > 1 then self:setSelected(self.selected - 1); return true end return false end
 
 function Menu:onActivate()
     local it = self.items[self.selected]
-    if it and self.onSelect then self.onSelect(self.selected, it, self) end
-    self.mgr:playSfx("click")
+    if it and self.onSelect and self.onSelect(self.selected, it, self) then return end
+    self:playSfx("click")
 end
 
 function Menu:restyle()
-    self.eff = self.mgr:resolveTheme(self.style)
+    self:resolveStyle()
     local c = self.eff.colors
     local rw, rh = self.w, self.rowHeight - 10
     local m = 6
@@ -97,7 +97,7 @@ function Menu:update(ctx)
         self:_clampScroll()
     end
     -- mouse hover row → preview-select; click sets selection
-    if self.hovered and ctx.inside then
+    if self.hovered and ctx.inside and (ctx.moved or not self._wasHovered) then
         local rel = ctx.my - self.y + self._scrollCur
         local row = math.floor(rel / self.rowHeight) + 1
         if row >= 1 and row <= self:_count() then
@@ -105,6 +105,7 @@ function Menu:update(ctx)
             if row ~= self.selected and not ctx.mPressing then self:setSelected(row) end
         end
     end
+    self._wasHovered = self.hovered
     -- smooth scroll
     self._scrollCur = self._scrollCur + (self._scrollTarget - self._scrollCur) * math.min(1, ctx.dt * 14)
 end

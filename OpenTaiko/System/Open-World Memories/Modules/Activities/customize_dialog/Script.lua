@@ -8,6 +8,8 @@
 -- the selection lists.  Changes are staged locally and applied only when the
 -- player confirms with OK.  Cancel discards all changes.
 
+local NavInput = require("NavInput")
+
 -- ─── State ────────────────────────────────────────────────────────────────────
 
 local reactive = false
@@ -76,16 +78,6 @@ local currentPaletteFolder = ""   -- folder name the palette list was built for
 -- Slide-in transition
 local bgpos  = 1080
 local bgtlop = 0
-
--- ─── Player input sets ────────────────────────────────────────────────────────
-
-local inputSets = {
-    { right = "RightChange", left = "LeftChange", decide1 = "Decide",  decide2 = "Decide",  cancel = "Cancel" },
-    { right = "RBlue2P",     left = "LBlue2P",    decide1 = "RRed2P",  decide2 = "LRed2P",  cancel = nil },
-    { right = "RBlue3P",     left = "LBlue3P",    decide1 = "RRed3P",  decide2 = "LRed3P",  cancel = nil },
-    { right = "RBlue4P",     left = "LBlue4P",    decide1 = "RRed4P",  decide2 = "LRed4P",  cancel = nil },
-    { right = "RBlue5P",     left = "LBlue5P",    decide1 = "RRed5P",  decide2 = "LRed5P",  cancel = nil },
-}
 
 -- ─── Fonts / textures / sounds / counters ────────────────────────────────────
 
@@ -775,14 +767,7 @@ function update()
     for _, c in pairs(ctx) do c:Tick() end
     if not reactive then return end
 
-    local inputs = inputSets[player + 1]
-
-    local function right()  return INPUT:Pressed(inputs.right)   or INPUT:KeyboardPressed("RightArrow") end
-    local function left()   return INPUT:Pressed(inputs.left)    or INPUT:KeyboardPressed("LeftArrow")  end
-    local function up()     return INPUT:Pressed(inputs.left)    or INPUT:KeyboardPressed("UpArrow")    end
-    local function down()   return INPUT:Pressed(inputs.right)   or INPUT:KeyboardPressed("DownArrow")  end
-    local function decide() return INPUT:Pressed(inputs.decide1) or INPUT:Pressed(inputs.decide2) or INPUT:KeyboardPressed("Return") end
-    local function cancel() return (inputs.cancel ~= nil and INPUT:Pressed(inputs.cancel)) or INPUT:KeyboardPressed("Escape") end
+    local navPn = NavInput.p[player + 1]
 
     local function exitDialog(save_changes)
         reactive = false
@@ -794,13 +779,13 @@ function update()
 
     -- ── Main menu ─────────────────────────────────────────────────────────────
     if currentScreen == "main" then
-        if down() then
+        if navPn.downOrPadRight() then
             sounds.Skip:Play()
             mainIdx = (mainIdx % MAIN_COUNT) + 1
-        elseif up() then
+        elseif navPn.upOrPadLeft() then
             sounds.Skip:Play()
             mainIdx = ((mainIdx - 2 + MAIN_COUNT) % MAIN_COUNT) + 1
-        elseif decide() then
+        elseif navPn.decide() then
             if     mainIdx == OK_IDX     then sounds.Decide:Play() ; exitDialog(true)
             elseif mainIdx == CANCEL_IDX then sounds.Cancel:Play() ; exitDialog(false)
             elseif mainIdx == 1 then sounds.Decide:Play() ; savedCharSubIdx    = charSubIdx    ; currentScreen = "character"
@@ -815,26 +800,26 @@ function update()
                 currentScreen   = "player_name"
             elseif mainIdx == 7 then sounds.Decide:Play() ; savedHsSubIdx = hsSubIdx ; currentScreen = "hitsounds"
             end
-        elseif cancel() then
+        elseif navPn.cancel() then
             sounds.Cancel:Play()
             exitDialog(false)
         end
 
     -- ── Character ─────────────────────────────────────────────────────────────
     elseif currentScreen == "character" then
-        if right() and #characterList > 0 then
+        if navPn.right() and #characterList > 0 then
             sounds.Skip:Play()
             local newIdx = modWrap(charSubIdx + 1, #characterList)
             swapPreviewCharacter(characterList[newIdx + 1])
             charSubIdx = newIdx
-        elseif left() and #characterList > 0 then
+        elseif navPn.left() and #characterList > 0 then
             sounds.Skip:Play()
             local newIdx = modWrap(charSubIdx - 1, #characterList)
             swapPreviewCharacter(characterList[newIdx + 1])
             charSubIdx = newIdx
-        elseif decide() then
+        elseif navPn.decide() then
             sounds.Decide:Play() ; currentScreen = "main"
-        elseif cancel() then
+        elseif navPn.cancel() then
             sounds.Cancel:Play()
             charSubIdx = savedCharSubIdx
             swapPreviewCharacter(characterList[charSubIdx + 1])
@@ -843,15 +828,15 @@ function update()
 
     -- ── Palette ───────────────────────────────────────────────────────────────
     elseif currentScreen == "palette" then
-        if down() and #paletteList > 0 then
+        if navPn.downOrPadRight() and #paletteList > 0 then
             sounds.Skip:Play()
             paletteSubIdx = modWrap(paletteSubIdx + 1, #paletteList)
             applyPreviewPalette()
-        elseif up() and #paletteList > 0 then
+        elseif navPn.upOrPadLeft() and #paletteList > 0 then
             sounds.Skip:Play()
             paletteSubIdx = modWrap(paletteSubIdx - 1, #paletteList)
             applyPreviewPalette()
-        elseif decide() then
+        elseif navPn.decide() then
             local p = paletteList[paletteSubIdx + 1]
             if p ~= nil and not isPaletteUnlocked(p) then
                 startCounter("palFlash", 0, 255, 1/510, "none", function(val)
@@ -862,7 +847,7 @@ function update()
             else
                 sounds.Decide:Play() ; currentScreen = "main"
             end
-        elseif cancel() then
+        elseif navPn.cancel() then
             sounds.Cancel:Play()
             paletteSubIdx = savedPaletteSubIdx
             palFlashColor = nil
@@ -872,37 +857,37 @@ function update()
 
     -- ── Puchichara ────────────────────────────────────────────────────────────
     elseif currentScreen == "puchichara" then
-        if right() and #puchiList > 0 then
+        if navPn.right() and #puchiList > 0 then
             sounds.Skip:Play() ; puchiSubIdx = modWrap(puchiSubIdx + 1, #puchiList)
-        elseif left() and #puchiList > 0 then
+        elseif navPn.left() and #puchiList > 0 then
             sounds.Skip:Play() ; puchiSubIdx = modWrap(puchiSubIdx - 1, #puchiList)
-        elseif decide() then
+        elseif navPn.decide() then
             sounds.Decide:Play() ; currentScreen = "main"
-        elseif cancel() then
+        elseif navPn.cancel() then
             sounds.Cancel:Play() ; puchiSubIdx = savedPuchiSubIdx ; currentScreen = "main"
         end
 
     -- ── Nameplate title ───────────────────────────────────────────────────────
     elseif currentScreen == "nameplate_title" then
-        if down() and #nameplateList > 0 then
+        if navPn.downOrPadRight() and #nameplateList > 0 then
             sounds.Skip:Play() ; npSubIdx = modWrap(npSubIdx + 1, #nameplateList)
-        elseif up() and #nameplateList > 0 then
+        elseif navPn.upOrPadLeft() and #nameplateList > 0 then
             sounds.Skip:Play() ; npSubIdx = modWrap(npSubIdx - 1, #nameplateList)
-        elseif decide() then
+        elseif navPn.decide() then
             sounds.Decide:Play() ; currentScreen = "main"
-        elseif cancel() then
+        elseif navPn.cancel() then
             sounds.Cancel:Play() ; npSubIdx = savedNpSubIdx ; currentScreen = "main"
         end
 
     -- ── Dan title ─────────────────────────────────────────────────────────────
     elseif currentScreen == "dan_title" then
-        if down() and #danList > 0 then
+        if navPn.downOrPadRight() and #danList > 0 then
             sounds.Skip:Play() ; danSubIdx = modWrap(danSubIdx + 1, #danList)
-        elseif up() and #danList > 0 then
+        elseif navPn.upOrPadLeft() and #danList > 0 then
             sounds.Skip:Play() ; danSubIdx = modWrap(danSubIdx - 1, #danList)
-        elseif decide() then
+        elseif navPn.decide() then
             sounds.Decide:Play() ; currentScreen = "main"
-        elseif cancel() then
+        elseif navPn.cancel() then
             sounds.Cancel:Play() ; danSubIdx = savedDanSubIdx ; currentScreen = "main"
         end
 
@@ -925,13 +910,13 @@ function update()
 
     -- ── Hitsounds ─────────────────────────────────────────────────────────────
     elseif currentScreen == "hitsounds" then
-        if down() and #hitsoundList > 0 then
+        if navPn.downOrPadRight() and #hitsoundList > 0 then
             sounds.Skip:Play() ; hsSubIdx = modWrap(hsSubIdx + 1, #hitsoundList) ; playHitsoundPreview()
-        elseif up() and #hitsoundList > 0 then
+        elseif navPn.upOrPadLeft() and #hitsoundList > 0 then
             sounds.Skip:Play() ; hsSubIdx = modWrap(hsSubIdx - 1, #hitsoundList) ; playHitsoundPreview()
-        elseif decide() then
+        elseif navPn.decide() then
             sounds.Decide:Play() ; currentScreen = "main"
-        elseif cancel() then
+        elseif navPn.cancel() then
             sounds.Cancel:Play() ; hsSubIdx = savedHsSubIdx ; stopHitsoundPreview() ; currentScreen = "main"
         end
     end

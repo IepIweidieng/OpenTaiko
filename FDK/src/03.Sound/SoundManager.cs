@@ -390,6 +390,6 @@ public class SoundManager   // : CSound
 		cs.AddBassSoundFromMixer();
 	}
 	public void RemoveMixer(CSound cs) {
-		cs.tRemoveSoundFromMixer();
+		cs.tRemoveFromMixer();
 	}
 }

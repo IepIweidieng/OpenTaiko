@@ -571,7 +571,8 @@ internal class Dan_Cert : CActivity {
 		for (int i = 0; i < CExamInfo.cMaxExam; i++) {
 			Status[i].Timer_Amount = null;
 			Status[i].Timer_Gauge = null;
-			Status[i].ctGaugeFlashLoop.CurrentValue = 0; // sync, otherwise kept as-is for displaying result
+			if (Status[i].ctGaugeFlashLoop != null)
+				Status[i].ctGaugeFlashLoop.CurrentValue = 0; // sync, otherwise kept as-is for displaying result
 		}
 		for (int i = 0; i < IsEnded.Length; i++)
 			IsEnded[i] = false;

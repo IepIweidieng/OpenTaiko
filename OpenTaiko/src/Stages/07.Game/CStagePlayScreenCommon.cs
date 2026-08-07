@@ -60,6 +60,8 @@ internal abstract class CStagePlayScreenCommon : CStage {
 	// `yield return progress` between the pre-setup, batches of child actors, and the note-state build, so the
 	// song load can advance it a slice per frame (smooth bar, no freeze) instead of one blocking call.
 	public virtual System.Collections.Generic.IEnumerator<float> ActivateSteps() {
+		base.Activate(); // activate ChildActivities here
+
 		OpenTaiko.HttpEventReporter.ReportGameplayStart();
 
 		// Initialize tower-mode life from the song node so the correct value is
@@ -67,7 +69,6 @@ internal abstract class CStagePlayScreenCommon : CStage {
 		int towerLife = OpenTaiko.SongMount.rChosenScore?.ChartInfo.nLife ?? 5;
 		FloorManagement = new CFloorManagement(towerLife);
 
-		listChip = new List<CChip>[5];
 		for (int i = 0; i < OpenTaiko.ConfigIni.nPlayerCount; i++) {
 			listChip[i] = OpenTaiko.GetTJA(i)!.listChip;
 		}
@@ -145,8 +146,6 @@ internal abstract class CStagePlayScreenCommon : CStage {
 			}
 		}
 
-		ctChipAnime = new CCounter[5];
-		ctChipAnimeLag = new CCounter[5];
 		for (int i = 0; i < 5; i++) {
 			ctChipAnime[i] = new CCounter();
 			ctChipAnimeLag[i] = new CCounter();
@@ -154,9 +153,6 @@ internal abstract class CStagePlayScreenCommon : CStage {
 
 		listWAV = OpenTaiko.TJA.listWAV;
 
-
-		this.nHitCount_ExclAuto = new CHITCOUNTOFRANK();
-		this.nHitCount_InclAuto = new CHITCOUNTOFRANK();
 		this.rCurrentCheerChip = null;
 		this.bReverse = OpenTaiko.ConfigIni.bReverse;
 
@@ -177,12 +173,12 @@ internal abstract class CStagePlayScreenCommon : CStage {
 		this.tPanelStringSettings();
 		//this.演奏判定ライン座標();
 		this.bIsGOGOTIME_Branch = new bool[5, 3];
-		this.bIsGOGOTIME = new bool[] { false, false, false, false, false };
-		this.bWasGOGOTIME = new bool[] { false, false, false, false, false };
-		this.bIsMiss = new bool[] { false, false, false, false, false };
-		this.bUseBranch = new bool[] { false, false, false, false, false };
-		this.nCurrentBranch = new CTja.ECourse[5];
-		this.nTargetBranch = new CTja.ECourse[5];
+		Array.Fill(this.bIsGOGOTIME, false);
+		Array.Fill(this.bWasGOGOTIME, false);
+		Array.Fill(this.bIsMiss, false);
+		Array.Fill(this.bUseBranch, false);
+		Array.Fill(this.nCurrentBranch, CTja.ECourse.eNormal);
+		Array.Fill(this.nTargetBranch,  CTja.ECourse.eNormal);
 
 		for (int i = 0; i < 5; i++) {
 			OpenTaiko.stageGameScreen.ChangeBranch(CTja.ECourse.eNormal, i, stopAnime: true);
@@ -192,9 +188,9 @@ internal abstract class CStagePlayScreenCommon : CStage {
 			this.CBranchScore[i] = new CBRANCHSCORE();
 
 
-		this.nCurrentRollCount = new int[] { 0, 0, 0, 0, 0 };
-		this.idxLastBranchSection = new int[5];
-		this.Chara_MissCount = new int[5];
+		Array.Fill(this.nCurrentRollCount, 0);
+		Array.Fill(this.idxLastBranchSection, 0);
+		Array.Fill(this.Chara_MissCount, 0);
 		dbDynamicBeatFactor   = 1.0;
 		dbDynBeatTjaOffset    = 0.0;
 		msDynBeatRawGameTime  = 0;
@@ -223,12 +219,12 @@ internal abstract class CStagePlayScreenCommon : CStage {
 					OpenTaiko.ConfigIni.nFunMods[i] = EFunMods.DynamicBeat;
 			}
 		}
-		this.bLEVELHOLD = new bool[] { false, false, false, false, false };
-		this.JPOSCROLLX = new double[5];
-		this.JPOSCROLLY = new double[5];
-		this.timingZones = new CConfigIni.CTimingZones[5];
-		eGameType = new EGameType[5];
-		bSplitLane = new bool[5];
+		Array.Fill(this.bLEVELHOLD, false);
+		Array.Fill(this.JPOSCROLLX, 0);
+		Array.Fill(this.JPOSCROLLY, 0);
+		Array.Fill(this.timingZones, null);
+		Array.Fill(eGameType, EGameType.Taiko);
+		Array.Fill(bSplitLane, false);
 
 
 		// Double play set here
@@ -243,7 +239,7 @@ internal abstract class CStagePlayScreenCommon : CStage {
 
 		OpenTaiko.Skin.tRemoveMixerAll();  // 効果音のストリームをミキサーから解除しておく
 
-		queueMixerSound = new Queue<stmixer>(64);
+		queueMixerSound.Clear();
 		bIsDirectSound = (OpenTaiko.SoundManager.GetCurrentSoundDeviceType() == "DirectSound");
 		bUseOSTimer = OpenTaiko.ConfigIni.bUseOSTimer;
 		bValidScore = true;
@@ -278,7 +274,7 @@ internal abstract class CStagePlayScreenCommon : CStage {
 		}
 
 
-		this.sw = new Stopwatch();
+		this.sw.Reset();
 		//          this.sw2 = new Stopwatch();
 		// Reduce .NET GC hitches during the song: ask the GC to avoid blocking gen-2 collections while
 		// playing. Restored to the previous mode in DeActivate. (SustainedLowLatency, not Batch — Batch
@@ -286,18 +282,18 @@ internal abstract class CStagePlayScreenCommon : CStage {
 		this.gclatencymode = System.Runtime.GCSettings.LatencyMode;
 		// GCSettings.LatencyMode is unsupported on iOS (throws PlatformNotSupportedException); it's only a GC-pause tweak.
 		if (!(OperatingSystem.IsIOS() || OperatingSystem.IsAndroid())) System.Runtime.GCSettings.LatencyMode = System.Runtime.GCLatencyMode.SustainedLowLatency;
-		this.bIsAlreadyCleared = new bool[5];
-		this.bIsAlreadyMaxed = new bool[5];
+		Array.Fill(this.bIsAlreadyCleared, false);
+		Array.Fill(this.bIsAlreadyMaxed, false);
 
 		this.ListDan_Number = 0;
 		this.IsDanFailed = false;
 
-		this.objHandlers = new();
-		this.bCustomDoron = new bool[5];
+		this.objHandlers.Clear();
+		Array.Fill(this.bCustomDoron, false);
 
 		this.tBackgroundTextureCreate();
 
-		this.nCurrentTopChip = new int[] { -1, -1, -1, -1, -1 }; // reset for new chart
+		Array.Fill(this.nCurrentTopChip, -1); // reset for new chart
 		yield return 0.9f;   // children up; build the note state
 		this.tValueInitialize(true, true);
 
@@ -501,10 +497,8 @@ internal abstract class CStagePlayScreenCommon : CStage {
 			this.chipNowProcessingMultiHitNotes[i].Clear();
 
 		listWAV.Clear();
-		listWAV = null;
-		listChip = null;
+		Array.Fill(listChip, []);
 		queueMixerSound.Clear();
-		queueMixerSound = null;
 		if (!(OperatingSystem.IsIOS() || OperatingSystem.IsAndroid())) System.Runtime.GCSettings.LatencyMode = this.gclatencymode;   // restore pre-gameplay GC mode (unsupported on mobile)
 
 		this.actAVI.rVD = null; // Will be disposed by TJA.DeActivate() later
@@ -733,15 +727,15 @@ internal abstract class CStagePlayScreenCommon : CStage {
 	// Tracks time since last Resume() to enforce a 1-second anti-buffering cooldown on pause re-open.
 	// Initialized with a high elapsed value so the first pause is never blocked.
 	private System.Diagnostics.Stopwatch _pauseCooldown = System.Diagnostics.Stopwatch.StartNew();
-	public bool[] bIsAlreadyCleared;
-	public bool[] bIsAlreadyMaxed;
+	public bool[] bIsAlreadyCleared = new bool[OpenTaiko.MAX_PLAYERS];
+	public bool[] bIsAlreadyMaxed = new bool[OpenTaiko.MAX_PLAYERS];
 	protected bool bUsedMidiInputInPlay;
 	protected bool bUsedKeyboardInPlay;
 	protected bool bUsedJoypadInPlay;
 	protected bool bUsedMouseInPlay;
-	protected CCounter ctChipPatternAnime;
-	public CCounter[] ctChipAnime;
-	public CCounter[] ctChipAnimeLag;
+	protected CCounter? ctChipPatternAnime;
+	public CCounter?[] ctChipAnime = new CCounter[OpenTaiko.MAX_PLAYERS];
+	public CCounter?[] ctChipAnimeLag = new CCounter[OpenTaiko.MAX_PLAYERS];
 	private int bgmlength = 1;
 
 	protected EGameplayScreenReturnValue eFadeOutCompleteWhenReturnValue;
@@ -752,8 +746,8 @@ internal abstract class CStagePlayScreenCommon : CStage {
 	protected readonly int[] nPad0AtoPad08 = new int[] { 1, 2, 3, 4, 5, 6, 7, 1, 8, 0, 9, 9 };// パッド画像のヒット処理用
 																							  //   HH SD BD HT LT FT CY HHO RD LC LP LBD
 	protected readonly int[] nPad0AtoLane07 = new int[] { 1, 2, 3, 4, 5, 6, 7, 1, 9, 0, 8, 8 };
-	public CHITCOUNTOFRANK nHitCount_ExclAuto;
-	public CHITCOUNTOFRANK nHitCount_InclAuto;
+	public CHITCOUNTOFRANK nHitCount_ExclAuto = new();
+	public CHITCOUNTOFRANK nHitCount_InclAuto = new();
 	public bool ShowVideo;
 	public CBRANCHSCORE[] DanSongScore = [];
 
@@ -767,21 +761,21 @@ internal abstract class CStagePlayScreenCommon : CStage {
 	public bool hasChipBeenPlayed(int chipListIndex, int iPlayer)
 		=> hasChipBeenPlayedAt(chipListIndex, nCurrentTopChip[iPlayer]);
 
-	protected volatile Queue<stmixer> queueMixerSound;      // #24820 2013.1.21 yyagi まずは単純にAdd/Removeを1個のキューでまとめて管理するやり方で設計する
+	protected volatile Queue<stmixer> queueMixerSound = new(64); // #24820 2013.1.21 yyagi まずは単純にAdd/Removeを1個のキューでまとめて管理するやり方で設計する
 	protected DateTime dtLastQueueOperation;                //
 	protected bool bIsDirectSound;                          //
 	protected bool bValidScore;
 	//		protected bool bDTXVmode;
 	protected bool bReverse;
 
-	protected CChip rCurrentCheerChip;
+	protected CChip? rCurrentCheerChip;
 
-	protected CTexture txBgImage;
+	protected CTexture? txBgImage;
 
 	//		protected int nRisky_InitialVar, nRiskyTime;		// #23559 2011.7.28 yyagi → CAct演奏ゲージ共通クラスに隠蔽
 	protected int nPolyphonicSounds;
-	protected List<CChip>[] listChip = new List<CChip>[5];
-	protected Dictionary<int, CTja.CWAV> listWAV;
+	protected List<CChip>[] listChip = Enumerable.Repeat(new List<CChip> { }, OpenTaiko.MAX_PLAYERS).ToArray();
+	protected Dictionary<int, CTja.CWAV> listWAV = [];
 	protected bool bUseOSTimer;
 
 	public CBRANCHSCORE[] CBranchScore = new CBRANCHSCORE[6];
@@ -805,7 +799,7 @@ internal abstract class CStagePlayScreenCommon : CStage {
 	protected int nListCount;
 
 	protected int[] nCurrentRollCount = new int[5];
-	public int[] Chara_MissCount;
+	public int[] Chara_MissCount = new int[OpenTaiko.MAX_PLAYERS];
 
 	// Dynamic Beat mode state (shared across all players)
 	protected double dbDynamicBeatFactor    = 1.0;
@@ -846,9 +840,10 @@ internal abstract class CStagePlayScreenCommon : CStage {
 
 	protected int nWaitButton;
 
-	protected CConfigIni.CTimingZones[] timingZones;
-	public EGameType[] eGameType;
-	protected bool[] bSplitLane;
+	protected CConfigIni.CTimingZones[] timingZones = Enumerable.Repeat(OpenTaiko.ConfigIni.tzLevels.Last(), OpenTaiko.MAX_PLAYERS)
+		.ToArray();
+	public EGameType[] eGameType = new EGameType[OpenTaiko.MAX_PLAYERS];
+	protected bool[] bSplitLane = new bool[OpenTaiko.MAX_PLAYERS];
 
 	public List<CChip>[] chipNowProcessingMultiHitNotes = [[], [], [], [], []]; // [iPlayer][idxNowProcessingMultiHitNotes]
 	public List<CChip>[] chipCurrentProcessingRollChip = [[], [], [], [], []]; // [iPlayer][idxNowProcessingRoll]
@@ -863,13 +858,13 @@ internal abstract class CStagePlayScreenCommon : CStage {
 	protected CSound[] soundAdlib = new CSound[5];
 	protected CSound[] soundClap = new CSound[5];
 	public bool isMultiPlay; // 2016.08.21 kairera0467 表示だけ。
-	protected Stopwatch sw;     // 2011.6.13 最適化検討用のストップウォッチ
+	protected Stopwatch sw = new();     // 2011.6.13 最適化検討用のストップウォッチ
 	protected System.Runtime.GCLatencyMode gclatencymode;   // saved GC latency mode, restored on DeActivate
 	public int ListDan_Number;
 	private bool IsDanFailed;
 
 	private float _AIBattleState;
-	private Queue<float>[] _AIBattleStateBatch;
+	private Queue<float>[] _AIBattleStateBatch = [new(), new()];
 	public int AIBattleState {
 		get {
 			return (int)_AIBattleState;
@@ -936,8 +931,8 @@ internal abstract class CStagePlayScreenCommon : CStage {
 	}
 
 	private void UpdateCharaCounter(int nPlayer) {
-		ctChipAnime[nPlayer] = new CCounter(0, 3, CTja.TjaDurationToGameDuration(60.0 / OpenTaiko.stageGameScreen.actPlayInfo.dbBPM[nPlayer] * 1 / 4), SoundManager.PlayTimer);
-		OpenTaiko.stageGameScreen.PuchiChara.ChangeBPM(CTja.TjaDurationToGameDuration(60.0 / OpenTaiko.stageGameScreen.actPlayInfo.dbBPM[nPlayer]));
+		ctChipAnime[nPlayer] = new CCounter(0, 3, OpenTaiko.stageGameScreen.actPlayInfo.secPerGameBeatAbs(nPlayer) * 1 / 4, SoundManager.PlayTimer);
+		OpenTaiko.stageGameScreen.PuchiChara.ChangeBPM(OpenTaiko.stageGameScreen.actPlayInfo.secPerGameBeatAbs(nPlayer));
 	}
 
 	public void AddMixer(CSound cs, bool _bPlayEndAfterPlaybackContinuesChip) {
@@ -983,6 +978,12 @@ internal abstract class CStagePlayScreenCommon : CStage {
 	internal ENoteJudge eGetChipJudgeAtTime(long nTime, CChip pChip, int player = 0) {
 		var eJudge = eGetChipJudgeAtTimeImpl(nTime, pChip, player).noteJudge;
 		return eJudge;
+	}
+
+	public static bool IsAcceptMultiHit(CChip chip, double msTjaHitTime) {
+		var msMaxWaitTime = CTja.GameDurationToTjaDuration(OpenTaiko.ConfigIni.nBigNoteWaitTimems);
+		var msWaitedTime = msTjaHitTime - chip.msFirstMultiHit;
+		return (msWaitedTime < msMaxWaitTime);
 	}
 
 	private bool tEasyTimeZones(int nPlayer) {
@@ -1042,14 +1043,18 @@ internal abstract class CStagePlayScreenCommon : CStage {
 			return ENoteJudge.Miss;
 		} else {
 			//Debug.WriteLine("nAbsTime=" + (nTime - pChip.n発声時刻ms) + ", nDeltaTime=" + (nTime - pChip.n発声時刻ms));
+			if (msDelta < 0) // too large and overflowed
+				return ENoteJudge.Miss;
+			if (msDelta == 0) // fast judge for autoplay
+				return ENoteJudge.Perfect;
+
 			var nt = NotesManager.GetNoteType(pChip);
 			if (NotesManager.IsRoll(nt)) {
 				return (msTjaTime >= pChip.nSoundTimems && msTjaTime < pChip.end.nSoundTimems) ? ENoteJudge.Perfect : ENoteJudge.Miss;
 			} else if (NotesManager.IsGenericBalloon(nt)) {
-				return (msTjaTime >= pChip.nSoundTimems - 17 && msTjaTime < pChip.end.nSoundTimems) ? ENoteJudge.Perfect : ENoteJudge.Miss;
+				var msHeadWindowTja = (int)CTja.GameDurationToTjaDuration(17);
+				return (msTjaTime >= pChip.nSoundTimems - msHeadWindowTja && msTjaTime < pChip.end.nSoundTimems) ? ENoteJudge.Perfect : ENoteJudge.Miss;
 			}
-			if (msDelta <= 0) // fast judge for autoplay
-				return ENoteJudge.Perfect;
 
 			CConfigIni.CTimingZones tz = this.timingZones[player];
 
@@ -1061,12 +1066,12 @@ internal abstract class CStagePlayScreenCommon : CStage {
 			int actual = player;
 
 			if (msDelta <= tz.nOkZone) {
-				if (OpenTaiko.ConfigIni.bJust[actual] == 1 && NotesManager.IsMissableNote(pChip)) // Just
+				if (OpenTaiko.ConfigIni.bJust[actual] == 1 && NotesManager.IsMissableNote(nt)) // Just
 					return ENoteJudge.Poor;
 				return ENoteJudge.Good;
 			}
 
-			if (OpenTaiko.ConfigIni.bJust[actual] == 2 || !NotesManager.IsMissableNote(pChip)) // Safe
+			if (OpenTaiko.ConfigIni.bJust[actual] == 2 || NotesManager.IsJudgedFromNearest(nt)) // Safe
 				return ENoteJudge.Good;
 			return ENoteJudge.Poor;
 		}
@@ -1081,16 +1086,21 @@ internal abstract class CStagePlayScreenCommon : CStage {
 		);
 	}
 
-	protected abstract void ProcessPadInput(int nUsePlayer, EPad nPad, long msHitTjaTime);
+	protected void ProcessPadInput(int nUsePlayer, EPad nPad, long msHitTjaTime) {
+		var (chipNoHit, eJudge) = GetChipToJudge(msHitTjaTime, nUsePlayer, nPad);
+		ProcessPadInput(nUsePlayer, nPad, msHitTjaTime, chipNoHit, eJudge);
+	}
+
+	protected abstract void ProcessPadInput(int nUsePlayer, EPad nPad, long msHitTjaTime, CChip? chip, ENoteJudge? judge);
 	protected abstract ENoteJudge JudgePadInput(int iPlayer, CChip? chip, EPad pad, long msHitTjaTime, ENoteJudge rawJudge, bool skipHit = false);
 
-	public static EPad[] GetAutoInput(NotesManager.ENoteType noteType, EGameType gameType, int nHand, bool isBigInput = false) {
+	public static EPad[] GetAutoInput(NotesManager.ENoteType noteType, EGameType gameType, int nHand, bool isBigInput = false, EPad storedHit = EPad.Unknown) {
 		if (isBigInput && NotesManager.IsBigDonTaiko(noteType, gameType))
 			return [EPad.LRed, EPad.RRed];
 		if (isBigInput && NotesManager.IsBigKaTaiko(noteType, gameType))
 			return [EPad.LBlue, EPad.RBlue];
 		if (NotesManager.IsPurpleNoteTaiko(noteType, gameType))
-			return (nHand == 0) ? [EPad.LBlue, EPad.RRed] : [EPad.RBlue, EPad.LRed];
+			return (nHand == 0 || storedHit is EPad.LBlue or EPad.RRed) ? [EPad.LBlue, EPad.RRed] : [EPad.RBlue, EPad.LRed];
 		if (NotesManager.IsPinkKonga(noteType, gameType))
 			return [EPad.LBlue, EPad.RRed];
 		if (NotesManager.IsAcceptRed(noteType, gameType)) {
@@ -1105,62 +1115,87 @@ internal abstract class CStagePlayScreenCommon : CStage {
 		return [];
 	}
 
-	private bool CanAutoplayHit(CChip chip, long msTjaTime, int iPlayer, EGameType gt) {
+	private ENoteJudge GetJudgeIfAutoplayHit(CChip chip, long msTjaTime, int iPlayer, EGameType gt) {
 		if (this.isDeniedPlaying[iPlayer] || this.IsStageFailed_Fast())
-			return false;
+			return ENoteJudge.Miss;
 		if (this.eGetChipJudgeAtTime(msTjaTime, chip, iPlayer) is ENoteJudge.Miss) // less costly check
-			return false;
+			return ENoteJudge.Miss;
 		var pads = GetAutoInput(chip, gt, this.nHand[iPlayer], isBigInput: OpenTaiko.ConfigIni.bJudgeBigNotes);
 		if (pads.Length == 0)
-			return false;
+			return ENoteJudge.Miss;
 		var (chipToJudge, judge) = this.GetChipToJudge(msTjaTime, iPlayer, pads[0]);
-		return (chipToJudge == chip && judge is not ENoteJudge.Miss);
+		return (chipToJudge != chip) ? ENoteJudge.Miss : judge;
 	}
 
-	private void AutoplayDoHit(CChip chip, long msTjaTime, int iPlayer, EGameType gt) {
+	// guarantees the first hit, still need to verify further hits
+	private bool AutoplayDoHit(CChip chip, long msTjaTime, int iPlayer, EGameType gt, ENoteJudge? judge = null) {
+		bool hitAny = false;
 		if (!NotesManager.IsMine(chip) || this.CanAutoplayHitMine(iPlayer, true)) {
 			this.AutoplaySwitchHand(iPlayer);
-			foreach (var pad in GetAutoInput(chip, gt, this.nHand[iPlayer], isBigInput: OpenTaiko.ConfigIni.bJudgeBigNotes))
-				this.ProcessPadInput(iPlayer, pad, msTjaTime);
+			var storedHit = (chip.eNoteState == ENoteState.Wait) ? chip.padStoredHit : EPad.Unknown;
+			foreach (var pad in GetAutoInput(chip, gt, this.nHand[iPlayer], isBigInput: OpenTaiko.ConfigIni.bJudgeBigNotes, storedHit: storedHit)) {
+				if (pad == storedHit) // already hit
+					continue;
+				if (hitAny) {
+					var (chipI, judgeI) = this.GetChipToJudge(msTjaTime, iPlayer, pad);
+					if (chipI != chip || judgeI is ENoteJudge.Miss) // cannot be hit now
+						continue;
+				}
+				this.ProcessPadInput(iPlayer, pad, msTjaTime, chip, judge);
+				hitAny = true;
+			}
 		}
-		// prevent further hit attempt (unless overridden)
+		if (!hitAny)
+			this.AutoplaySwitchHand(iPlayer); // cancel hand switching
+		// prevent further hit attempt (unless waiting or overridden)
 		chip.msAutoLastHit = double.PositiveInfinity;
+		return hitAny;
 	}
 
 	private bool AutoplayTryHit(CChip chip, long msTjaTime, int iPlayer, EGameType gt) {
-		if (!this.CanAutoplayHit(chip, msTjaTime, iPlayer, gt))
-			return false;
-		this.AutoplayDoHit(chip, msTjaTime, iPlayer, gt);
-		return true;
+		ENoteJudge judge = this.GetJudgeIfAutoplayHit(chip, msTjaTime, iPlayer, gt);
+		return (judge is not ENoteJudge.Miss) && this.AutoplayDoHit(chip, msTjaTime, iPlayer, gt, judge);
 	}
 
-	protected void AutoplayHit(CChip chip, long msTjaTime, int iPlayer, EGameType gt) {
-		if (!chip.bVisible || chip.IsMissed || chip.bHit || this.bPAUSE || chip.msAutoLastHit > msTjaTime) {
-			return;
+	protected bool AutoplayHitCritical(CChip chip, int iPlayer, EGameType gt) {
+		if (!chip.bVisible || chip.IsMissed || chip.bHit || this.bPAUSE || chip.msAutoLastHit > chip.nSoundTimems) {
+			return false;
 		}
 		bool bAutoPlay = OpenTaiko.ConfigIni.bAutoPlay[iPlayer] || (iPlayer == 1 && OpenTaiko.ConfigIni.bAIBattleMode);
-		if (!bAutoPlay)
-			return;
+		return bAutoPlay && this.AutoplayTryHit(chip, chip.nSoundTimems, iPlayer, gt);
+	}
 
-		bool canHitNow = this.CanAutoplayHit(chip, msTjaTime, iPlayer, gt);
-		if (chip.nSoundTimems > msTjaTime) {
-			if (chip.eNoteState == ENoteState.None && canHitNow)
-				chip.msAutoLastHit = msTjaTime;
-			return;
-		}
-		if (chip.eNoteState == ENoteState.None && chip.msAutoLastHit < chip.nSoundTimems) {
-			if (this.AutoplayTryHit(chip, chip.nSoundTimems, iPlayer, gt)) // critical hit
-				return;
-			bool canHitEarly = this.CanAutoplayHit(chip, (long)chip.msAutoLastHit, iPlayer, gt);
-			if (canHitEarly && (!canHitNow || Math.Abs(chip.msAutoLastHit - chip.nSoundTimems) < Math.Abs(msTjaTime - chip.nSoundTimems))) {
-				this.AutoplayDoHit(chip, (long)chip.msAutoLastHit, iPlayer, gt); // early hit
-				return;
+	protected void AutoplayHitNonCriticalCanHit(long msTjaTime, int iPlayer) {
+	retry:
+		foreach (var pad in new[] { EPad.LRed, EPad.RRed, EPad.LBlue, EPad.RBlue, EPad.Clap }) {
+			var (chipToJudge, judge) = this.GetChipToJudge(msTjaTime, iPlayer, pad);
+			if (chipToJudge != null && !NotesManager.IsGenericRoll(chipToJudge) && judge is not ENoteJudge.Miss) {
+				if (this.AutoplayHitNonCriticalCanHit(chipToJudge, msTjaTime, iPlayer, NotesManager.GetChipGameType(chipToJudge, iPlayer)))
+					goto retry;
 			}
-			// mark as attempted
-			chip.msAutoLastHit = msTjaTime;
 		}
-		if (canHitNow) // late hit
-			this.AutoplayDoHit(chip, msTjaTime, iPlayer, gt);
+	}
+
+	// returns whether the note is actually hit
+	protected bool AutoplayHitNonCriticalCanHit(CChip chip, long msTjaTime, int iPlayer, EGameType gt) {
+		bool bAutoPlay = OpenTaiko.ConfigIni.bAutoPlay[iPlayer] || (iPlayer == 1 && OpenTaiko.ConfigIni.bAIBattleMode);
+		if (!bAutoPlay)
+			return false;
+
+		if (chip.eNoteState == ENoteState.Wait)
+			return this.AutoplayDoHit(chip, msTjaTime, iPlayer, gt); // hit waiting notes immediately
+		if (chip.msAutoLastHit > msTjaTime) // prevented from further attempts
+			return false;
+		if (chip.nSoundTimems > msTjaTime) { // early hit check
+			if (chip.eNoteState == ENoteState.None)
+				chip.msAutoLastHit = msTjaTime;
+			return false;
+		}
+		if (chip.eNoteState == ENoteState.None
+			&& Math.Abs(chip.msAutoLastHit - chip.nSoundTimems) < Math.Abs(msTjaTime - chip.nSoundTimems)
+			)
+			return this.AutoplayDoHit(chip, (long)chip.msAutoLastHit, iPlayer, gt); // early hit
+		return this.AutoplayDoHit(chip, msTjaTime, iPlayer, gt); // late hit
 	}
 
 	protected void Autoroll(CChip chip, long msTjaTime, int iPlayer, EGameType gt) {
@@ -2032,24 +2067,28 @@ internal abstract class CStagePlayScreenCommon : CStage {
 		if (count <= 0)         // 演奏データとして1個もチップがない場合は
 			return (null, ENoteJudge.Miss);
 
-		#region [ search for the first future note chips ]
-		// search backward for the top chip at given time
-		int iTop = Math.Max(0, Math.Min(count, this.nCurrentTopChip[nPlayer]));
-		if ((iTop < count) && (msTjaTime < this.listChip[nPlayer][iTop].nSoundTimems)) {
-			CChip searchChip = new() { nSoundTimems = (int)msTjaTime, dbSoundTimems = double.PositiveInfinity }; // chip is played until this
-			iTop = this.listChip[nPlayer].BinarySearch(0, iTop, searchChip, Comparer<CChip>.Default);
+		int getIdxChip(long msTjaTime, double direction) {
+			CChip searchChip = new() { nSoundTimems = (int)msTjaTime, dbSoundTimems = direction };
+			int iTop = this.listChip[nPlayer].BinarySearch(0, count, searchChip, Comparer<CChip>.Default);
 			if (iTop < 0)
 				iTop = ~iTop;
+			return iTop;
 		}
 
+		int getIdxChipAfter(long msTjaTime) => getIdxChip(msTjaTime, double.PositiveInfinity);
+		int getIdxChipAtOrBefore(long msTjaTime) => getIdxChip(msTjaTime, double.NegativeInfinity);
+
+		#region [ search for the first future note chips ]
+		// search for the correct top chip at given time; `this.nCurrentTopChip[nPlayer]` could incorrect due to input or audio resyncs)
+		int iTop = getIdxChipAfter(msTjaTime);
+
+		int badZone = this.timingZones[nPlayer].nBadZone;
+		int idxFutureFirstMissZone = getIdxChipAfter(msTjaTime + badZone);
 		(CChip? chip, ENoteJudge judge) futureFirstUnhit = (null, ENoteJudge.Miss);
-		int iFutureFirst = count; // regardless of hit or unhit
-		for (int i = iTop; i < count; ++i) {
+		for (int i = iTop; i < idxFutureFirstMissZone; ++i) {
 			CChip chip = listChip[nPlayer][i];
-			if (!(chip.bVisible && chip.nSoundTimems > msTjaTime && NotesManager.IsHittableNote(chip) && !NotesManager.IsRollEnd(chip)))
+			if (!(chip.bVisible && NotesManager.IsHittableNote(chip) && !NotesManager.IsRollEnd(chip)))
 				continue;
-			if (iFutureFirst >= count)
-				iFutureFirst = i;
 			var judge = this.eGetChipJudgeAtTime(msTjaTime, chip, nPlayer);
 			if (judge is ENoteJudge.Miss) // not in judgement window or before a roll
 				break;
@@ -2061,16 +2100,20 @@ internal abstract class CStagePlayScreenCommon : CStage {
 		#endregion
 
 		#region [ search for the first past note chips (ignore rolls) ]
+		var firstWaitingTime = this.chipNowProcessingMultiHitNotes[nPlayer]
+			.FirstOrDefault(chip => IsAcceptMultiHit(chip, msTjaTime))
+			?.nSoundTimems ?? msTjaTime;
+		int idxPastFirstNonMissZone = getIdxChipAtOrBefore(Math.Min(firstWaitingTime, msTjaTime - badZone));
 		(CChip? chip, ENoteJudge judge) pastFirstUnhit = (null, ENoteJudge.Miss);
 		(CChip? chip, ENoteJudge judge) pastFirstUnhitNotBad = (null, ENoteJudge.Miss);
 		(CChip? chip, ENoteJudge judge) pastFirstUnhitRoll = (null, ENoteJudge.Miss);
-		var firstWaitingChip = this.chipNowProcessingMultiHitNotes[nPlayer].FirstOrDefault();
-		for (int i = iFutureFirst; i-- > 0;) { // exclude past from future
+		for (int i = iTop; i-- > idxPastFirstNonMissZone;) {
 			CChip chip = listChip[nPlayer][i];
-			if (!chip.bVisible || !NotesManager.IsHittableNote(chip) || NotesManager.IsRollEnd(chip))
+			if (!(chip.bVisible && NotesManager.IsHittableNote(chip) && !NotesManager.IsRollEnd(chip)))
 				continue;
-			var judge = (chip.eNoteState is ENoteState.Wait) ? ENoteJudge.Perfect : this.eGetChipJudgeAtTime(msTjaTime, chip, nPlayer);
-			if (judge is ENoteJudge.Miss && (firstWaitingChip == null || chip.nSoundTimems < firstWaitingChip.nSoundTimems)) // search over waiting notes
+			var judge = (chip.eNoteState == ENoteState.Wait && IsAcceptMultiHit(chip, msTjaTime)) ? ENoteJudge.Perfect
+				: this.eGetChipJudgeAtTime(msTjaTime, chip, nPlayer);
+			if (judge is ENoteJudge.Miss && (chip.nSoundTimems < firstWaitingTime)) // search over waiting notes
 				break; // not in judgement window or after a roll
 			if (!chip.IsMissed && !chip.bHit && this.IsInputPadConsumedByChip(nPlayer, chip, pad, msTjaTime, judge)) {
 				if (NotesManager.IsGenericRoll(chip)) {
@@ -2319,7 +2362,7 @@ internal abstract class CStagePlayScreenCommon : CStage {
 				long expected = now - wc.nPlaybackStartTime[i] + wc.nInitialSeekMs;
 				long timelineLength = (long)(snd.TotalPlayTime / Math.Max(0.01, snd.Frequency * snd.PlaySpeed));
 				if (expected < 1000 || expected > timelineLength - 1000) continue;   // start settle-in / near end
-				long actual = snd.tGetPositionOnTimelineMs();
+				long actual = snd.tGetPositionWallTimeMs();
 				if (actual < 0) continue;
 				long drift = actual - expected;
 				if (Math.Abs(drift) > Math.Abs(worst)) worst = drift;
@@ -2531,6 +2574,10 @@ internal abstract class CStagePlayScreenCommon : CStage {
 						this.UpdateClearAnimation(nPlayer);
 				}
 			}
+
+			// accurate auto hit
+			if (NotesManager.IsHittableNote(pChip) && !NotesManager.IsGenericRoll(pChip))
+				this.AutoplayHitCritical(pChip, nPlayer, NotesManager.GetChipGameType(pChip, nPlayer));
 
 			switch (pChip.nChannelNo) {
 				#region [ 01: BGM ]
@@ -3319,10 +3366,13 @@ internal abstract class CStagePlayScreenCommon : CStage {
 
 			tja.UpdateScrolledChipPosition(pChip, play_bpm_points[(int)pChip.nBranch], nCurrentTimems, th16NowBeats[(int)pChip.nBranch], scrollRate);
 
-			if (!this.bPAUSE && !this.isRewinding) {
+			if (!this.bPAUSE && !this.isRewinding)
 				this.AutoJudge(nPlayer, nCurrentTimems, pChip, msMaxPlayedTjaTime: this.msMaxPlayedTjaTime(nPlayer));
-			}
 		}
+
+		// attempt inaccurate hit
+		if (!this.bPAUSE && !this.isRewinding)
+			this.AutoplayHitNonCriticalCanHit(nCurrentTimems, nPlayer);
 		#endregion
 
 		#region [draw phase (bar line), backward for correct stack order]
@@ -3386,8 +3436,7 @@ internal abstract class CStagePlayScreenCommon : CStage {
 				}
 			} else if (NotesManager.IsHittableNote(pChip) && pChip.eNoteState != ENoteState.Wait) {
 				//こっちのほうが適格と考えたためフラグを変更.2020.04.20 Akasoko26
-				if (doAutoInput && !NotesManager.IsMine(pChip))
-					this.AutoplayHit(pChip, msTjaHitTime, nPlayer, NotesManager.GetChipGameType(pChip, nPlayer));
+				// auto hit handled separately
 				if (pChip.nSoundTimems <= msTjaHitTime) {
 					var msJudgeTjaTime = (long)Math.Max(pChip.nSoundTimems, Math.Min(msTjaHitTime, msMaxPlayedTjaTime));
 					if (!this.IsNoteIfMet(pChip, nPlayer)) {
@@ -4014,7 +4063,8 @@ internal abstract class CStagePlayScreenCommon : CStage {
 			}
 		}
 		if (bPlayState) {
-			_AIBattleStateBatch = new Queue<float>[] { new Queue<float>(), new Queue<float>() };
+			foreach (var batch in _AIBattleStateBatch)
+				batch.Clear();
 			bIsAIBattleWin = false;
 			this.dbDynamicBeatFactor   = 1.0;
 			this.dbDynBeatTjaOffset    = 0.0;
@@ -4261,7 +4311,7 @@ internal abstract class CStagePlayScreenCommon : CStage {
 							int j = wc.nCurrentPlaybackSoundNumber;
 							if (wc.rSound[j] != null) {
 								wc.rSound[j].Pause();
-								wc.rSound[j].tSetPositonToBegin(nStartTime - nSoundTimems);
+								wc.rSound[j].tSetPosition(nStartTime - nSoundTimems);
 								pausedCSound.Add(wc.rSound[j]);
 							}
 							#endregion
@@ -4275,7 +4325,7 @@ internal abstract class CStagePlayScreenCommon : CStage {
 
 		if (!(OpenTaiko.ConfigIni.bNoAudioIfNot1xSpeed && OpenTaiko.ConfigIni.nSongSpeed != 20))
 			foreach (CSound cs in pausedCSound) {
-				cs.tPlaySound();
+				cs.tPlay();
 			}
 		#endregion
 		pausedCSound.Clear();
@@ -4450,9 +4500,9 @@ internal abstract class CStagePlayScreenCommon : CStage {
 
 
 	#region [EXTENDED COMMANDS]
-	private Dictionary<string, (CChip chip, CCounter counter, Action<float> setter)> objHandlers;
+	private Dictionary<string, (CChip chip, CCounter counter, Action<float> setter)> objHandlers = new();
 
-	public bool[] bCustomDoron;
+	public bool[] bCustomDoron = new bool[OpenTaiko.MAX_PLAYERS];
 	private bool bConfigUpdated = false;
 	#endregion
 }

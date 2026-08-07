@@ -11,6 +11,7 @@
 -- key-config service; model.RequestExit()/model.PlaySfx(name) are callbacks.
 
 local PopUI = require("PopUI")
+local NavInput = require("NavInput")
 
 local SW, SH = 1920, 1080
 
@@ -61,13 +62,15 @@ mode = nil   -- "main" (a category / keys-index page) | "bind" (a key-binding ca
 
 local M               -- the model
 local tabs            -- the category tabs + keys tab + trailing exit tab
-local nTabs           -- #tabs
-local keysTabIndex    -- index of the keys tab (exit is the last tab)
-local catPages        -- catPages[catId]  = page
-local keysIndexPage   -- the keys tab page (lists the key-config rows)
-local bindPages       -- bindPages[group] = the key-binding page for a group
-local current         -- the page being shown + scrolled
-local activeTabIndex
+-- tabs.n             -- #tabs
+-- tabs.idxKeysTab    -- index of the keys tab (exit is the last tab)
+-- tabs.idxActive
+-- tabs.idxFocused
+local pages
+-- pages.cats         -- pages.cats[catId]  = page
+-- pages.keysTab      -- the keys tab page (lists the key-config rows)
+-- pages.binds        -- pages.binds[group] = the key-binding page for a group
+-- pages.current      -- the page being shown + scrolled
 local previewPanel
 local keysBack, keysTitle
 local bgCanvas
@@ -114,7 +117,7 @@ local function groupTitle(group)
     return tr("SETTINGS_UI_KEYS_GROUP_DEFAULT", "Input Settings")
 end
 
-local function activeTab() return tabs[activeTabIndex] end
+local function activeTab() return tabs[tabs.idxActive] end
 
 local function setFocusTo(w)
     if not w then return end
@@ -153,7 +156,7 @@ local function makeControl(opt)
     elseif kind == "Int" then
         local custom = (opt:Display() ~= tostring(opt.Value))
         local w = ui:slider{ w = W_SLIDER, h = 40, min = opt.Min, max = opt.Max, step = opt.Step,
-            value = opt.Value, showValue = not custom,
+            value = opt.Value, showValue = not custom or function () return opt:Display() end,
             onChange = function(v) opt:SetValue(floor(v + 0.5)) end }
         return w, custom
     elseif kind == "Choice" then
@@ -181,13 +184,13 @@ local function placeControl(ctrl, kind, entry, opt)
     ctrl._opt = opt
     -- up from the first row of a category page goes to the active tab (in main mode; in bind mode it falls
     -- through to focusPrev → the back button)
-    ctrl.onNavUp = function(self)
-        if mode == "main" and current and self == current.firstCtrl then setFocusTo(activeTab()); return true end
+    ctrl.onNavUpOrPadLeft = function(self)
+        if mode == "main" and pages.current and self == pages.current.firstCtrl then setFocusTo(activeTab()); return true end
         return false
     end
     -- down from the last row wraps up to the tab strip (two-layer nav: tab strip <-> rows, both ways)
-    ctrl.onNavDown = function(self)
-        if mode == "main" and current and self == current.lastCtrl then setFocusTo(activeTab()); return true end
+    ctrl.onNavDownOrPadRight = function(self)
+        if mode == "main" and pages.current and self == pages.current.lastCtrl then setFocusTo(activeTab()); return true end
         return false
     end
 end
@@ -224,12 +227,12 @@ local function addOptionRow(page, opt, nameOverride)
     page.lastCtrl = ctrl
 end
 
-local function newPage()
-    return { entries = {}, widgets = {}, firstCtrl = nil, contentH = 0 }
+local function newPage(keys)
+    return { keys = keys, entries = {}, widgets = {}, firstCtrl = nil, contentH = 0 }
 end
 
 local function buildCatPage(catId)
-    local page = newPage()
+    local page = newPage{ "cats", catId }
     local lastSection = nil
     for i = 0, M.Options.Count - 1 do
         local opt = M.Options[i]
@@ -244,8 +247,8 @@ local function buildCatPage(catId)
     return page
 end
 
-local function buildKeysIndexPage()
-    local page = newPage()
+local function buildKeysTabPage()
+    local page = newPage{ "idxKeysTab" }
     addHeader(page, tr("SETTINGS_UI_KEYS_INDEX_HEADER", "Input Settings"))
     for i = 0, M.Options.Count - 1 do
         local opt = M.Options[i]
@@ -274,8 +277,8 @@ local function addBindRow(page, act)
     btn._entry = entry
     btn._opt = entry.opt
     btn._act = act
-    btn.onNavUp = function(self)
-        if mode == "main" and current and self == current.firstCtrl then setFocusTo(activeTab()); return true end
+    btn.onNavUpOrPadLeft = function(self)
+        if mode == "main" and pages.current and self == pages.current.firstCtrl then setFocusTo(activeTab()); return true end
         return false
     end
     page.widgets[#page.widgets + 1] = nameLbl
@@ -286,7 +289,7 @@ local function addBindRow(page, act)
 end
 
 local function buildBindPage(group)
-    local page = newPage()
+    local page = newPage{ "binds", group }
     local actions = M.Keys:ListActions(group)
     local lastGroup = nil
     for i = 0, actions.Count - 1 do
@@ -300,68 +303,71 @@ end
 
 -- ── page show / tab switching ───────────────────────────────────────────────────────
 local function hideAllPages()
-    for _, p in pairs(catPages) do for _, w in ipairs(p.widgets) do w:setVisible(false) end end
-    if keysIndexPage then for _, w in ipairs(keysIndexPage.widgets) do w:setVisible(false) end end
-    for _, p in pairs(bindPages) do for _, w in ipairs(p.widgets) do w:setVisible(false) end end
+    for _, p in pairs(pages.cats) do for _, w in ipairs(p.widgets) do w:setVisible(false) end end
+    if pages.keysTab then for _, w in ipairs(pages.keysTab.widgets) do w:setVisible(false) end end
+    for _, p in pairs(pages.binds) do for _, w in ipairs(p.widgets) do w:setVisible(false) end end
 end
 
 local function showPage(page)
     hideAllPages()
     for _, w in ipairs(page.widgets) do w:setVisible(true) end
-    current = page
+    pages.current = page
     scrollTarget, scrollCur = 0, 0
     lastFocusIdx = -1   -- force one ensureFocusedVisible after the page changes
     ui:_rebuildFocus()
+    ui:clearPrevFocus()
 end
 
 local function setTabsVisible(b) for _, t in ipairs(tabs) do t:setVisible(b) end end
 
 local function restyleTabs()
     for i, t in ipairs(tabs) do
-        local want = (i == activeTabIndex)
+        local want = (i == tabs.idxActive)
         if t.accent ~= want then t.accent = want; t:restyle() end
     end
 end
 
 function switchTab(i)
     if tabs[i] and tabs[i]._exit then requestExit(); return end   -- never switch to the exit tab; it just leaves
-    activeTabIndex = i
+    tabs.idxActive = i
+    tabs.idxFocused = i
     mode = "main"
     keysBack:setVisible(false); keysTitle:setVisible(false)
     setTabsVisible(true)
     -- build the page lazily on first view (see the note in activate)
     if tabs[i]._catId then
         local catId = tabs[i]._catId
-        if not catPages[catId] then catPages[catId] = buildCatPage(catId) end
-        showPage(catPages[catId])
+        if not pages.cats[catId] then pages.cats[catId] = buildCatPage(catId) end
+        showPage(pages.cats[catId])
     else
-        if not keysIndexPage then keysIndexPage = buildKeysIndexPage() end
-        showPage(keysIndexPage)
+        if not pages.keysTab then pages.keysTab = buildKeysTabPage() end
+        showPage(pages.keysTab)
     end
     restyleTabs()
     setFocusTo(tabs[i])
 end
 
 function enterKeys(group)
-    if not bindPages[group] then bindPages[group] = buildBindPage(group) end
+    if not pages.binds[group] then pages.binds[group] = buildBindPage(group) end
     mode = "bind"
     setTabsVisible(false)
     keysBack:setVisible(true)
     keysTitle:setVisible(true); keysTitle:setText(groupTitle(group))
-    showPage(bindPages[group])
-    setFocusTo(current.firstCtrl or keysBack)
+    showPage(pages.binds[group])
+    setFocusTo(pages.current.firstCtrl or keysBack)
 end
 
-local function backToKeysIndex()
+local function backToKeysTab()
     keysBack:setVisible(false); keysTitle:setVisible(false)
-    switchTab(keysTabIndex)   -- back to the keys tab, not the exit tab
+    switchTab(tabs.idxKeysTab)   -- back to the keys tab, not the exit tab
+    SHARED:GetSharedSound("Cancel"):Play()
 end
 
-function enterMain() if mode == "bind" then backToKeysIndex() end end
+function enterMain() if mode == "bind" then backToKeysTab() end end
 
 -- ── scrolling + per-frame row placement ──────────────────────────────────────────
 local function ensureFocusedVisible()
-    if not current then return end
+    if not pages.current then return end
     local fw = ui.focusables[ui.focusIdx]
     if not (fw and fw._entry) then return end
     local e = fw._entry
@@ -371,11 +377,11 @@ local function ensureFocusedVisible()
 end
 
 local function reposition(dt)
-    if not current then return end
-    local maxS = max(0, current.contentH - VH)
+    if not pages.current then return end
+    local maxS = max(0, pages.current.contentH - VH)
     scrollTarget = clamp(scrollTarget, 0, maxS)
     scrollCur = scrollCur + (scrollTarget - scrollCur) * min(1, dt * 16)
-    for _, e in ipairs(current.entries) do
+    for _, e in ipairs(pages.current.entries) do
         local sy = VY + e.baseY - scrollCur
         -- let rows scroll past the pane top/bottom (they get masked in draw for a clean cut); cull only when fully off
         local onscreen = (sy + e.h >= 0) and (sy <= VY + VH)
@@ -395,9 +401,9 @@ end
 
 -- scrollbar geometry: returns maxScroll, thumbY, thumbH (or nil when the content fits)
 local function scrollMetrics()
-    if not current or not current.contentH or current.contentH <= VH then return nil end
-    local maxS = max(0, current.contentH - VH)
-    local thumbH = max(40, VH * VH / current.contentH)
+    if not pages.current or not pages.current.contentH or pages.current.contentH <= VH then return nil end
+    local maxS = max(0, pages.current.contentH - VH)
+    local thumbH = max(40, VH * VH / pages.current.contentH)
     local t = (maxS > 0) and clamp(scrollCur / maxS, 0, 1) or 0
     local thumbY = VY + (VH - thumbH) * t
     return maxS, thumbY, thumbH
@@ -421,19 +427,23 @@ end
 
 -- focus a tab: category/keys tabs switch their page on focus; the exit tab only highlights (decide/click on it
 -- exits), so cycling onto it never exits by accident
-local function focusTab(i)
-    if tabs[i]._exit then setFocusTo(tabs[i]) else switchTab(i) end
+local function focusTab(i, silence)
+    if tabs[i]._exit then
+        setFocusTo(tabs[i]); tabs.idxFocused = i
+        if silence then ui:clearPrevFocus() end
+    else
+        switchTab(i)
+        if silence then ui:clearPrevFocus()
+        else SHARED:GetSharedSound("Skip"):Play()
+        end
+    end
 end
 
 -- horizontal arrows (or LBlue/RBlue) move between tabs, only while a tab is focused, and wrap both ways across
 -- all tabs including the exit tab
-local function handleTabKeys()
-    local fw = ui.focusables[ui.focusIdx]
-    if not (fw and fw._tab) then return end
-    local right = INPUT:KeyboardPressed("RightArrow") or INPUT:Pressed("RBlue")
-    local left  = INPUT:KeyboardPressed("LeftArrow") or INPUT:Pressed("LBlue")
-    if right then focusTab(fw._tab % nTabs + 1)
-    elseif left then focusTab((fw._tab - 2) % nTabs + 1) end
+local function setupHandleTabKeys(tab)
+    function tab:onNavRight() focusTab((tabs.idxFocused or 1) % tabs.n + 1); return true end
+    function tab:onNavLeft() focusTab(((tabs.idxFocused or 1) - 2) % tabs.n + 1); return true end
 end
 
 -- ── gradient background ───────────────────────────────────────────────────────────
@@ -459,8 +469,8 @@ local function currentTitleDesc()
     local opt = focusedOpt()
     if opt then return opt.Name, opt.Desc, opt end
     if mode == "bind" then return keysTitle.text, tr("SETTINGS_UI_KEYS_BIND_DESC", "Pick an action. Each can hold several keys: Enter adds one, Delete removes the most recent."), nil end
-    if activeTabIndex and activeTabIndex <= 3 then
-        return M.CategoryLabels[activeTabIndex - 1], M.CategoryDescs[activeTabIndex - 1], nil
+    if tabs.idxActive and tabs.idxActive < tabs.idxKeysTab then
+        return M.CategoryLabels[tabs.idxActive - 1], M.CategoryDescs[tabs.idxActive - 1], nil
     end
     return tr("SETTINGS_UI_KEYS", "Input Settings"), tr("SETTINGS_UI_KEYS_PREVIEW_DESC", "Configure your controls."), nil
 end
@@ -507,18 +517,6 @@ local function drawPreview()
     end
 end
 
--- int values whose :Display() differs from the raw number, drawn next to the slider
-local function drawCustomValues()
-    if not current then return end
-    local sz = ui.theme.font.small
-    for _, e in ipairs(current.entries) do
-        if e.kind == "option" and e.customDisplay and e.ctrl.y > -9000 then
-            local cy = e.ctrl.y + e.ctrl.h * 0.5
-            ui:drawText(sz, e.opt:Display(), e.ctrl.x + e.ctrl.w + 18, floor(cy - ui:textHeight(sz) * 0.5), ui.theme.colors.text)
-        end
-    end
-end
-
 -- ── lifecycle ─────────────────────────────────────────────────────────────────────
 function onStart() end
 
@@ -527,7 +525,7 @@ function activate(model)
     mode = "main"; scrollTarget, scrollCur = 0, 0; lastTs = 0
     wasCapturing = false; captureBtn = nil; lastThumbIdx, lastThumbOpt = nil, nil
     thumbWantIdx, thumbWantOpt, thumbWantSince = nil, nil, 0
-    catPages = {}; bindPages = {}; tabs = {}; current = nil
+    pages = { cats = {}, keysTab = nil, binds = {}, current = nil }; tabs = {}
 
     ui = PopUI.new{ theme = THEME, bg = false }
     bakeGradient()
@@ -537,32 +535,42 @@ function activate(model)
     for i = 0, M.CategoryLabels.Count - 1 do tabLabels[#tabLabels + 1] = M.CategoryLabels[i] end
     tabLabels[#tabLabels + 1] = tr("SETTINGS_UI_KEYS", "Input")
     local tx = VX
-    local function tabNavDown() if mode == "main" and current and current.firstCtrl then setFocusTo(current.firstCtrl); return true end return false end
-    local function tabNavUp() if mode == "main" and current and current.lastCtrl then setFocusTo(current.lastCtrl); return true end return true end
+    local function tabDecide(self) self:keyActivate(); return self:onNavDown() end
+    local function tabNavDown()
+        if mode == "main" and pages.current and pages.current.firstCtrl then setFocusTo(pages.current.firstCtrl); return true end
+        return false
+    end
+    local function tabNavUp()
+        if mode == "main" and pages.current and pages.current.lastCtrl then setFocusTo(pages.current.lastCtrl); return true end
+        return true
+    end
     for i, label in ipairs(tabLabels) do
         local catId = (i <= M.Categories.Count) and M.Categories[i - 1] or nil
         local t = ui:button{ text = label, y = TAB_Y, h = TAB_H, onClick = function() switchTab(i) end }
         t._tab = i; t._catId = catId
+        t.onDecide = tabDecide
         t.onNavDown = tabNavDown
         t.onNavUp = tabNavUp   -- up from a tab wraps to the last row
+        setupHandleTabKeys(t)
         t.x = floor(tx); tx = tx + t.w + 16
         tabs[i] = t
     end
-    keysTabIndex = #tabs   -- the keys tab is the last category-strip entry (exit is appended after)
+    tabs.idxKeysTab = #tabs   -- the keys tab is the last category-strip entry (exit is appended after)
     -- trailing exit tab: decide/click leaves the config; cycling onto it just highlights it
     do
         local i = #tabs + 1
-        local t = ui:button{ text = tr("SETTINGS_UI_EXIT", "Exit"), y = TAB_Y, h = TAB_H, onClick = function() requestExit() end }
+        local t = ui:button{ text = tr("SETTINGS_UI_EXIT", "Exit"), y = TAB_Y, h = TAB_H, onClick = requestExit, sfx = { click = "" } }
         t._tab = i; t._exit = true
         t.onNavDown = tabNavDown
         t.onNavUp = tabNavUp
+        setupHandleTabKeys(t)
         t.x = floor(tx); tx = tx + t.w + 16
         tabs[i] = t
     end
-    nTabs = #tabs
+    tabs.n = #tabs
 
     -- keys-mode chrome, shown only while binding keys
-    keysBack = ui:button{ text = tr("SETTINGS_UI_BACK", "< Back"), x = VX, y = TAB_Y, h = TAB_H, onClick = backToKeysIndex }
+    keysBack = ui:button{ text = tr("SETTINGS_UI_BACK", "< Back"), x = VX, y = TAB_Y, h = TAB_H, onClick = backToKeysTab, sfx = { click = "" } }
     keysBack:setVisible(false)
     keysTitle = ui:label{ text = "", x = floor(keysBack.x + keysBack.w + 40), y = TAB_Y + 18, size = "title", color = THEME.colors.text }
     keysTitle:setVisible(false)
@@ -580,15 +588,22 @@ function reload(model)
     -- language-dependent, so the shared PopUI fonts must be flushed and rebuilt with the new typeface
     -- (their old glyph textures are disposed with them — nothing stacks across switches).
     PopUI.flushSharedFonts()
-    local keepTab   = activeTabIndex or 1
+    local keepTab   = tabs.idxActive or 1
+    local keepTabFocus = tabs.idxFocused or keepTab
     local keepFocus = ui and ui.focusIdx or 1
+    local keepCapturing = ui and ui.focusables[ui.focusIdx] and ui.focusables[ui.focusIdx].capturing or false
     local keepST, keepSC = scrollTarget, scrollCur
+    local keepPageKeys = pages.current and pages.current.keys
     if ui then ui:disposeWidgets(); ui:clear() end
     activate(model)
-    if keepTab > 1 and keepTab <= nTabs then switchTab(keepTab) end
+    if keepTab > 1 and keepTab <= tabs.n then switchTab(keepTab) end
+    if keepTabFocus ~= keepTab and keepTabFocus > 1 and keepTabFocus <= tabs.n then focusTab(keepTab, silence) end
+    if keepPageKeys and keepPageKeys[1] == "binds" then enterKeys(keepPageKeys[2]) end
     scrollTarget, scrollCur = keepST, keepSC
     ui.focusIdx = clamp(keepFocus, 1, math.max(1, #ui.focusables))
     lastFocusIdx = ui.focusIdx   -- keep the restored scroll: no focus-follow snap on the next update
+    local fw = ui.focusables[ui.focusIdx]
+    if ui.focusIdx == keepFocus and fw then fw:setCapturing(keepCapturing) end
 end
 
 function update(ts)
@@ -624,7 +639,6 @@ function update(ts)
     local r = ui:update(ts)
 
     if not typing then
-        handleTabKeys()
         -- bind mode: delete/backspace clears the most-recently-added binding of the focused action
         if mode == "bind" and (INPUT:KeyboardPressed("Delete") or INPUT:KeyboardPressed("Backspace")) then
             local fw = ui.focusables[ui.focusIdx]
@@ -640,13 +654,14 @@ function update(ts)
     if exitRequested then
         exitRequested = false
         if M.RequestExit then M.RequestExit() end
+        SHARED:GetSharedSound("Cancel"):Play()
         return "exit"
     end
 
     -- keep number-input boxes showing the clamped model value when not being edited (click-away / esc leave the
     -- raw typed text, so re-sync from opt.Value once editing ends)
-    if current then
-        for _, e in ipairs(current.entries) do
+    if pages.current then
+        for _, e in ipairs(pages.current.entries) do
             if e.ctrl and e.ctrl._isTextInput and not e.ctrl._capturing then e.ctrl.value = tostring(e.opt.Value) end
         end
     end
@@ -656,8 +671,12 @@ function update(ts)
     reposition(dt)
 
     if r == "cancel" then
-        if mode == "bind" then backToKeysIndex()
-        else if M.RequestExit then M.RequestExit() end; return "exit" end
+        if mode == "bind" then backToKeysTab()
+        else
+            if M.RequestExit then M.RequestExit() end
+            SHARED:GetSharedSound("Cancel"):Play()
+            return "exit"
+        end
     end
 end
 
@@ -665,7 +684,6 @@ function draw()
     if M == nil then return end
     drawGradient()
     ui:draw()             -- tabs (bottom z) + rows (top z) + preview panel
-    drawCustomValues()    -- slider :Display() values, at row positions
 
     -- header mask: cover the area above the pane top so rows that scrolled up are cut cleanly (no abrupt pop, no
     -- overlap with the tab strip). the colour matches the gradient at y=VY for a seamless seam.

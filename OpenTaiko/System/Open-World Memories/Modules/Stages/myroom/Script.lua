@@ -18,6 +18,7 @@ local PopUI    = require("PopUI")
 local I18N      = require("i18n")
 local MO       = require("online")          -- P2P "visit my room" (lobby + presence); see online.lua
 local JB       = require("jukebox")         -- the Jukebox furniture's audio player; see jukebox.lua
+local NavInput = require("NavInput")
 local net      = MO.net
 
 local SCREEN_W, SCREEN_H = 1920, 1080
@@ -94,7 +95,7 @@ local function jukeboxKey() return (saveKey():gsub("^room_", "jukebox_")) end
 local persistLocked = false    -- deactivate snapshots the live state, then LOCKS so the teardown
                                -- stopAll (which fires onState with an empty state) can't wipe it
 local function persistJukebox()
-    if persistLocked then return end
+    if persistLocked or (IsSongsEnumDone and not IsSongsEnumDone()) then return end
     if net.online and not net.isHost then return end   -- never persist a host's song into a guest save
     if store == nil then return end
     local st = JB.persistState()
@@ -117,7 +118,6 @@ local function loadRoom()
     JB.stopAll()
     if jbSaved then
         JB.restoreState(jbSaved)
-        persistJukebox()               -- re-persist right away (stopAll just wrote the empty state)
     end
 end
 saveRoom = function()
@@ -234,6 +234,7 @@ function deactivate()
     saveRoom()
     if pcScreen and pcScreen:active() then pcScreen:close() end
     if mode == "edit" and edit then edit:leave() end
+    PCS.tickBgmFade(math.huge)                     -- force finishing fading out
     persistJukebox()                               -- snapshot the LIVE playing position first...
     persistLocked = true                           -- ...lock it against the teardown's own onState...
     JB.stopAll()                                   -- ...then kill jukebox audio + UI with the stage
@@ -386,7 +387,8 @@ local function playPhoneSound(stem)
         if s then pcall(function() s:SetVolume(100) end) end
         phoneSfx[stem] = s or false
     end
-    if phoneSfx[stem] then pcall(function() phoneSfx[stem]:Play() end) end
+    if phoneSfx[stem] then return pcall(function() phoneSfx[stem]:Play() end) end
+    return false
 end
 local function startBombs() bombFx = { t = 0, dur = 3.0, next = 0 } end  -- { t, dur, next }
 local function dialPhone(input)
@@ -398,7 +400,7 @@ local function dialPhone(input)
         local n = (input and input ~= "" and input) or I18N.tr("the number")
         mode = "dialogue"; phoneFlow = nil
         dlg:start({ { name = "", text = I18N.trf("You dial %s... It rings, and rings. Nobody picks up.", n) } })
-        return
+        return false
     end
     -- guarded like every other data-file read: a malformed entry (bare string, nested field) must
     -- degrade to the no-answer placeholder, not error out of the update path
@@ -417,13 +419,15 @@ local function dialPhone(input)
     end
     if name then name = I18N.tr(name) end        -- localized via lang/ja.lua (English text = the key)
     if text then text = I18N.tr(text) end
-    if sound and sound ~= "" and (text == nil or text == "") then
-        playPhoneSound(sound); mode = "play"; return  -- sound-only (e.g. 1122 → egg.ogg), no message
-    end
-    if sound and sound ~= "" then playPhoneSound(sound) end
+    local wantSilent
+    if sound and sound ~= "" then wantSilent = playPhoneSound(sound) end
     if effect == "bombs" then startBombs() end
-    mode = "dialogue"; phoneFlow = nil
-    dlg:start({ { name = name or "", text = text or "" } })
+    if text == nil or text == "" then mode = "play"  -- sound-only (e.g. 1122 → egg.ogg), no message
+    else
+        mode = "dialogue"; phoneFlow = nil
+        dlg:start({ { name = name or "", text = text or "" } })
+    end
+    return wantSilent
 end
 
 -- the bomb storm: explosion bursts around the player + screen shake, ticked every frame while active
@@ -549,22 +553,22 @@ local buildPhoneMenu   -- forward decl (the textbox panes route Back into it)
 
 local function buildPhoneTextPane(title, hintText, maxLen, confirmLabel, onConfirm)
     if phoneUI then phoneUI:disposeWidgets() end
-    local ui = PopUI.new{ theme = PHONE_THEME }
+    local ui = PopUI.new{ theme = PHONE_THEME, navPlayer = playerIndex + 1 }
     phoneUI = ui
     local x, y, w = SCREEN_W / 2 - 430, 330, 860
     ui:panel{ x = x, y = y, w = w, h = 330, title = title }
     local tb = ui:textbox{ x = x + 40, y = y + 100, w = w - 80, h = 76, value = "", maxLen = maxLen,
                            placeholder = hintText,
-                           onSubmit = function(t) onConfirm(t) end }
+                           onSubmit = function(t) return onConfirm(t) end }
     ui:button{ text = confirmLabel, x = x + 40, y = y + 210, w = 300, h = 76, accent = true,
-               onClick = function() onConfirm(tb.value or "") end }
+               onClick = function() return onConfirm(tb.value or "") end }
     ui:button{ text = I18N.tr("Back"), x = x + w - 240, y = y + 210, w = 200, h = 76,
-               onClick = function() buildPhoneMenu() end }
+               onClick = function() buildPhoneMenu() end, sfx = { click = "cancel" } }
 end
 
 buildPhoneMenu = function()
     if phoneUI then phoneUI:disposeWidgets() end
-    local ui = PopUI.new{ theme = PHONE_THEME }
+    local ui = PopUI.new{ theme = PHONE_THEME, navPlayer = playerIndex + 1 }
     phoneUI = ui
     local entries
     if net.online and net.isHost then
@@ -595,7 +599,8 @@ buildPhoneMenu = function()
                 dlg:start(landlordScript())
             elseif v == "number" then
                 buildPhoneTextPane(I18N.tr("Enter a number"), I18N.tr("number..."), 16, I18N.tr("Call"), function(t)
-                    closePhone(); dialPhone(t)       -- looks up data/phone_numbers.json (events/eggs)
+                    closePhone();
+                    return dialPhone(t)  -- looks up data/phone_numbers.json (events/eggs)
                 end)
             elseif v == "invite" then
                 if not JB.songsEnumReady() then
@@ -615,21 +620,22 @@ buildPhoneMenu = function()
                 buildPhoneTextPane(I18N.tr("Join a friend"), I18N.tr("paste the room code..."), 4096, I18N.tr("Join"), function(t)
                     closePhone()
                     local code = (t ~= "" and t) or nil
-                    if code then
-                        if MO.join(code) then
-                            JB.stopAll()   -- our own music stays home; the host's jukebox takes over
-                            msg = net.msg or I18N.tr("Connecting…")
-                        else
-                            msg = net.msg or I18N.tr("Could not join.")
-                        end
-                        msgT = 6
+                    if not code then SHARED:GetSharedSound("Cancel"):Play(); return true end
+                    if MO.join(code) then
+                        JB.stopAll()   -- our own music stays home; the host's jukebox takes over
+                        msg = net.msg or I18N.tr("Connecting…")
+                    else
+                        msg = net.msg or I18N.tr("Could not join.")
                     end
+                    msgT = 6
                 end)
                 end
             elseif v == "stophost" then
                 MO.leave(); closePhone(); msg = I18N.tr("You closed the room."); msgT = 4
             else
+                SHARED:GetSharedSound("Cancel"):Play()
                 closePhone()
+                return true
             end
         end,
     }
@@ -648,11 +654,15 @@ local function closePlayerSelect()
 end
 -- commit to a player: read THAT save (coins/unlocks via GetSaveFile(playerIndex)) and load its room
 local function pickPlayer(i)
-    playerIndex = i
     MO.playerIndex = i
     if pcScreen then pcScreen.playerIndex = i end
-    loadRoom()
-    rebuild()
+    if edit then edit.playerIndex = i end
+    if i ~= playerIndex then
+        persistJukebox()
+        playerIndex = i
+        loadRoom()
+        rebuild()
+    end
     spawnAtEntrance()
     closePlayerSelect()
     mode = "play"
@@ -670,7 +680,7 @@ openPlayerSelect = function()
         return
     end
     closePlayerSelect()
-    local ui = PopUI.new{ theme = PHONE_THEME }
+    local ui = PopUI.new{ theme = PHONE_THEME, navPlayer = nil } -- accessible by all players
     playerSelUI = ui
     local x, y, w = SCREEN_W / 2 - 380, 210, 760
     local h = 120 + #entries * 78 + 40
@@ -734,21 +744,28 @@ local function clampCamera()
     if cam.pitch > -15 then cam.pitch = -15 elseif cam.pitch < -50 then cam.pitch = -50 end
 end
 
--- edit-mode camera: RMB drag rotates, wheel zooms, WASD/arrows PAN the look-at target on the ground
--- plane (the player character does not move while editing). Same clamps as play mode.
-local function editCamera(dt)
+-- getting mouse deltas clears the deltas, so passed by the caller instead of getting here
+local function panCamera(dmx, dmy)
     local cam = world.cam
-    local dmx, dmy = INPUT:GetMouseDelta()
-    if INPUT:MousePressing("Right") then cam:orbit(dmx * YAW_SENS, -dmy * PITCH_SENS) end
+    if INPUT:MousePressing("Right") then
+        cam:orbit(dmx * YAW_SENS, -dmy * PITCH_SENS)
+    end
     if kd("Q") then cam:orbit(-90 * dt) end
     if kd("E") then cam:orbit(90 * dt) end
     clampCamera()
-    local _, scrollY = INPUT:GetScrollDelta()
+end
+
+local function zoomCamera(scrollY)
     if scrollY ~= 0 then
+        local cam = world.cam
         local d = cam.dist * (1 - scrollY * 0.12)
         local lo, hi = cam.minDist or 6, cam.maxDist or 60
         cam.dist = (d < lo) and lo or ((d > hi) and hi or d)
     end
+end
+
+local function getMoveUnitIsoXZ()
+    local cam = world.cam
     local fy = rad(cam.yaw)
     local fwdX, fwdZ = sin(fy), cos(fy)
     local rgtX, rgtZ = cos(fy), -sin(fy)
@@ -757,11 +774,22 @@ local function editCamera(dt)
     if kd("S") or kd("DownArrow")  then mx = mx - fwdX; mz = mz - fwdZ end
     if kd("D") or kd("RightArrow") then mx = mx + rgtX; mz = mz + rgtZ end
     if kd("A") or kd("LeftArrow")  then mx = mx - rgtX; mz = mz - rgtZ end
-    if mx ~= 0 or mz ~= 0 then
-        local sp = 7 * dt
-        cam:setTarget((cam.tx or 0) + mx * sp, cam.ty or (FY + 0.4), (cam.tz or 0) + mz * sp)
-    end
+    return mx, mz
 end
+
+-- edit-mode camera: RMB drag rotates, wheel zooms, WASD/arrows PAN the look-at target on the ground
+-- plane (the player character does not move while editing). Same clamps as play mode.
+local function getEditCameraFuncs(dt) return {
+    pan = panCamera,
+    zoom = zoomCamera,
+    move = function()
+        local ix, iz = getMoveUnitIsoXZ()
+        if ix ~= 0 or iz ~= 0 then
+            local sp = 7 * dt
+            cam:setTarget((cam.tx or 0) + ix * sp, cam.ty or (FY + 0.4), (cam.tz or 0) + iz * sp)
+        end
+    end,
+} end
 
 function update(ts)
     local dt = (ts - lastTs) / 1000.0
@@ -791,7 +819,8 @@ function update(ts)
             if phoneJustOpened then
                 phoneJustOpened = false                 -- consume the edge that opened My Room
             elseif playerSelUI:update(ts) == "cancel" then
-                closePlayerSelect(); MO.leave(); GLOBALCAMERA:Reset(); return Exit("stage", "_title")
+                closePlayerSelect(); MO.leave(); GLOBALCAMERA:Reset(); SHARED:GetSharedSound("Cancel"):Play()
+                return Exit("stage", "_title")
             end
         else
             mode = "play"
@@ -811,6 +840,7 @@ function update(ts)
             if phoneJustOpened then
                 phoneJustOpened = false      -- consume the keypress edge that opened the phone
             elseif phoneUI:update(ts) == "cancel" then
+                SHARED:GetSharedSound("Cancel"):Play()
                 closePhone()
             end
         else
@@ -821,8 +851,7 @@ function update(ts)
         if jbRes == "closed" or not JB.isOpen() then mode = "play" end
         settlePlayer(dt); world:update(dt, px, py, pz); return nil
     elseif mode == "edit" then
-        editCamera(dt)                 -- RMB rotate, WASD pan the target, wheel zoom (player is parked)
-        if edit:update(ts) == "exit" then
+        if edit:update(ts, getEditCameraFuncs(dt)) == "exit" then
             mode = "play"; pmoving = false
             if editSavedCam then       -- restore the exact camera the player had before editing
                 local s = editSavedCam
@@ -834,7 +863,8 @@ function update(ts)
         settlePlayer(dt); world:update(dt, px, py, pz); return nil
     end
 
-    if kp("Escape") then
+    if NavInput.p[playerIndex + 1].cancel() then
+        SHARED:GetSharedSound("Cancel"):Play()
         if MO.isGuest() then backToOwnRoom(I18N.tr("You left the room.")); return nil end
         MO.leave(); GLOBALCAMERA:Reset(); saveRoom(); return Exit("stage", "_title")
     end
@@ -842,30 +872,12 @@ function update(ts)
 
     -- camera orbit / zoom (iso_demo2 parity), wall-clamped so both walls always face the camera
     local dmx, dmy = INPUT:GetMouseDelta()
-    if INPUT:MousePressing("Right") then
-        world.cam:orbit(dmx * YAW_SENS, -dmy * PITCH_SENS)
-    end
-    if kd("Q") then world.cam:orbit(-90 * dt) end
-    if kd("E") then world.cam:orbit(90 * dt) end
-    clampCamera()
+    panCamera(dmx, dmy)
     local _, scrollY = INPUT:GetScrollDelta()
-    if scrollY ~= 0 then
-        local d = world.cam.dist * (1 - scrollY * 0.12)
-        local lo = world.cam.minDist or 6
-        local hi = world.cam.maxDist or 60
-        if d < lo then d = lo elseif d > hi then d = hi end
-        world.cam.dist = d
-    end
+    zoomCamera(scrollY)
 
     -- movement on the physics character, camera-relative like iso_demo2 (wish dir from cam yaw)
-    local fy = rad(world.cam.yaw)
-    local fwdX, fwdZ = sin(fy), cos(fy)
-    local rgtX, rgtZ = cos(fy), -sin(fy)
-    local ix, iz = 0, 0
-    if kd("W") or kd("UpArrow")    then ix = ix + fwdX; iz = iz + fwdZ end
-    if kd("S") or kd("DownArrow")  then ix = ix - fwdX; iz = iz - fwdZ end
-    if kd("D") or kd("RightArrow") then ix = ix + rgtX; iz = iz + rgtZ end
-    if kd("A") or kd("LeftArrow")  then ix = ix - rgtX; iz = iz - rgtZ end
+    local ix, iz = getMoveUnitIsoXZ()
     player:move(dt, ix, iz, moveSpeed, false)
     px, py, pz = player:pos()
 
@@ -902,6 +914,7 @@ function update(ts)
             local idx = 1
             for i, e in ipairs(inter) do if e.key == focusKey then idx = i; break end end
             focusKey = inter[idx % #inter + 1].key
+            SHARED:GetSharedSound("Skip"):Play()
         elseif not net.online then       -- no room editing while online (hosting or visiting)
             local pc, pr = world:worldToCell(px, pz)
             -- remember the full camera to restore on exit, then reset to a clean, framed editing view
@@ -912,7 +925,9 @@ function update(ts)
             fit = math.min(world.cam.maxDist or fit, math.max(world.cam.minDist or fit, fit))
             world.cam:setRig{ yaw = 45, pitch = -40, fov = FOV, dist = fit }
             world.cam:setTarget(room:gridW() * 0.5, FY + 0.4, room:gridH() * 0.5)
-            edit:enter(pc, pr); mode = "edit"; return nil
+            edit:enter(pc, pr); mode = "edit"
+            SHARED:GetSharedSound("Decide"):Play()
+            return nil
         end
     end
 
@@ -921,24 +936,31 @@ function update(ts)
     if focusKey then for _, e in ipairs(inter) do if e.key == focusKey then focused = e; break end end end
     prompt = focused and focused.kind or nil
     interactGlow(focused)
-    if focused and (kp("Return") or kp("Space")) then
+    if focused and (NavInput.p[playerIndex + 1].decide() or kp("Space")) then
         if focused.kind == "exit" then
+            SHARED:GetSharedSound("Cancel"):Play()
             if MO.isGuest() then backToOwnRoom(I18N.tr("You left the room.")); return nil end
-            MO.leave(); GLOBALCAMERA:Reset(); saveRoom(); return Exit("stage", "_title")
+            MO.leave(); GLOBALCAMERA:Reset(); saveRoom()
+            return Exit("stage", "_title")
         elseif focused.kind == "computer" then
             JB.setDuck(true)               -- jukebox fades down first; the PC BGM fades in after it
+            SHARED:GetSharedSound("Decide"):Play()
             pcScreen:openScreen(); mode = "pc"
         elseif focused.kind == "phone" then
+            SHARED:GetSharedSound("Decide"):Play()
             openPhone()
         elseif focused.kind == "lamp" then
+            SHARED:GetSharedSound("Move"):Play()
             focused.it.lit = (focused.it.lit == false) and true or false   -- toggle on/off
             rebuild(); saveRoom(); MO.onRoomChanged()
         elseif focused.kind == "pod" then
+            SHARED:GetSharedSound("Decide"):Play()
             mode = "dialogue"; phoneFlow = nil
             dlg:start({ { name = "", text = dlgLoc("pod", "locked",
                 "You press the panel on the Mysterious pod. It hums, but nothing opens. Not yet.") } })
         elseif focused.kind == "jukebox" then
-            JB.openFor(focused.it, Room.displayName("jukebox"))
+            SHARED:GetSharedSound("Decide"):Play()
+            JB.openFor(focused.it, Room.displayName("jukebox"), playerIndex)
             mode = "jukebox"
         end
     end

@@ -15,28 +15,20 @@ internal class CActImplRunner : CActivity {
 
 	public void Start(int Player, bool IsMiss, CChip? pChip) {
 		if (Runner != null && !OpenTaiko.ConfigIni.SimpleMode) {
-			while (stRunners[Index].bUse) {
-				Index += 1;
-				if (Index >= 128) {
-					Index = 0;
-					break; // 2018.6.15 IMARER 無限ループが発生するので修正
+			ref var runner = ref stRunners[RunnerTail];
+			if (!(runner.bUse || NotesManager.IsGenericRoll(pChip) || NotesManager.IsRollEnd(pChip))) {
+				RunnerTail = (RunnerTail + 1) % RUNNER_COUNT;
+				runner.bUse = true;
+				runner.nPlayer = Player;
+				if (IsMiss == true) {
+					runner.nType = 0;
+				} else {
+					runner.nType = random.Next(1, Type + 1);
 				}
-			}
-			if (!(NotesManager.IsGenericRoll(pChip) || NotesManager.IsRollEnd(pChip))) {
-				if (!stRunners[Index].bUse) {
-					stRunners[Index].bUse = true;
-					stRunners[Index].nPlayer = Player;
-					if (IsMiss == true) {
-						stRunners[Index].nType = 0;
-					} else {
-						stRunners[Index].nType = random.Next(1, Type + 1);
-					}
-					stRunners[Index].ctProgress = new CCounter(0, OpenTaiko.Skin.Resolution[0], Timer, OpenTaiko.Timer);
-					stRunners[Index].nOldValue = 0;
-					stRunners[Index].nNowPtn = 0;
-					stRunners[Index].fX = 0;
-				}
-
+				runner.ctProgress = new CCounter(0, OpenTaiko.Skin.Resolution[0], Timer, OpenTaiko.Timer);
+				runner.nOldValue = 0;
+				runner.nNowPtn = 0;
+				runner.fX = 0;
 			}
 		}
 	}
@@ -47,11 +39,13 @@ internal class CActImplRunner : CActivity {
 			return;
 		}
 
-		for (int i = 0; i < 128; i++) {
-			stRunners[i] = new STRunner();
-			stRunners[i].bUse = false;
-			stRunners[i].ctProgress = new CCounter();
+		for (int i = 0; i < RUNNER_COUNT; i++) {
+			ref var runner = ref stRunners[i];
+			runner = new STRunner();
+			runner.bUse = false;
+			runner.ctProgress = new CCounter();
 		}
+		RunnerHead = RunnerTail = 0;
 
 		var preset = HScenePreset.GetBGPreset();
 
@@ -83,7 +77,7 @@ internal class CActImplRunner : CActivity {
 			return;
 		}
 
-		for (int i = 0; i < 128; i++) {
+		for (int i = 0; i < RUNNER_COUNT; i++) {
 			stRunners[i].ctProgress = null;
 		}
 
@@ -105,24 +99,33 @@ internal class CActImplRunner : CActivity {
 			return base.Draw();
 		}
 
-		for (int i = 0; i < 128; i++) {
-			if (stRunners[i].bUse) {
-				stRunners[i].nOldValue = stRunners[i].ctProgress.CurrentValue;
-				stRunners[i].ctProgress.Tick();
-				if (stRunners[i].ctProgress.IsEnded || stRunners[i].fX > OpenTaiko.Skin.Resolution[0]) {
-					stRunners[i].ctProgress.Stop();
-					stRunners[i].bUse = false;
+		var prevHead = RunnerHead;
+		for (int i = 0; i < RUNNER_COUNT; i++) {
+			var iRunner = (prevHead + i) % RUNNER_COUNT;
+			ref var runner = ref stRunners[iRunner];
+			if (!runner.bUse) {
+				if (iRunner == RunnerTail)
+					break;
+			} else {
+				runner.nOldValue = runner.ctProgress.CurrentValue;
+				runner.ctProgress.Tick();
+				if (runner.ctProgress.IsEnded || runner.fX > OpenTaiko.Skin.Resolution[0]) {
+					runner.ctProgress.Stop();
+					runner.bUse = false;
+					if (iRunner == RunnerHead)
+						RunnerHead = (RunnerHead + 1) % RUNNER_COUNT;
 				}
-				for (int n = stRunners[i].nOldValue; n < stRunners[i].ctProgress.CurrentValue; n++) {
-					stRunners[i].fX += (float)CTja.TjaBeatSpeedToGameBeatSpeed(OpenTaiko.stageGameScreen.actPlayInfo.dbBPM[stRunners[i].nPlayer]) / 18;
+				int progress = runner.ctProgress.CurrentValue - runner.nOldValue;
+				if (progress > 0) {
+					runner.fX += progress * (float)(OpenTaiko.Skin.ScaleX * Math.Abs(OpenTaiko.stageGameScreen.actPlayInfo.dbGameBPS(runner.nPlayer)) * 10 / 3);
 					int Width = OpenTaiko.Skin.Resolution[0] / Ptn;
-					stRunners[i].nNowPtn = (int)stRunners[i].fX / Width;
+					runner.nNowPtn = (int)runner.fX / Width;
 				}
 				if (Runner != null) {
-					if (stRunners[i].nPlayer == 0) {
-						Runner.t2DDraw((int)(StartPoint_X[0] + stRunners[i].fX), StartPoint_Y[0], new Rectangle(stRunners[i].nNowPtn * Size[0], stRunners[i].nType * Size[1], Size[0], Size[1]));
+					if (runner.nPlayer == 0) {
+						Runner.t2DDraw((int)(StartPoint_X[0] + runner.fX), StartPoint_Y[0], new Rectangle(runner.nNowPtn * Size[0], runner.nType * Size[1], Size[0], Size[1]));
 					} else {
-						Runner.t2DDraw((int)(StartPoint_X[1] + stRunners[i].fX), StartPoint_Y[1], new Rectangle(stRunners[i].nNowPtn * Size[0], stRunners[i].nType * Size[1], Size[0], Size[1]));
+						Runner.t2DDraw((int)(StartPoint_X[1] + runner.fX), StartPoint_Y[1], new Rectangle(runner.nNowPtn * Size[0], runner.nType * Size[1], Size[0], Size[1]));
 					}
 				}
 			}
@@ -142,9 +145,11 @@ internal class CActImplRunner : CActivity {
 		public float fX;
 		public CCounter ctProgress;
 	}
-	private STRunner[] stRunners = new STRunner[128];
+	private const int RUNNER_COUNT = 128; // circular queue
+	private readonly STRunner[] stRunners = new STRunner[RUNNER_COUNT];
 	Random random = new Random();
-	int Index = 0;
+	int RunnerHead = 0;
+	int RunnerTail = 0;
 
 	private CTexture Runner;
 

@@ -5,6 +5,8 @@
 -- LeftChange/UpArrow    → scroll up
 -- Cancel/Escape         → exit
 
+local NavInput = require("NavInput")
+
 -- ─────────────────────────────────────────────────────────────────────────────
 -- State
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -90,20 +92,20 @@ end
 
 function update(_timestamp)
     -- Cancel / Back → exit back to the previous stage
-    if INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+    if NavInput.cancel() then
         sounds.Cancel:Play()
         return Exit("title", nil)
     end
 
     local maxScroll = math.max(0, #rows - VISIBLE_ROWS)
 
-    if INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("DownArrow") then
+    if NavInput.downOrPadRight() then
         local prev = scrollIdx
         scrollIdx = clamp(scrollIdx + 1, 0, maxScroll)
         if scrollIdx ~= prev then sounds.Move:Play() end
     end
 
-    if INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("UpArrow") then
+    if NavInput.upOrPadLeft() then
         local prev = scrollIdx
         scrollIdx = clamp(scrollIdx - 1, 0, maxScroll)
         if scrollIdx ~= prev then sounds.Move:Play() end

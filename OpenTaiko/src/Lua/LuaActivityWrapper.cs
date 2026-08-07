@@ -1,11 +1,13 @@
 ﻿namespace OpenTaiko {
-	public class LuaActivityWrapper {
+	public class LuaActivityWrapper : LuaROActivityWrapper {
 		// Used to search activities in the global activities dictionary from lua stages
 		public static Dictionary<string, LuaActivityWrapper> _allLuaActivities = new Dictionary<string, LuaActivityWrapper>();
 
+		// All global operations except querying is also performed on the global ROActivities dictionary
 		#region [Setters]
 
 		public static void ResetLuaActivityDictionary() {
+			ResetROActivityDictionary();
 			foreach (KeyValuePair<string, LuaActivityWrapper> _act in _allLuaActivities) {
 				_act.Value.DisposeActivity();
 			}
@@ -27,25 +29,21 @@
 
 		#region [Executers]
 
-		public static void PropagateAfterSongEnumEvent() {
+		public static new void PropagateAfterSongEnumEvent() {
+			LuaROActivityWrapper.PropagateAfterSongEnumEvent();
 			foreach (KeyValuePair<string, LuaActivityWrapper> _act in _allLuaActivities) {
 				_act.Value.AfterSongsEnum();
 			}
 		}
 
-		public static void PropagateOnDestroy() {
+		public static new void PropagateOnDestroy() {
+			LuaROActivityWrapper.PropagateOnDestroy();
 			foreach (KeyValuePair<string, LuaActivityWrapper> _act in _allLuaActivities) {
 				_act.Value.OnDestroy();
 			}
 		}
 
 		#endregion
-
-		private CLuaActivityScript lcActScript;
-
-		public void DisposeActivity() {
-			lcActScript?.Dispose();
-		}
 
 		public LuaActivityWrapper(string name, bool isGlobal = false) {
 			if (isGlobal == false) lcActScript = new CLuaActivityScript(CSkin.Path($"Modules/Activities/{name}"), name);
@@ -54,61 +52,9 @@
 			_allLuaActivities.Add(name, this);
 
 		}
-
-		#region [Events]
-
-		public bool IsActive {
-			get => lcActScript?.IsActive() ?? false;
 		}
 
-		public object[]? Activate(params object[] args) {
-			return lcActScript?.Activate(args);
-		}
-
-		public object[]? Deactivate(params object[] args) {
-			return lcActScript?.Deactivate(args);
-		}
-
-		public object[]? Draw(params object[] args) {
-			return lcActScript?.Draw(args);
-		}
-
-		public object[]? Update(params object[] args) {
-			return lcActScript?.Update(DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond, args);
-		}
-
-		#endregion
-
-		#region [Events not present on CStage/CActivity]
-
-		// Incremental onStart (see LuaStageWrapper) — drives a yielding onStart across frames with the bar.
-		internal void BeginOnStart() {
-			lcActScript?.BeginOnStart();
-		}
-
-		internal bool StepOnStart(out float progress) {
-			if (lcActScript == null) { progress = 0f; return false; }
-			return lcActScript.StepOnStart(out progress);
-		}
-
-
-		// Executes everytime songs enum is done, including soft/hard reload and at start
-		private void AfterSongsEnum() {
-			lcActScript?.AfterSongsEnum();
-		}
-
-		// Executes before skin change, in order to deallocate any ressources carried by the skin's Lua modules
-		private void OnDestroy() {
-			lcActScript?.OnDestroy();
-		}
-
-
-		#endregion
-	}
-
-	public class LuaActivityFunc {
-		public LuaActivityFunc() { }
-
+	public class LuaActivityFunc : LuaROActivityFunc {
 		public LuaActivityWrapper? GetActivity(string name) {
 			return LuaActivityWrapper.GetLuaActivity(name);
 		}

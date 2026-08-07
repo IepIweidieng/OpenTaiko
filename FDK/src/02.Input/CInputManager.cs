@@ -11,7 +11,7 @@ public class CInputManager : IDisposable {
 	public static int DefaultVolume = 110;
 
 
-	// Properties
+	// value-like properties
 
 	public List<IInputDevice> InputDevices {
 		get;
@@ -19,9 +19,6 @@ public class CInputManager : IDisposable {
 	}
 	// Define a null device for platforms without a physical keyboard/mouse (such as iOS).
 	private static readonly IInputDevice _nullDevice = new CInputNull();
-
-	public IInputDevice Keyboard => this._Keyboard ??= this.InputDevices.FirstOrDefault(device => device.CurrentType == InputDeviceType.Keyboard) ?? _nullDevice;
-	public IInputDevice Mouse => this._Mouse ??= this.InputDevices.FirstOrDefault(device => device.CurrentType == InputDeviceType.Mouse) ?? _nullDevice;
 	public float Deadzone = 0.5f;
 
 
@@ -147,12 +144,14 @@ public class CInputManager : IDisposable {
 	}
 
 
-	// メソッド
+	// methods / method-like properties
 
 	public IInputDevice? FindDevice(InputDeviceType type, int ID)
 		=> InputDevices.FirstOrDefault(device => (device.CurrentType == type) && (device.ID == ID));
 	public IInputDevice? FindDevice(InputDeviceType type, string GUID)
 		=> InputDevices.FirstOrDefault(device => (device.CurrentType == type) && device.GUID.Equals(GUID));
+	public IInputDevice Keyboard => this._Keyboard ??= this.InputDevices.FirstOrDefault(device => device.CurrentType == InputDeviceType.Keyboard) ?? _nullDevice;
+	public IInputDevice Mouse => this._Mouse ??= this.InputDevices.FirstOrDefault(device => device.CurrentType == InputDeviceType.Mouse) ?? _nullDevice;
 	public IInputDevice? Joystick(int ID) => FindDevice(InputDeviceType.Joystick, ID);
 	public IInputDevice? Joystick(string GUID) => FindDevice(InputDeviceType.Joystick, GUID);
 	public IInputDevice? Gamepad(int ID) => FindDevice(InputDeviceType.Gamepad, ID);

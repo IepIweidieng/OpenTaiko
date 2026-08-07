@@ -15,6 +15,9 @@ local Bubble = require("PopUI.widgets.bubble")
 local Menu   = require("PopUI.widgets.menu")
 local Chooser = require("PopUI.widgets.chooser")
 local SettingsList = require("PopUI.widgets.settingslist")
+local Sfx          = require("PopUI.sfx")
+
+local NavInput = require("NavInput")
 
 local SCREEN_W, SCREEN_H = 1920, 1080
 local HOLD_DELAY, HOLD_REPEAT = 0.20, 0.07
@@ -40,9 +43,11 @@ end
 function M.new(opts)
     opts = opts or {}
     local self = setmetatable({}, M)
+    self.navPlayer = opts.navPlayer  -- for NavInput.getPn(navPlayer)
     self.userTheme = opts.theme or {}
     self.theme = Theme.resolve(self.userTheme, nil)
-    self.sfx = opts.sfx or {}
+    self.userSfx = opts.sfx or {}
+    self.sfx = Sfx.resolve(self.userSfx, nil)
     self.drawBg = opts.bg == true
     self.widgets = {}
     self.focusables = {}
@@ -64,6 +69,7 @@ end
 
 -- ── caches ───────────────────────────────────────────────────────────────────────
 function M:resolveTheme(style) return Theme.resolve(self.userTheme, style) end
+function M:resolveSfx(sfx) return Sfx.resolve(self.userSfx, sfx) end
 
 function M:font(size)
     local f = sharedFonts[size]
@@ -163,11 +169,7 @@ function M:reuseCanvas(old, w, h)
     return CANVAS:CreateCanvas(w, h)
 end
 
-function M:playSfx(name)
-    local s = self.sfx[name]
-    if not s then return end
-    if type(s) == "function" then s() else pcall(function() s:Play() end) end
-end
+function M:playSfx(name) return Sfx.playSfx(self.sfx, name) end
 
 -- Draw a solid filled rectangle in screen space (tinted). Reuses one shared 2x2 white canvas so callers
 -- (scrollbars, dividers, overlays) don't each allocate. Colours are 0-255.
@@ -239,6 +241,11 @@ function M:setTheme(t)
     for _, w in ipairs(self.widgets) do w:restyle() end
 end
 
+function M:setSfx(t)
+    self.userSfx = t or {}
+    self.sfx = Sfx.resolve(self.userSfx, nil)
+end
+
 -- ── focus navigation ────────────────────────────────────────────────────────────
 function M:_setFocusIndex(i)
     if #self.focusables == 0 then self.focusIdx = 0; return end
@@ -246,8 +253,10 @@ function M:_setFocusIndex(i)
     self.focusIdx = i
 end
 
-function M:focusNext() self:_setFocusIndex(self.focusIdx < 1 and 1 or self.focusIdx + 1); self:playSfx("move") end
-function M:focusPrev() self:_setFocusIndex(self.focusIdx < 1 and 1 or self.focusIdx - 1); self:playSfx("move") end
+function M:clearPrevFocus() if self._focusW then self._focusW:setFocus(false); self._focusW = nil end end
+function M:focusStay() self:_setFocusIndex(self.focusIdx < 1 and 1 or self.focusIdx) end
+function M:focusNext() self:_setFocusIndex(self.focusIdx < 1 and 1 or self.focusIdx + 1) end
+function M:focusPrev() self:_setFocusIndex(self.focusIdx < 1 and 1 or self.focusIdx - 1) end
 
 function M:captureKeys(w) self._captureWidget = w end
 function M:releaseKeys(w) if self._captureWidget == w then self._captureWidget = nil end end
@@ -258,8 +267,9 @@ function M:isCapturing() return self._captureWidget ~= nil end
 function M:_repeatKey(key, dt)
     local st = self._rep[key]
     if not st then st = { held = false, t = 0 }; self._rep[key] = st end
-    if INPUT:KeyboardPressed(key) then st.held = true; st.t = 0; return true end
-    if st.held and INPUT:KeyboardPressing(key) then
+    local navPn = NavInput.getPn(self.navPlayer)
+    if navPn[key]() then st.held = true; st.t = 0; return true end
+    if st.held and navPn[key .. "Pressing"]() then
         st.t = st.t + dt
         if st.t >= HOLD_DELAY then st.t = st.t - HOLD_REPEAT; return true end
         return false
@@ -276,6 +286,8 @@ function M:update(ts)
     local c = self._ctx
     c.dt, c.ts = dt, ts
     c.mx, c.my = INPUT:GetMouseXY()
+    c.mdx, c.mdy = INPUT:GetMouseDelta()
+    c.moved = c.mdx ~= 0 or c.mdy ~= 0
     c.inside = INPUT:IsMouseInside()
     c.mPressed  = INPUT:MousePressed("Left")
     c.mPressing = INPUT:MousePressing("Left")
@@ -287,7 +299,8 @@ function M:update(ts)
     -- widget's own :update that reads the mouse directly — slider drag, list/chooser scroll). One-shot: cleared here.
     if self._suppressMouse then
         c.mx, c.my = -100000, -100000
-        c.inside = false
+        c.mdx, c.mdy = 0, 0
+        c.moved, c.inside = false, false
         c.mPressed, c.mPressing, c.mReleased = false, false, false
         c.scrollDx, c.scrollDy = 0, 0
         self._suppressMouse = false
@@ -297,15 +310,19 @@ function M:update(ts)
         self._captureWidget = nil
     end
     local captured = self._captureWidget ~= nil
-    c.decide = (not captured) and (INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return") or INPUT:KeyboardPressed("Space")) or false
-    c.cancel = INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape")
-    c.navDown  = (not captured) and self:_repeatKey("DownArrow", dt) or false
-    c.navUp    = (not captured) and self:_repeatKey("UpArrow", dt) or false
-    c.navLeft  = (not captured) and (self:_repeatKey("LeftArrow", dt) or INPUT:Pressed("LBlue")) or false
-    c.navRight = (not captured) and (self:_repeatKey("RightArrow", dt) or INPUT:Pressed("RBlue")) or false
+    local navPn = NavInput.getPn(self.navPlayer)
+    c.decide = (not captured) and (navPn.decide() or INPUT:KeyboardPressed("Space")) or false
+    c.cancel = navPn.cancel()
+    c.navDown  = (not captured) and self:_repeatKey("down", dt) or false
+    c.navDownOrPadRight = (not captured) and self:_repeatKey("downOrPadRight", dt) or false
+    c.navUp    = (not captured) and self:_repeatKey("up", dt) or false
+    c.navUpOrPadLeft = (not captured) and self:_repeatKey("upOrPadLeft", dt) or false
+    c.navLeft  = (not captured) and self:_repeatKey("leftKeyboard", dt) or false
+    c.navRight = (not captured) and self:_repeatKey("rightKeyboard", dt) or false
 
     self.cancelRequested = false
 
+    local justHoveredIdx
     if not captured then
         -- mouse hover: topmost visible+enabled hit
         local hoverW = nil
@@ -319,28 +336,52 @@ function M:update(ts)
             if self._hoverW then self._hoverW:setHover(false) end
             if hoverW then hoverW:setHover(true) end
             self._hoverW = hoverW
-        end
-        -- mouse moves focus to the hovered widget
-        if hoverW then
-            for i, w in ipairs(self.focusables) do if w == hoverW then self.focusIdx = i; break end end
+            -- mouse moves focus to the newly hovered widget
+            for i, w in ipairs(self.focusables) do if w == hoverW then self.focusIdx = i; justHoveredIdx = i; break end end
         end
         -- keyboard/gamepad focus navigation; a focused widget (e.g. a list) may consume Up/Down for its
         -- own internal selection and only let focus escape at its boundary.
-        local fw = self.focusables[self.focusIdx]
-        if c.navDown then
-            if not (fw and fw.onNavDown and fw:onNavDown()) then self:focusNext() end
+        -- Pad Left/Right is also tried if specified by the callbacks; treated as normal Left/Right if not consumed.
+        for i, v in ipairs{
+            { "navDown", "onNavDown", "onNavRight", "navDownOrPadRight", "onNavDownOrPadRight", self.focusNext },
+            { "navUp", "onNavUp", "onNavLeft", "navUpOrPadLeft", "onNavUpOrPadLeft", self.focusPrev },
+            } do
+            local nav, onNav, onNavH, navOrPadH, onNavOrPadH, focus = table.unpack(v)
+            local fw = self.focusables[self.focusIdx]
+            if c[nav] or c[navOrPadH] then
+                local on = nil
+                if c[nav] then on = fw and fw[onNav]
+                else on = fw and fw[onNavH]  -- from padRight / padLeft
+                end
+                if not (on and on(fw, not c[nav])) then
+                    local on = fw and fw[onNavOrPadH]
+                    if not (on and on(fw)) then focus(self) end
+                end
+                c[nav] = false
+                c[navOrPadH] = false
+            end
         end
-        if c.navUp then
-            fw = self.focusables[self.focusIdx]
-            if not (fw and fw.onNavUp and fw:onNavUp()) then self:focusPrev() end
+        -- Ensure focus for keyboard Left/Right
+        for i, v in ipairs{
+            { "navRight", "onNavRight", self.focusStay }, { "navLeft", "onNavLeft", self.focusStay },
+            { "decide", "onDecide", function () end }, { "cancel", "onCancel", function () end }, -- pass to be handled below
+            } do
+            local nav, onNav, focus = table.unpack(v)
+            local fw = self.focusables[self.focusIdx]
+            if c[nav] then
+                local on = fw and fw[onNav]
+                if on and on(fw, false) then c[nav] = false
+                else focus(self)
+                end
+            end
         end
     end
 
     -- apply focus flags from focusIdx
     local focusW = self.focusables[self.focusIdx]
     if focusW ~= self._focusW then
-        if self._focusW then self._focusW:setFocus(false) end
-        if focusW then focusW:setFocus(true) end
+        if self._focusW then self._focusW:setFocus(false, justHoveredIdx == self.focusIdx) end
+        if focusW then focusW:setFocus(true, not self._focusW or justHoveredIdx == self.focusIdx) end
         self._focusW = focusW
     end
 
@@ -352,7 +393,11 @@ function M:update(ts)
             self._pressW:release(inside); self._pressW = nil
         end
         -- keyboard/gamepad activate (single-shot squish→boing, not a same-frame press+release that cancels it)
-        if c.decide and focusW then focusW:keyActivate() end
+        if c.decide then
+            if focusW then focusW:keyActivate(); c.decide = false
+            else self:focusStay()
+            end
+        end
         -- cancel bubbles to the stage
         if c.cancel then self.cancelRequested = true end
     end

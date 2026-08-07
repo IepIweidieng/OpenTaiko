@@ -139,7 +139,7 @@ internal class CActImplCharacter : CActivity {
 				break;
 
 			if (!OpenTaiko.stageGameScreen.bPAUSE) {
-				CharacterControllers[i].dbDuration = 60000 / Math.Abs(CTja.TjaBeatSpeedToGameBeatSpeed(OpenTaiko.stageGameScreen.actPlayInfo.dbBPM[i]));
+				CharacterControllers[i].dbDuration = OpenTaiko.stageGameScreen.actPlayInfo.msPerGameBeatAbs(i);
 				CharacterControllers[i].Update();
 			}
 			//CCharacter.GetCharacter(i).Update(i, animation);

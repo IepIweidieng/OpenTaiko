@@ -1,6 +1,8 @@
 ---@diagnostic disable: undefined-global, undefined-field, need-check-nil, unused-local, inject-field, param-type-mismatch
 local DBItems = require("DBControllers/dbItems")
 local PopUI = require("PopUI")
+local NavInput = require("NavInput")
+local Util = require("Util")
 
 local save = nil
 local playerIndex = 0          -- which of the 5 local saves' shop we're browsing (chosen on entry)
@@ -58,49 +60,6 @@ end
 
 local function markSoldOut(mask, slot)
 	return mask | (1 << (slot - 1))
-end
-
--- Clone a C# Dictionary into a Lua table safely
-local function cloneTable(t)
-	local copy = {}
-
-	-- Get enumerator from the dictionary
-	local enumerator = t:GetEnumerator()
-	while enumerator:MoveNext() do
-		local kvp = enumerator.Current
-		local key = kvp.Key
-		local value = kvp.Value
-
-		-- Recursively clone if it's another Dictionary
-		if value ~= nil and type(value) == "userdata" and value.GetEnumerator then
-			copy[key] = cloneTable(value)
-		else
-			copy[key] = value
-		end
-	end
-
-	return copy
-end
-
--- Deep copy Lua table
-local function deepcopy(o, seen)
-  seen = seen or {}
-  if o == nil then return nil end
-  if seen[o] then return seen[o] end
-
-  local no
-  if type(o) == 'table' then
-    no = {}
-    seen[o] = no
-
-    for k, v in next, o, nil do
-      no[deepcopy(k, seen)] = deepcopy(v, seen)
-    end
-    setmetatable(no, deepcopy(getmetatable(o), seen))
-  else -- number, string, boolean, etc
-    no = o
-  end
-  return no
 end
 
 
@@ -182,8 +141,8 @@ local _cachedPools = nil
 local function ensureCachedPools()
 	if _cachedPools == nil then
 		_cachedPools = {
-			normal = cloneTable(DBItems:GetItems("regular")),
-			big    = cloneTable(DBItems:GetItems("major"))
+			normal = Util.cloneTable(DBItems:GetItems("regular")),
+			big    = Util.cloneTable(DBItems:GetItems("major"))
 		}
 	end
 end
@@ -208,7 +167,7 @@ end
 
 local function setupItem(entry, iconIdx)
 	if entry == nil then return nil end
-	local item = deepcopy(entry)
+	local item = Util.deepcopy(entry)
 	item.LocalizedName = LANG:FromString(item.Name):GetString("")
 	item.NameTx = text:GetText(item.LocalizedName, true, 380)
 	item.SoldOut = false
@@ -543,13 +502,13 @@ local function buildCycle()
   -- odd indices first (from high to low)
   local oddStart = (layoutSize - 1) % 2 == 1 and (layoutSize - 1) or (layoutSize - 2)
   for i = oddStart, 1, -2 do
-    table.insert(cycle, i)
+	table.insert(cycle, i)
   end
 
   -- even indices after (from high to low)
   local evenStart = (layoutSize - 1) % 2 == 0 and (layoutSize - 1) or (layoutSize - 2)
   for i = evenStart, 0, -2 do
-    table.insert(cycle, i)
+	table.insert(cycle, i)
   end
 
   -- reroll and return
@@ -565,10 +524,10 @@ local function moveInCycle(direction)
   -- find current index in cycle
   local idx
   for i,v in ipairs(cycle) do
-      if v == selectedItem then
-          idx = i
-          break
-      end
+	  if v == selectedItem then
+		  idx = i
+		  break
+	  end
   end
   if not idx then return selectedItem end
 
@@ -626,7 +585,7 @@ local SHOP_SFX  -- set in activate() once sounds exist
 local CONFIRM_CX, BTN_W = 960, 340
 local function buildConfirmUI(item, slot)
 	if confirmUI then confirmUI:disposeWidgets() end
-	confirmUI = PopUI.new{ theme = {}, sfx = SHOP_SFX }
+	confirmUI = PopUI.new{ theme = {}, sfx = SHOP_SFX, navPlayer = playerIndex + 1 }
 	local cx, bx = CONFIRM_CX, CONFIRM_CX - BTN_W / 2
 	local hasQty = (item.Stock or 1) > 1
 	local panelH = hasQty and 720 or 640
@@ -650,9 +609,11 @@ local function buildConfirmUI(item, slot)
 			if item.Price * qty > save.Coins then sounds.SoldOut:Play(); return end   -- can't afford (guarded)
 			purchaseItemMultiple(item, slot, qty)
 			closeConfirm()
-		end }
+		end,
+		sfx = { click = "" } }
 	confirmUI:button{ text = "Cancel", x = bx, y = buyY + 92, w = BTN_W, h = 76,
-		onClick = function() sounds.Cancel:Play(); closeConfirm() end }
+		onClick = function() closeConfirm() end,
+		sfx = { click = "cancel" } }
 	confirmUI._item, confirmUI._qty = item, qtyChooser
 	confirmUI._totalLabel, confirmUI._buyBtn = totalLabel, buyBtn
 	updateConfirmTotals()
@@ -661,7 +622,7 @@ end
 
 local function buildRefreshUI()
 	if confirmUI then confirmUI:disposeWidgets() end
-	confirmUI = PopUI.new{ theme = {}, sfx = SHOP_SFX }
+	confirmUI = PopUI.new{ theme = {}, sfx = SHOP_SFX, navPlayer = playerIndex + 1 }
 	local cx, bx = CONFIRM_CX, CONFIRM_CX - BTN_W / 2
 	local rerollPrice = math.floor(10 * (2 ^ executedRerolls))
 	confirmUI:panel{ x = 660, y = 280, w = 600, h = 480, title = "Reroll" }
@@ -673,10 +634,12 @@ local function buildRefreshUI()
 			save:SpendCoins(rerollPrice); executedRerolls = executedRerolls + 1; soldOutMask = 0
 			poolItems(); storeShopState(shopDB); sounds.Buy:Play()
 			closeConfirm()
+			return true
 		end }
 	rb.enabled = (rerollPrice <= save.Coins)
 	confirmUI:button{ text = "Cancel", x = bx, y = 620, w = BTN_W, h = 76,
-		onClick = function() sounds.Cancel:Play(); closeConfirm() end }
+		onClick = function() closeConfirm() end,
+		sfx = { click = "cancel" } }
 	confirmUI:_setFocusIndex(1)   -- default focus/highlight on Reroll
 end
 
@@ -703,22 +666,23 @@ function update(ts)
 			currentScreen = "shop"
 		end
 	elseif currentScreen == "shop" then
-		if INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow") then
+		local navPn = NavInput.p[playerIndex + 1]
+		if navPn.right() then
 			sounds.Skip:Play()
 			selectedItem = moveInCycle(1)
 		end
-		if INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("LeftArrow") then
+		if navPn.left() then
 			sounds.Skip:Play()
 			selectedItem = moveInCycle(-1)
 		end
-		if INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+		if navPn.cancel() then
 			sounds.Cancel:Play()
 			return Exit("title", nil)
 		end
-		if INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return") then
+		if navPn.decide() then
 				-- Back button
 				if selectedItem == -2 then
-					sounds.Decide:Play()
+					sounds.Cancel:Play()
 					return Exit("title", nil)
 				-- Reroll button
 				elseif selectedItem == -1 then
@@ -782,12 +746,12 @@ local function openShopPlayerSelect()
 	end
 	if #entries <= 1 then enterShopFor(entries[1] and entries[1].value or 0); return end
 	if confirmUI then confirmUI:disposeWidgets() end
-	confirmUI = PopUI.new{ theme = {}, sfx = SHOP_SFX }
+	confirmUI = PopUI.new{ theme = {}, sfx = SHOP_SFX, navPlayer = nil } -- accessible by all players
 	local x, y, w = 960 - 380, 210, 760
 	local h = 120 + #entries * 78 + 40
 	confirmUI:panel{ x = x, y = y, w = w, h = h, title = "Whose shop?" }
 	confirmUI:menu{ x = x + 36, y = y + 92, w = w - 72, h = #entries * 78, rowHeight = 78, items = entries,
-	                onSelect = function(_, it) enterShopFor(it.value) end }
+					onSelect = function(_, it) enterShopFor(it.value) end }
 	confirmUI:_setFocusIndex(1)
 	currentScreen = "playerselect"
 end
@@ -796,7 +760,11 @@ end
 
 function activate()
 	save = nil
-	SHOP_SFX = { move = function() sounds.Skip:Play() end, click = function() sounds.Decide:Play() end }
+	SHOP_SFX = {
+		move = function() sounds.Skip:Play() end,
+		click = function() sounds.Decide:Play() end,
+		cancel = function() sounds.Cancel:Play() end,
+	}
 
 	-- (the old Confirm/Refresh/Buttons textures are no longer used — the confirm/reroll dialogs are PopUI)
 	local txNm = {

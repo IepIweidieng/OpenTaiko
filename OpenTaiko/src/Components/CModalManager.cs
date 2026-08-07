@@ -36,17 +36,18 @@ internal class CModalManager {
 	/// queued modal or sets <see cref="AllModalsDone"/> when the queue is exhausted.
 	/// </summary>
 	public void Draw() {
-		if (displayedModals == null) return;
+		if (displayedModals == null || Script == null) return;
 
-		Script?.Update();
-		Script?.Draw();
+		Script.Update();
+		Script.Draw();
 
 		// Lua called DEACTIVATE() after detecting input — advance the queue
-		if (!(Script?.IsActive ?? true)) {
-			OpenTaiko.Skin.soundDecideSFX.tPlay();
+		if (!Script.IsActive) {
 			if (!rModalQueue.tAreBothQueuesEmpty()) {
+				OpenTaiko.Skin.soundDecideSFX.tPlay();
 				displayedModals = rModalQueue.tPopModalInOrder();
 			} else {
+				// same state as if no modals were ever queued
 				displayedModals = null;
 				AllModalsDone = true;
 			}

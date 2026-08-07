@@ -16,6 +16,8 @@
 --   player — which player's save file to use for sort persistence
 --   mode   — "sort" (default) | "search"
 
+local NavInput = require("NavInput")
+
 local bg        = nil
 local text      = nil
 local textSmall = nil
@@ -319,10 +321,11 @@ end
 -- ── Update ────────────────────────────────────────────────────────────────────
 
 local function updateSort()
-    if INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("UpArrow") then
+    local navPn = NavInput.p[activePlayer + 1]
+    if navPn.upOrPadLeft() then
         sounds.Skip:Play()
         sortCursorIndex = ((sortCursorIndex - 2) % #SORT_METHODS) + 1
-    elseif INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("DownArrow") then
+    elseif navPn.downOrPadRight() then
         sounds.Skip:Play()
         sortCursorIndex = (sortCursorIndex % #SORT_METHODS) + 1
     end
@@ -330,17 +333,17 @@ local function updateSort()
     local curMethod0 = sortCursorIndex - 1
     local pointedDir = (curMethod0 == readMethod()) and readDir() or 0
 
-    if INPUT:Pressed("Decide") or INPUT:KeyboardPressed("RightArrow") or INPUT:Pressed("RBlue2P") then
+    if navPn.decide() or navPn.rightOtherPlayer() then
         sounds.Decide:Play()
         local newDir = (pointedDir == 0) and 1 or ((pointedDir % 3) + 1)
         writeSort(curMethod0, newDir == 3 and 0 or newDir)
-    elseif INPUT:KeyboardPressed("LeftArrow") or INPUT:Pressed("LBlue2P") then
+    elseif navPn.leftOtherPlayer() then
         sounds.Decide:Play()
         local newDir = (pointedDir - 1 + 3) % 3
         writeSort(curMethod0, newDir)
     end
 
-    if INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+    if navPn.cancel() then
         sounds.Cancel:Play()
         closeDialog()
     end
@@ -365,10 +368,11 @@ local function updateSearch()
     end
 
     -- Field navigation
-    if INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("UpArrow") then
+    local navPn = NavInput.p[activePlayer + 1]
+    if NavInput.upOrPadLeft() then
         sounds.Skip:Play()
         sfFieldIdx = ((sfFieldIdx - 2) % SF_COUNT) + 1
-    elseif INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("DownArrow") then
+    elseif NavInput.downOrPadRight() then
         sounds.Skip:Play()
         sfFieldIdx = (sfFieldIdx % SF_COUNT) + 1
     end
@@ -388,10 +392,9 @@ local function updateSearch()
             else                                   levelToIdx   = ((levelToIdx   - 2) % #LEVEL_OPTIONS) + 1
             end
         end
-        if INPUT:KeyboardPressed("RightArrow") or INPUT:Pressed("RBlue2P")
-                or INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return") then
+        if navPn.rightOtherPlayer() or navPn.decide() then
             sounds.Skip:Play(); right()
-        elseif INPUT:KeyboardPressed("LeftArrow") or INPUT:Pressed("LBlue2P") then
+        elseif navPn.leftOtherPlayer() then
             sounds.Skip:Play(); left()
         end
 
@@ -406,17 +409,16 @@ local function updateSearch()
             if sfFieldIdx == SF_SUBTITLE then subtitleText = "" end
             if sfFieldIdx == SF_CHARTER  then charterText  = "" end
         end
-        if INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return") then
+        if navPn.decide() then
             sounds.Decide:Play()
             textInput = INPUT:CreateTextInput(curText(), 64)
             editField = sfFieldIdx
-        elseif INPUT:KeyboardPressed("RightArrow") or INPUT:Pressed("RBlue2P")
-                or INPUT:KeyboardPressed("LeftArrow") or INPUT:Pressed("LBlue2P") then
+        elseif navPn.rightOtherPlayer() or navPn.leftOtherPlayer() then
             if curText() ~= "" then sounds.Skip:Play(); clearText() end
         end
 
     elseif field.ftype == "button" then
-        if INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return") then
+        if navPn.decide() then
             if sfFieldIdx == SF_OK then
                 sounds.Decide:Play()
                 commitSearchParams()
@@ -428,7 +430,7 @@ local function updateSearch()
         end
     end
 
-    if INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+    if navPn.cancel() then
         sounds.Cancel:Play()
         closeDialog()
     end

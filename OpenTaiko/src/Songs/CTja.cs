@@ -634,7 +634,7 @@ internal class CTja : CActivity {
 						// WASAPI/ASIO用↓
 						if (!OpenTaiko.stageGameScreen.bPAUSE) {
 							if (wc.rSound[i].IsPaused) wc.rSound[i].Resume(nSeekMs);
-							else wc.rSound[i].tSetPositonToBegin(nSeekMs);
+							else wc.rSound[i].tSetPosition(nSeekMs);
 						} else {
 							wc.rSound[i].Pause();
 						}
@@ -651,9 +651,9 @@ internal class CTja : CActivity {
 			for (int i = 0; i < nPolyphonicSounds; i++) {
 				if (cwav.rSound[i] != null && cwav.rSound[i].IsPlaying) {
 					if (bAlsoRemoveFromMixer) {
-						cwav.rSound[i].tStopSoundAndRemoveSoundFromMixer();
+						cwav.rSound[i].tStopAndRemoveFromMixer();
 					} else {
-						cwav.rSound[i].Stop();
+						cwav.rSound[i].StopReset();
 					}
 				}
 				cwav.nPauseTime[i] = long.MinValue; // prevent unpause

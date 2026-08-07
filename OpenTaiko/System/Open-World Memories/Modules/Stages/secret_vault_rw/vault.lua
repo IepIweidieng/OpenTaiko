@@ -6,6 +6,8 @@
 -- Vault.draw()
 -- Vault.update()  — returns "back" to exit, nil otherwise
 
+local NavInput = require("NavInput")
+
 local M = {}
 
 local tx   = {}
@@ -446,11 +448,12 @@ function M.update()
     if enterCtr        then enterCtr:Tick() end
     if returnBounceCtr then returnBounceCtr:Tick() end
 
+	local navPn = NavInput.p[1]
     if state == "idle" then
-        local right  = INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow")
-        local left   = INPUT:Pressed("LeftChange")  or INPUT:KeyboardPressed("LeftArrow")
-        local decide = INPUT:Pressed("Decide")       or INPUT:KeyboardPressed("Return")
-        local cancel = INPUT:Pressed("Cancel")       or INPUT:KeyboardPressed("Escape")
+        local right  = navPn.right()
+        local left   = navPn.left()
+        local decide = navPn.decide()
+        local cancel = navPn.cancel()
 
         if right then
             selected = (selected % 4) + 1
@@ -489,8 +492,8 @@ function M.update()
 
     elseif state == "confirm" then
         tickAnim()  -- darken animation
-        local decide = INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return")
-        local cancel = INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape")
+        local decide = navPn.decide()
+        local cancel = navPn.cancel()
 
         if cancel then
             if snd["Cancel"] then snd["Cancel"]:Play() end
@@ -580,7 +583,7 @@ function M.update()
         if animDone() then
             animCtr = nil
             -- Wait for Decide
-            local decide = INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return")
+            local decide = navPn.decide()
             if decide then
                 state = "reward_show_out"
                 startUndark(0.3)

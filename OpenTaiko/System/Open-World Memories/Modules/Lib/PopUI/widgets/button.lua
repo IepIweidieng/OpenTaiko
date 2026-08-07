@@ -33,7 +33,7 @@ function Button:setIcon(k)
 end
 
 function Button:restyle()
-    self.eff = self.mgr:resolveTheme(self.style)
+    self:resolveStyle()
     local c = self.eff.colors
     local size = self.eff.font.button
     -- text colours: dark outlined text on light face, white outlined text on accent face

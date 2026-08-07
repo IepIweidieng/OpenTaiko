@@ -1,5 +1,7 @@
 -- standard_dan.lua  —  Standard Dan Challenge sub-module for dan_select
 
+local NavInput       = require("NavInput")
+
 local M = {}
 local ContentsDrawer = require("standard_dan_contents_draw")
 
@@ -47,13 +49,12 @@ local HOLD_REPEAT_SEC   = 0.08
 local BAR_STAGGER_SEC   = 0.05
 local CONTENT_SLIDE_SEC = 0.25
 local BAR_SLIDE_SEC     = 0.15
-local PUCHI_FLOAT_AMP   = 6.0
 
 -- ── State persistent across activate/deactivate ───────────────────────────────
 
 local _song_list = nil
 local _in_play   = false
-local _callbacks = nil
+local _CB        = nil
 
 -- ── Per-activation resources ──────────────────────────────────────────────────
 
@@ -94,8 +95,6 @@ local hold_dir              = 0
 local hold_phase            = 0
 local hold_elapsed          = 0.0
 local confirm_sel           = 0
-local puchi_sine_y          = 0.0
-local puchi_sine_counter    = nil
 
 -- ── Internals ─────────────────────────────────────────────────────────────────
 
@@ -178,6 +177,7 @@ end
 
 -- Returns "back" if we should return to the 3-way menu, nil otherwise
 local function _handle_cancel()
+    SHARED:GetSharedSound("Cancel"):Play()
     if _song_list == nil then return "back" end
     local ssn = _song_list:GetSelectedSongNode()
     if ssn ~= nil and not ssn.IsRoot then
@@ -225,24 +225,6 @@ local function _draw_content(node, y_offset)
     tx_content:DrawAtAnchor(CONTENT_X, CONTENT_Y + (y_offset or 0), "topleft")
 end
 
-local function _draw_player_chara(x, y, opacity)
-    local chara = GetSaveFile(0):GetCharacter()
-    if chara ~= nil and chara.IsValid then
-        chara:Update(CHARACTER.ANIM_MENU_NORMAL, true)
-        chara:DrawAtAnchor(x, y, CHARACTER.ANIM_MENU_NORMAL, "bottom", 1.0, 1.0, math.floor(opacity * 255))
-    end
-end
-
-local function _draw_player_puchi(x, y, opacity)
-    local puchi = GetSaveFile(0):GetPuchichara()
-    if puchi == nil or puchi.tx == nil or not puchi.tx.Loaded then return end
-    local frameW = math.floor(puchi.tx.Width / 2)
-    puchi.tx:SetScale(1.0, 1.0)
-    puchi.tx:SetOpacity(opacity)
-    puchi.tx:DrawRectAtAnchor(x, y, 0, 0, frameW, puchi.tx.Height, "bottom")
-    puchi.tx:SetOpacity(1.0)
-end
-
 local function _load_resources()
     tx_header        = TEXTURE:CreateTexture(TX .. "Header.png")
     tx_content       = TEXTURE:CreateTexture(TX .. "Contents.png")
@@ -270,10 +252,6 @@ local function _load_resources()
     if chara ~= nil and chara.IsValid then
         chara:LoadAnimation(CHARACTER.ANIM_MENU_NORMAL)
     end
-
-    puchi_sine_counter = COUNTER:CreateCounter(0, 360, 1 / 120)
-    puchi_sine_counter:SetLoop(true)
-    puchi_sine_counter:Start()
 
     bar_select_pulse = COUNTER:CreateCounterDuration(0.3, 1.0, 0.6)
     bar_select_pulse:SetBounce(true)
@@ -307,7 +285,6 @@ local function _unload_resources()
         chara:DisposeAnimation(CHARACTER.ANIM_MENU_NORMAL)
     end
 
-    puchi_sine_counter   = nil
     bar_sel_x_counter    = nil
     bar_y_offset_counter = nil
     bar_select_pulse     = nil
@@ -342,8 +319,8 @@ end
 -- or when entering standard dan from the 3-way menu.
 -- is_return = true  → returning from a played dan (resume song list)
 -- is_return = false → first/subsequent entry from menu
-function M.enter(shared, is_return)
-    _callbacks = shared
+function M.enter(CB, is_return)
+    _CB = CB
     _in_play   = false
 
     _load_resources()
@@ -388,6 +365,10 @@ end
 
 -- Returns: nil (continue) | "back" (return to 3-way menu) | "play" (exit to play)
 function M.update(dt)
+    if _CB then
+        for _, c in pairs(_CB.ctx) do c:Tick() end
+    end
+
     -- Activities take full control while active
     local any_active = false
     for k, a in pairs(act) do
@@ -405,12 +386,6 @@ function M.update(dt)
             end
             act_was_active[k] = is_now
         end
-    end
-
-    -- Always tick puchi sine
-    if puchi_sine_counter ~= nil then
-        puchi_sine_counter:Tick()
-        puchi_sine_y = math.sin(puchi_sine_counter.Value * math.pi / 180) * PUCHI_FLOAT_AMP
     end
 
     -- Tick contents drawer scroll
@@ -449,8 +424,9 @@ function M.update(dt)
         if bar_y_offset == 0.0 then bar_y_offset_counter = nil end
     end
 
-    if INPUT:KeyboardPressed("F3") then
+    if INPUT:Pressed("ToggleAutoP1") then
         CONFIG:SetAutoStatus(0, not CONFIG:GetAutoStatus(0))
+        SHARED:GetSharedSound("Move"):Play()
     end
 
     -- ── SONG SELECT SETUP ─────────────────────────────────────────────────────
@@ -466,11 +442,12 @@ function M.update(dt)
     end
 
     -- ── SONG SELECT ───────────────────────────────────────────────────────────
+	local navPn = NavInput.p[1]
     if _state == "song_select" then
         if hold_dir ~= 0 then
             local still =
-                (hold_dir ==  1 and (INPUT:Pressing("RightChange") or INPUT:KeyboardPressing("RightArrow"))) or
-                (hold_dir == -1 and (INPUT:Pressing("LeftChange")  or INPUT:KeyboardPressing("LeftArrow")))
+                (hold_dir ==  1 and navPn.right()) or
+                (hold_dir == -1 and navPn.left())
             if not still then
                 hold_dir = 0 ; hold_phase = 0 ; hold_elapsed = 0.0
             else
@@ -483,19 +460,21 @@ function M.update(dt)
             end
         end
 
-        if INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow") then
+        if navPn.right() then
             _do_scroll(1) ; hold_dir = 1 ; hold_phase = 1 ; hold_elapsed = 0.0
-        elseif INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("LeftArrow") then
+        elseif navPn.left() then
             _do_scroll(-1) ; hold_dir = -1 ; hold_phase = 1 ; hold_elapsed = 0.0
         end
 
-        if INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return") then
+        if navPn.decide() then
             local ssn = _song_list ~= nil and _song_list:GetSelectedSongNode() or nil
             if ssn ~= nil then
                 if ssn.IsSong then
                     _state = "confirm" ; confirm_sel = 0
+                    SHARED:GetSharedSound("Decide"):Play()
                 elseif ssn.IsFolder then
                     _song_list:OpenFolder() ; _refresh_page() ; _start_setup_anim(false)
+                    SHARED:GetSharedSound("Decide"):Play()
                 elseif ssn.IsReturn then
                     local r = _handle_cancel()
                     if r == "back" then return "back" end
@@ -503,7 +482,7 @@ function M.update(dt)
             end
         end
 
-        if INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+        if navPn.cancel() then
             local r = _handle_cancel()
             if r == "back" then return "back" end
         end
@@ -512,31 +491,39 @@ function M.update(dt)
 
     -- ── CONFIRM ───────────────────────────────────────────────────────────────
     if _state == "confirm" then
-        if INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow") then
+        if navPn.right() then
             confirm_sel = (confirm_sel + 1) % 4
-        elseif INPUT:Pressed("LeftChange") or INPUT:KeyboardPressed("LeftArrow") then
+            SHARED:GetSharedSound("Move"):Play()
+        elseif navPn.left() then
             confirm_sel = (confirm_sel + 3) % 4
+            SHARED:GetSharedSound("Move"):Play()
         end
 
-        if INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return") then
+        if navPn.decide() then
             if confirm_sel == 0 then
+                SHARED:GetSharedSound("Cancel"):Play()
                 _state = "song_select"
             elseif confirm_sel == 1 then
                 if act["customize_dialog"] ~= nil then act["customize_dialog"]:Activate(0) end
+                SHARED:GetSharedSound("Decide"):Play()
             elseif confirm_sel == 2 then
                 if act["mod_select_dialog"] ~= nil then act["mod_select_dialog"]:Activate(0) end
+                SHARED:GetSharedSound("Decide"):Play()
             elseif confirm_sel == 3 then
                 local ssn = _song_list ~= nil and _song_list:GetSelectedSongNode() or nil
                 if ssn ~= nil and ssn.IsSong then
                     ssn:Mount(DIFF_DAN)
                     _in_play = true
-                    if _callbacks ~= nil then _callbacks.stopBGM() end
+                    if _CB ~= nil then _CB.stopBGM() end
+                    SHARED:GetSharedSound("SongDecide"):Play()
                     return "play"
                 end
+                SHARED:GetSharedSound("Error"):Play()
             end
         end
 
-        if INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+        if navPn.cancel() then
+            SHARED:GetSharedSound("Cancel"):Play()
             _state = "song_select"
         end
         return nil
@@ -642,8 +629,10 @@ function M.draw()
 
     -- Nameplate + character
     NAMEPLATE:DrawPlayerNameplate(NP_X, NP_Y, 255, 0)
-    _draw_player_chara(NP_X + 140, NP_Y - 6,            1.0)
-    _draw_player_puchi(NP_X + 220, NP_Y + puchi_sine_y, 1.0)
+    if _CB then
+        _CB.drawPlayerChara(NP_X + 140, NP_Y - 6,            1.0)
+        _CB.drawPlayerPuchi(NP_X + 220, NP_Y + _CB.puchiSineY, 1.0, _CB.puchiIdxFrame)
+    end
     if modicons_ro ~= nil then modicons_ro:Draw(NP_X, NP_Y - 50, 0, "menu", 255) end
 
     -- Confirm dialog

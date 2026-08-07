@@ -33,8 +33,8 @@ function Toggle:setValue(v, silent)
     cc.Begin, cc.End, cc.Interval = 0, 1, 0.22
     cc:SetEasing("OUT", "BACK"); cc:Start()
     if not silent then
-        if self.onChange then self.onChange(self.value, self) end
-        self.mgr:playSfx("toggle")
+        if self.onChange and self.onChange(self.value, self) then return end
+        self:playSfx("toggle")
     end
 end
 
@@ -43,7 +43,7 @@ function Toggle:onActivate()
 end
 
 function Toggle:restyle()
-    self.eff = self.mgr:resolveTheme(self.style)
+    self:resolveStyle()
     self._valC = self._valC or COUNTER:EmptyCounter()
     local c = self.eff.colors
     local ch = (self.variant == "checkbox") and 48 or 48

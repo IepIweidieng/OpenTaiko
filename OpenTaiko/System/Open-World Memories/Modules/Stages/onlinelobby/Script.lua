@@ -6,6 +6,7 @@
 -- players render as real virtual-slot spots whose judges are sampled from the broadcast accuracy (no flying notes),
 -- with synced loading/finish + results + host rotation. Net logic lives in online.lua (LO). See LuaNetworking.
 
+local NavInput = require("NavInput")
 local LO = require("online")
 local net = LO.net
 
@@ -103,20 +104,21 @@ function update(ts)
     end
     if mode == "lobby" or mode == "results" then LO.tickPreview(dt) end   -- loop the jacket preview (song select owns its own)
 
+    local navPn = NavInput.p[1]
     if mode == "menu" then
-        if kp("UpArrow") or kp("DownArrow") then menuSel = (menuSel == 1) and 2 or 1 end
-        if kp("Return") or kp("Space") then
+        if navPn.upOrPadLeft() or navPn.downOrPadRight() then menuSel = (menuSel == 1) and 2 or 1 end
+        if navPn.decide() or kp("Space") then
             if menuSel == 1 then if LO.host() then mode = "lobby"; tab = 1 end
             else mode = "code"; ti = INPUT:CreateTextInput("", 4096) end
         end
-        if kp("Escape") then return Exit("stage", "_title") end
+        if navPn.cancel() then return Exit("stage", "_title") end
 
     elseif mode == "code" then
         if ti:Update() then
             local code = (ti.Text ~= "" and ti.Text) or nil
             if code and LO.join(code) then mode = "lobby"; tab = 1 else setMsg(net.msg or "Could not join.", 5); mode = "menu" end
         end
-        if kp("Escape") then mode = "menu" end
+        if navPn.cancel() then mode = "menu" end
 
     elseif mode == "songselect" then
         updateSongSelect()
@@ -139,19 +141,19 @@ function update(ts)
         if modDlg and modDlg.IsActive then modDlg:Update(); modWasActive = true; return nil end
         if modWasActive then modWasActive = false; LO.broadcastMods() end
 
-        if kp("UpArrow") then tab = (tab - 2) % 3 + 1 end
-        if kp("DownArrow") then tab = tab % 3 + 1 end
+        if navPn.up() then tab = (tab - 2) % 3 + 1 end
+        if navPn.down() then tab = tab % 3 + 1 end
         if tab == 1 then
             if LO.amController() then
-                if kp("Space") or kp("Return") then if LO.hostStart() then setMsg("Starting…", 2) else setMsg("Pick a song first.", 3) end end
+                if kp("Space") or navPn.decide() then if LO.hostStart() then setMsg("Starting…", 2) else setMsg("Pick a song first.", 3) end end
             else
-                if kp("Space") or kp("Return") then LO.setReady(not LO.myReady()) end
+                if kp("Space") or navPn.decide() then LO.setReady(not LO.myReady()) end
             end
         elseif tab == 2 then
-            if kp("LeftArrow") then LO.cycleDiff(-1) end    -- only difficulties the song actually has
-            if kp("RightArrow") then LO.cycleDiff(1) end
+            if navPn.left() then LO.cycleDiff(-1) end    -- only difficulties the song actually has
+            if navPn.right() then LO.cycleDiff(1) end
         elseif tab == 3 then
-            if kp("Space") or kp("Return") then
+            if kp("Space") or navPn.decide() then
                 if not modDlg then modDlg = ACTIVITY:GetActivity("mod_select_dialog") end   -- lazily (re)fetch if onStart missed it
                 if modDlg then modDlg:Activate(0, true) else setMsg("Mod select unavailable.", 3) end   -- restrict: no Auto (Dynamic Beat IS allowed, per-player)
             end
@@ -165,7 +167,7 @@ function update(ts)
             end
         end
         -- Escape: un-ready if readied (Ready is reversible), otherwise leave the room
-        if kp("Escape") then
+        if navPn.cancel() then
             if LO.myReady() then LO.setReady(false) else backToMenu() end
         end
 
@@ -177,10 +179,10 @@ function update(ts)
             backToMenu("A new round started without you."); return nil
         end
         -- stay as long as you want; press Enter (once results are in) to return to the lobby
-        if net.resultsReadyT ~= nil and (kp("Return") or kp("Space")) then
+        if net.resultsReadyT ~= nil and (navPn.decide() or kp("Space")) then
             LO.nextRound(); mode = "lobby"; tab = 1
         end
-        if kp("Escape") then backToMenu(); return nil end
+        if navPn.cancel() then backToMenu(); return nil end
     end
     return nil
 end
@@ -237,7 +239,7 @@ local function drawLobby()
     if net.song then
         txt(fontMid, net.song.title or "?", 255, 255, 255, sx, JK_Y + 6)
         if net.songSubtitle and net.songSubtitle ~= "" then txt(fontSmall, net.songSubtitle, 205, 205, 220, sx, JK_Y + 46) end
-        txt(fontSmall, string.format("Speed x%.2f", (net.song.speed or 20) / 20), 190, 220, 255, sx, JK_Y + 76)
+        txt(fontSmall, string.format("Speed x%.2f", net.song.speed and CONFIG.SONGSPEED:ToActual(net.song.speed) or 1), 190, 220, 255, sx, JK_Y + 76)
         -- available difficulties + their level numbers
         local lx = sx
         for d = 0, 4 do

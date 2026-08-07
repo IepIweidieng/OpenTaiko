@@ -127,10 +127,10 @@ internal class CActImplDancer : CActivity {
 
 		if (OpenTaiko.SongMount.nChoosenSongDifficulty[0] != (int)Difficulty.Tower && OpenTaiko.SongMount.nChoosenSongDifficulty[0] != (int)Difficulty.Dan) {
 			if (OpenTaiko.ConfigIni.ShowDancer && this.arDancerMotionNumber != null && (this.arDancerMotionNumber.Length - 1) != 0) {
-				if (!OpenTaiko.stageGameScreen.bPAUSE)
-					nNowDancerCounter += Math.Abs((float)CTja.TjaBeatSpeedToGameBeatSpeed(OpenTaiko.stageGameScreen.actPlayInfo.dbBPM[0]) / 60.0f) * (float)OpenTaiko.FPS.DeltaTime / nDancerBeat;
-				if (nNowDancerCounter >= 1) {
-					nNowDancerCounter = 0;
+				if (!OpenTaiko.stageGameScreen.bPAUSE) {
+					float value = (nNowDancerCounter + (float)Math.Abs(OpenTaiko.stageGameScreen.actPlayInfo.dbGameBPS(0)) * (float)OpenTaiko.FPS.DeltaTime / nDancerBeat) % 1;
+					if (float.IsFinite(value))
+						nNowDancerCounter = value;
 				}
 				nNowDancerFrame = (int)(nNowDancerCounter * (this.arDancerMotionNumber.Length - 1));
 
@@ -154,12 +154,13 @@ internal class CActImplDancer : CActivity {
 								if (nDancerInInterval == 0) {
 									DancerStates[i] = 3;
 								} else {
-									if (!OpenTaiko.stageGameScreen.bPAUSE)
-										nNowDancerInCounter[i] += Math.Abs((float)CTja.TjaBeatSpeedToGameBeatSpeed(OpenTaiko.stageGameScreen.actPlayInfo.dbBPM[0]) / nDancerInInterval) * (float)OpenTaiko.FPS.DeltaTime;
-
-									if (nNowDancerInCounter[i] >= 1) {
-										nNowDancerInCounter[i] = 1;
-										DancerStates[i] = 3;
+									if (!OpenTaiko.stageGameScreen.bPAUSE) {
+										float value = Math.Min(1, nNowDancerInCounter[i] + (float)Math.Abs(OpenTaiko.stageGameScreen.actPlayInfo.dbGameBPM(0) / nDancerInInterval) * (float)OpenTaiko.FPS.DeltaTime);
+										if (float.IsFinite(value)) {
+											nNowDancerInCounter[i] = value;
+											if (value >= 1)
+												DancerStates[i] = 3;
+										}
 									}
 
 									int frame = (int)(nNowDancerInCounter[i] * (this.arMotionArray_In.Length - 1));
@@ -174,12 +175,12 @@ internal class CActImplDancer : CActivity {
 								if (nDancerOutInterval == 0) {
 									DancerStates[i] = 0;
 								} else {
-									if (!OpenTaiko.stageGameScreen.bPAUSE)
-										nNowDancerOutCounter[i] += Math.Abs((float)CTja.TjaBeatSpeedToGameBeatSpeed(OpenTaiko.stageGameScreen.actPlayInfo.dbBPM[0]) / nDancerOutInterval) * (float)OpenTaiko.FPS.DeltaTime;
-
-									if (nNowDancerOutCounter[i] >= 1) {
-										nNowDancerOutCounter[i] = 1;
-										DancerStates[i] = 0;
+									if (!OpenTaiko.stageGameScreen.bPAUSE) {
+										float value = Math.Min(1, nNowDancerOutCounter[i] + (float)Math.Abs(OpenTaiko.stageGameScreen.actPlayInfo.dbGameBPM(0) / nDancerOutInterval) * (float)OpenTaiko.FPS.DeltaTime);
+										if (float.IsFinite(value))
+											nNowDancerOutCounter[i] = value;
+										if (value >= 1)
+											DancerStates[i] = 0;
 									}
 
 									int frame = (int)(nNowDancerOutCounter[i] * (this.arMotionArray_Out.Length - 1));

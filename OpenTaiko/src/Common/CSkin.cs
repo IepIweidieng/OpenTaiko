@@ -51,7 +51,15 @@ internal class CSkin : IDisposable {
 
 		public bool bPlayed;
 		public bool bCompactTarget;
-		public bool bLoop;
+		private bool _bLoop;
+		public bool bLoop {
+			get => _bLoop;
+			set {
+				this.rSound[0]?.SetLoop(value);
+				this.rSound[1]?.SetLoop(value);
+				_bLoop = value;
+			}
+		}
 		public bool bNotLoadedYet;
 		public bool bLoadedSuccessfuly;
 		public bool bExclusive;
@@ -61,6 +69,9 @@ internal class CSkin : IDisposable {
 		public bool bIsPlaying {
 			get => this.nowSound?.IsPlaying ?? false;
 		}
+		public bool bIsFinishedPlaying {
+			get => this.nowSound?.IsFinishedPlaying ?? false;
+		}
 		public int nPosition_CurrentlyPlayingSound {
 			get => this.nowSound?.SoundPosition ?? 0;
 			set => this.nowSound?.SetPanning(value);
@@ -69,6 +80,7 @@ internal class CSkin : IDisposable {
 			get => nextSound?.SoundPosition ?? 0;
 			set => nextSound?.SetPanning(value);
 		}
+		public double VolumePercent => this.nowSound?.GetGainPercent() ?? 100;
 		public int nAutomationLevel_CurrentSound {
 			get => this.nowSound?.AutomationLevel ?? 0;
 			set {
@@ -81,23 +93,21 @@ internal class CSkin : IDisposable {
 		public double msTimeStamp_nowSound {
 			get {
 				double msTimeStamp = 0;
-				this.nowSound?.tGetPlayPositon(out var bytesTimeStamp, out msTimeStamp);
+				this.nowSound?.tGetPlayPosition(out var bytesTimeStamp, out msTimeStamp);
 				return msTimeStamp;
 			}
 		}
 		public double msTimeStamp_nextSound {
 			get {
 				double msTimeStamp = 0;
-				this.nextSound?.tGetPlayPositon(out var bytesTimeStamp, out msTimeStamp);
+				this.nextSound?.tGetPlayPosition(out var bytesTimeStamp, out msTimeStamp);
 				return msTimeStamp;
 			}
 		}
-		public double nLength_CurrentSound {
-			get => this.nowSound?.dbTotalPlayTime ?? 0;
-		}
-		public double nLength_NextPlaySound {
-			get => nextSound?.dbTotalPlayTime ?? 0;
-		}
+		public double Speed => this.nowSound?.PlaySpeed ?? 1;
+		public double nLength => nLength_of(0); // all rSound[i] has the same audio loaded
+		public double nLength_of(int i)
+			=> this.rSound[i]?.dbTotalPlayTime ?? 0; // only for debugging purpose
 
 		public uint Pointer { get => this.rSound[0]?.Pointer ?? 0; }
 
@@ -156,7 +166,7 @@ internal class CSkin : IDisposable {
 			this.bLoadedSuccessfuly = true;
 			this.bDisposed = false;
 		}
-		public void tPlay() {
+		public void tPlay(bool resume = false) {
 			if (this.bNotLoadedYet) {
 				try {
 					tLoading();
@@ -172,20 +182,31 @@ internal class CSkin : IDisposable {
 
 				rLastPlaybackExclusiveSystemSound = this;
 			}
-			this.nextSound?.PlayStart(this.bLoop);
+			if (resume) {
+				this.rSound[0]?.Resume(this.bLoop);
+				this.rSound[1]?.Resume(this.bLoop);
+			} else {
+				this.nextSound?.PlayStart(this.bLoop);
+			}
 
 			this.bPlayed = true;
 			this.nNextPlayingSoundNumber = 1 - this.nNextPlayingSoundNumber;
 		}
-		public void tStop() {
+		public void tResume() => tPlay(resume: true);
+		public void tStop(bool pause = false) {
 			this.bPlayed = false;
 
-			this.rSound[0]?.Stop();
-			this.rSound[1]?.Stop();
-
+			if (pause) {
+				this.rSound[0]?.Pause();
+				this.rSound[1]?.Pause();
+			} else {
+				this.rSound[0]?.tStop();
+				this.rSound[1]?.tStop();
+			}
 			if (rLastPlaybackExclusiveSystemSound == this)
 				rLastPlaybackExclusiveSystemSound = null;
 		}
+		public void tPause() => tStop(pause: true);
 
 		public void SetPanning(int pan) {
 			nPosition_CurrentlyPlayingSound = pan;
@@ -202,7 +223,7 @@ internal class CSkin : IDisposable {
 			if (this.rSound[1] != null) this.rSound[1].SetSpeedWhilePlaying(speed);
 		}
 
-		public void SetTimestamp(int ms) {
+		public void SetTimestamp(long ms) {
 			if (this.bNotLoadedYet) {
 				try {
 					tLoading();
@@ -212,8 +233,8 @@ internal class CSkin : IDisposable {
 					this.bNotLoadedYet = false;
 				}
 			}
-			this.rSound[0]?.tSetPositonToBegin(ms);
-			this.rSound[1]?.tSetPositonToBegin(ms);
+			this.rSound[0]?.tSetPosition(ms);
+			this.rSound[1]?.tSetPosition(ms);
 		}
 
 		public void tRemoveMixer() {
@@ -469,8 +490,6 @@ internal class CSkin : IDisposable {
 		LuaStageWrapper.ResetLuaStagesDictionary();
 		LuaActivityWrapper.PropagateOnDestroy();
 		LuaActivityWrapper.ResetLuaActivityDictionary();
-		LuaROActivityWrapper.PropagateOnDestroy();
-		LuaROActivityWrapper.ResetROActivityDictionary();
 		// Transitions LAST — onDestroy runs after Stages/Activities (mirror of the load order).
 		LuaTransitionWrapper.PropagateOnDestroy();
 		LuaTransitionWrapper.ResetTransitionsDictionary();

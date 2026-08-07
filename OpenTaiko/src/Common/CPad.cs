@@ -73,10 +73,17 @@ public class CPad {
 		return list;
 	}
 
-	public bool HasInput(EKeyConfigPart part, EPad pad, Func<IInputDevice?, int, bool> predicate) {
-		if (part == EKeyConfigPart.Unknown) {
+	// Each pad below EPad.Max has separate keybinds for different instruments
+	// Each pad at EPad.Max and above has unified System keybinds
+	public static EKeyConfigPart ResolveKeyConfigPart(EKeyConfigPart part, EKeyConfigPad pad)
+		=> (pad >= EKeyConfigPad.Max) ? EKeyConfigPart.Unknown
+			: (pad >= (EKeyConfigPad)EPad.Max) ? EKeyConfigPart.System
+			: part;
+
+	public bool HasInput(EKeyConfigPart part, EKeyConfigPad pad, Func<IInputDevice?, int, bool> predicate) {
+		part = ResolveKeyConfigPart(part, pad);
+		if (part == EKeyConfigPart.Unknown)
 			return false;
-		}
 
 		var device = this.rConfigIni.KeyAssign[(int)part][(int)pad].GetDevice(predicate);
 		if (device != null && (device.CurrentType >= 0 && device.CurrentType < InputDeviceType.Total)) {
@@ -86,15 +93,37 @@ public class CPad {
 		return false;
 	}
 
-	public bool bPressed(EKeyConfigPart part, EPad pad)
+	public bool bPressed(EKeyConfigPart part, EKeyConfigPad pad)
 		=> HasInput(part, pad, (device, keyCode) => device?.KeyPressed(keyCode) ?? false);
+	public bool bPressed(EKeyConfigPart part, EPad pad) => bPressed(part, (EKeyConfigPad)pad);
 
-	public bool bPressed(EKeyConfigPart part, EKeyConfigPad pad) => bPressed(part, (EPad)pad);
-
-	public bool IsPressing(EKeyConfigPart part, EPad pad)
+	public bool IsPressing(EKeyConfigPart part, EKeyConfigPad pad)
 		=> HasInput(part, pad, (device, keyCode) => device?.KeyPressing(keyCode) ?? false);
+	public bool IsPressing(EKeyConfigPart part, EPad pad) => IsPressing(part, (EKeyConfigPad)pad);
 
-	public bool IsPressing(EKeyConfigPart part, EKeyConfigPad pad) => IsPressing(part, (EPad)pad);
+	public bool IsReleased(EKeyConfigPart part, EKeyConfigPad pad)
+		=> HasInput(part, pad, (device, keyCode) => device?.KeyReleased(keyCode) ?? false);
+	public bool IsReleased(EKeyConfigPart part, EPad pad) => IsReleased(part, (EKeyConfigPad)pad);
+
+	public bool IsReleasing(EKeyConfigPart part, EKeyConfigPad pad) {
+		part = ResolveKeyConfigPart(part, pad);
+		if (part == EKeyConfigPart.Unknown)
+			return false;
+
+		var availables = this.rConfigIni.KeyAssign[(int)part][(int)pad].GetAllInputs((device, code) => device?.KeyAvailable(code) ?? false);
+		if (!availables.Any())
+			return false;
+		foreach (var (device, code) in availables) {
+			if (device!.CurrentType >= 0 && device.CurrentType < InputDeviceType.Total) {
+				this.detectedDevice[device.CurrentType] = true;
+				if (device.KeyPressing(code))
+					return false;
+			}
+		}
+		return true;
+	}
+
+	public bool IsReleasing(EKeyConfigPart part, EPad pad) => IsReleasing(part, (EKeyConfigPad)pad);
 
 	public void InvalidateInputToPadCache() => inputToPadCacheValid = false;
 
@@ -103,104 +132,11 @@ public class CPad {
 		return pads.Any(pad => NotesManager.GetPadPlayer(pad) == iPlayer);
 	}
 
+	public bool IsUsedByPlayer(IInputDevice? device, int key, int iPlayer)
+		=> (device != null) && IsUsedByPlayer(device.CurrentType, device.ID, key, iPlayer);
+
 	internal bool IsUsedByPlayer(ref CConfigIni.CKeyAssign.STKEYASSIGN keyAssign, int iPlayer)
 		=> IsUsedByPlayer(keyAssign.InputDevice, keyAssign.ID, keyAssign.Code, iPlayer);
-
-	public bool IsReleasing(EKeyConfigPart part, EPad pad) { return IsReleasing(part, (EKeyConfigPad)pad); }
-	public bool IsReleasing(EKeyConfigPart part, EKeyConfigPad pad) {
-		if (part == EKeyConfigPart.Unknown) {
-			return false;
-		}
-
-		CConfigIni.CKeyAssign.STKEYASSIGN[] stkeyassignArray = this.rConfigIni.KeyAssign[(int)part][(int)pad];
-		for (int i = 0; i < stkeyassignArray.Length; i++) {
-			switch (stkeyassignArray[i].InputDevice) {
-				case InputDeviceType.Keyboard:
-					if (!this.inputManager.Keyboard.KeyReleasing(stkeyassignArray[i].Code)) {
-						return false;
-					}
-					break;
-
-				case InputDeviceType.Joystick: {
-						if (!this.rConfigIni.dicJoystick.ContainsKey(stkeyassignArray[i].ID)) break;
-						IInputDevice device = this.inputManager.Joystick(stkeyassignArray[i].ID);
-						if (device == null) break;
-						if (!device.KeyReleasing(stkeyassignArray[i].Code))
-						return false;
-
-						break;
-					}
-
-				case InputDeviceType.Gamepad: {
-						if (!this.rConfigIni.dicGamepad.ContainsKey(stkeyassignArray[i].ID)) {
-							break;
-						}
-						IInputDevice device = this.inputManager.Gamepad(stkeyassignArray[i].ID);
-						if (device == null) break;
-						if (!device.KeyReleasing(stkeyassignArray[i].Code))
-							return false;
-
-						break;
-					}
-				case InputDeviceType.Mouse:
-					if (!this.inputManager.Mouse.KeyReleasing(stkeyassignArray[i].Code)) {
-						return false;
-					}
-					break;
-			}
-		}
-		return true;
-	}
-
-	public bool IsReleased(EKeyConfigPart part, EPad pad) { return IsReleased(part, (EKeyConfigPad)pad); }
-	public bool IsReleased(EKeyConfigPart part, EKeyConfigPad pad) {
-		if (part == EKeyConfigPart.Unknown) {
-			return false;
-		}
-
-		CConfigIni.CKeyAssign.STKEYASSIGN[] stkeyassignArray = this.rConfigIni.KeyAssign[(int)part][(int)pad];
-		for (int i = 0; i < stkeyassignArray.Length; i++) {
-			switch (stkeyassignArray[i].InputDevice) {
-				case InputDeviceType.Keyboard:
-					if (this.inputManager.Keyboard.KeyReleased(stkeyassignArray[i].Code))
-						return true;
-					break;
-
-				case InputDeviceType.MidiIn: {
-						IInputDevice device2 = this.inputManager.MidiIn(stkeyassignArray[i].ID);
-						if (device2 == null) break;
-						if (device2.KeyReleased(stkeyassignArray[i].Code))
-							return true;
-						break;
-					}
-				case InputDeviceType.Joystick: {
-						if (!this.rConfigIni.dicJoystick.ContainsKey(stkeyassignArray[i].ID))
-							break;
-
-						IInputDevice device = this.inputManager.Joystick(stkeyassignArray[i].ID);
-						if (device == null) break;
-						if (device.KeyReleased(stkeyassignArray[i].Code))
-							return true;
-						break;
-					}
-				case InputDeviceType.Gamepad: {
-						if (!this.rConfigIni.dicGamepad.ContainsKey(stkeyassignArray[i].ID))
-							break;
-
-						IInputDevice device = this.inputManager.Gamepad(stkeyassignArray[i].ID);
-						if (device == null) break;
-						if (device.KeyReleased(stkeyassignArray[i].Code))
-							return true;
-						break;
-					}
-				case InputDeviceType.Mouse:
-					if (this.inputManager.Mouse.KeyReleased(stkeyassignArray[i].Code))
-						return true;
-					break;
-			}
-		}
-		return false;
-	}
 
 	#region [ private ]
 	//-----------------

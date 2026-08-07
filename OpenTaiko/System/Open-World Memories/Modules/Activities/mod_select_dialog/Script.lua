@@ -1,3 +1,5 @@
+local NavInput = require("NavInput")
+
 -- Reactive once the enter animation is done
 local reactive = false
 local player = 0
@@ -34,50 +36,6 @@ local ctx = {}
 
 local bgpos = 1080
 local bgtlop = 0
-
--- Inputs for each player
-local inputSets = {
-	{
-		right = "RightChange",
-		left = "LeftChange",
-		decide1 = "Decide",
-		decide2 = "Decide",
-		cancel = "Cancel",
-		auto = "ToggleAutoP1"
-	},
-	{
-		right = "RBlue2P",
-		left = "LBlue2P",
-		decide1 = "RRed2P",
-		decide2 = "LRed2P",
-		cancel = nil,
-		auto = "ToggleAutoP2"
-	},
-	{
-		right = "RBlue3P",
-		left = "LBlue3P",
-		decide1 = "RRed3P",
-		decide2 = "LRed3P",
-		cancel = nil,
-		auto = nil
-	},
-	{
-		right = "RBlue4P",
-		left = "LBlue4P",
-		decide1 = "RRed4P",
-		decide2 = "LRed4P",
-		cancel = nil,
-		auto = nil
-	},
-	{
-		right = "RBlue5P",
-		left = "LBlue5P",
-		decide1 = "RRed5P",
-		decide2 = "LRed5P",
-		cancel = nil,
-		auto = nil
-	},
-}
 
 -- ============================================================
 -- UI Layout Constants
@@ -245,7 +203,7 @@ end
 -- Helper: scroll speed display  e.g. value 19 -> "2.0"
 -- ============================================================
 local function scrollSpeedDisplay(value)
-    return string.format("%.1f", (value + 1) / 10)
+    return string.format("%.1f", CONFIG.SCROLLSPEED:ToActual(value))
 end
 
 -- ============================================================
@@ -429,21 +387,21 @@ function update()
 
     if reactive == false then return end
 
-    local inputs = inputSets[player+1]
+    local navPn = NavInput.p[player+1]
 
     if editingOption == false then
         -- --------------------------------------------------------
         -- Step 1 – navigate the list
         -- --------------------------------------------------------
-        if INPUT:Pressed(inputs.right) or INPUT:KeyboardPressed("RightArrow") then
+        if navPn.right() then
             sounds.Skip:Play()
             selectedIndex = (selectedIndex + 1) % TOTAL_ITEMS
 
-        elseif INPUT:Pressed(inputs.left) or INPUT:KeyboardPressed("LeftArrow") then
+        elseif navPn.left() then
             sounds.Skip:Play()
             selectedIndex = (selectedIndex - 1 + TOTAL_ITEMS) % TOTAL_ITEMS
 
-        elseif INPUT:Pressed(inputs.decide1) or INPUT:Pressed(inputs.decide2) or INPUT:KeyboardPressed("Return") then
+        elseif navPn.decide() then
             if selectedIndex == OK_INDEX then
                 sounds.Decide:Play()
                 reactive = false
@@ -465,7 +423,7 @@ function update()
                 editingOption = true
             end
 
-        elseif INPUT:Pressed(inputs.cancel) or INPUT:KeyboardPressed("Escape") then
+        elseif navPn.cancel() then
             -- Escape from menu without saving
             sounds.Cancel:Play()
             reactive = false
@@ -483,19 +441,19 @@ function update()
 
         if opt.type == "scroll" then
             -- Left/right move value by 1, clamped to [min, max]
-            if INPUT:Pressed(inputs.right) or INPUT:KeyboardPressed("RightArrow") then
+            if navPn.right() then
                 sounds.Skip:Play()
                 opt.value = math.min(opt.max, opt.value + 1)
 
-            elseif INPUT:Pressed(inputs.left) or INPUT:KeyboardPressed("LeftArrow") then
+            elseif navPn.left() then
                 sounds.Skip:Play()
                 opt.value = math.max(opt.min, opt.value - 1)
 
-            elseif INPUT:Pressed(inputs.decide1) or INPUT:Pressed(inputs.decide2) or INPUT:KeyboardPressed("Return") then
+            elseif navPn.decide() then
                 sounds.Decide:Play()
                 editingOption = false
 
-            elseif INPUT:Pressed(inputs.cancel) or INPUT:KeyboardPressed("Escape") then
+            elseif navPn.cancel() then
                 sounds.Cancel:Play()
                 editingOption = false
             end
@@ -504,19 +462,19 @@ function update()
             -- Left/right cycle through choices (modulo)
             local choiceCount = #opt.choices
 
-            if INPUT:Pressed(inputs.right) or INPUT:KeyboardPressed("RightArrow") then
+            if navPn.right() then
                 sounds.Skip:Play()
                 opt.value = (opt.value + 1) % choiceCount
 
-            elseif INPUT:Pressed(inputs.left) or INPUT:KeyboardPressed("LeftArrow") then
+            elseif navPn.left() then
                 sounds.Skip:Play()
                 opt.value = (opt.value - 1 + choiceCount) % choiceCount
 
-            elseif INPUT:Pressed(inputs.decide1) or INPUT:Pressed(inputs.decide2) or INPUT:KeyboardPressed("Return") then
+            elseif navPn.decide() then
                 sounds.Decide:Play()
                 editingOption = false
 
-            elseif INPUT:Pressed(inputs.cancel) or INPUT:KeyboardPressed("Escape") then
+            elseif navPn.cancel() then
                 sounds.Cancel:Play()
                 editingOption = false
             end
@@ -561,8 +519,8 @@ function onStart()
     tx["bg"]     = TEXTURE:CreateTexture("Textures/Background.png")
     tx["bgtile"] = TEXTURE:CreateTexture("Textures/BgTile.png")
     for i = 1, 5, 1 do
-		tx["player"..(i-1)] = TEXTURE:CreateTexture("Textures/"..i.."P.png")
-	end
+        tx["player"..(i-1)] = TEXTURE:CreateTexture("Textures/"..i.."P.png")
+    end
 end
 
 function onDestroy()

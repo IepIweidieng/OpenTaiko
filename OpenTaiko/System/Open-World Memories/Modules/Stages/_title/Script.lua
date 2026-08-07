@@ -1,6 +1,8 @@
 ---@diagnostic disable: undefined-global, undefined-field, need-check-nil
 -- _title/Script.lua  —  Main menu for OpenTaiko
 
+local NavInput = require("NavInput")
+
 -- ── Resources ─────────────────────────────────────────────────────────────────
 
 local boxTex    = nil
@@ -361,14 +363,14 @@ function update(ts)
 
     -- ── Prompt mode ───────────────────────────────────────────────────────────
     if inPrompt then
-        if INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+        if NavInput.cancel() then
             sounds.Cancel:Play()
             inPrompt = false
             holdDir  = 0
             return nil
         end
 
-        if INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return") then
+        if NavInput.decide() then
             sounds.Decide:Play()
             CONFIG.PlayerCount = promptCnt
             inPrompt = false
@@ -376,14 +378,14 @@ function update(ts)
             return doExit()
         end
 
-        local rp = INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow") or INPUT:KeyboardPressed("DownArrow")
-        local lp = INPUT:Pressed("LeftChange")  or INPUT:KeyboardPressed("LeftArrow")  or INPUT:KeyboardPressed("UpArrow")
+        local rp = NavInput.down() or NavInput.right()
+        local lp = NavInput.up() or NavInput.left()
         if rp then promptCnt = promptCnt % 5 + 1;              sounds.Move:Play() end
         if lp then promptCnt = (promptCnt - 2) % 5 + 1;        sounds.Move:Play() end
 
         -- Hold repeat for prompt
-        local rHeld = INPUT:Pressing("RightChange") or INPUT:KeyboardPressing("RightArrow") or INPUT:KeyboardPressing("DownArrow")
-        local lHeld = INPUT:Pressing("LeftChange")  or INPUT:KeyboardPressing("LeftArrow")  or INPUT:KeyboardPressing("UpArrow")
+        local rHeld = NavInput.downPressing() or NavInput.rightPressing()
+        local lHeld = NavInput.upPressing() or NavInput.leftPressing()
         local pDir  = rHeld and 1 or (lHeld and -1 or 0)
         if pDir ~= holdDir then holdDir = pDir; holdStart = ts; holdLast = ts
         elseif pDir ~= 0 and ts - holdStart >= HOLD_DELAY and ts - holdLast >= HOLD_REPEAT then
@@ -396,20 +398,20 @@ function update(ts)
     end
 
     -- ── Cancel → boot ─────────────────────────────────────────────────────────
-    if INPUT:Pressed("Cancel") or INPUT:KeyboardPressed("Escape") then
+    if NavInput.cancel() then
         sounds.Cancel:Play()
         return Exit("stage", "_boot")
     end
 
     -- ── Navigate ──────────────────────────────────────────────────────────────
-    local rp = INPUT:Pressed("RightChange") or INPUT:KeyboardPressed("RightArrow") or INPUT:KeyboardPressed("DownArrow")
-    local lp = INPUT:Pressed("LeftChange")  or INPUT:KeyboardPressed("LeftArrow")  or INPUT:KeyboardPressed("UpArrow")
+    local rp = NavInput.down() or NavInput.right()
+    local lp = NavInput.up() or NavInput.left()
     if rp then moveMenu(1)  end
     if lp then moveMenu(-1) end
 
     -- Hold-scroll auto-repeat
-    local rHeld = INPUT:Pressing("RightChange") or INPUT:KeyboardPressing("RightArrow") or INPUT:KeyboardPressing("DownArrow")
-    local lHeld = INPUT:Pressing("LeftChange")  or INPUT:KeyboardPressing("LeftArrow")  or INPUT:KeyboardPressing("UpArrow")
+    local rHeld = NavInput.downPressing() or NavInput.rightPressing()
+    local lHeld = NavInput.upPressing() or NavInput.leftPressing()
     local dir   = rHeld and 1 or (lHeld and -1 or 0)
     if dir ~= holdDir then
         holdDir = dir; holdStart = ts; holdLast = ts
@@ -419,7 +421,7 @@ function update(ts)
     end
 
     -- ── Decide ────────────────────────────────────────────────────────────────
-    if INPUT:Pressed("Decide") or INPUT:KeyboardPressed("Return") then
+    if NavInput.decide() then
         sounds.Decide:Play()
         local m = menus[curIdx]
         if m.playerPrompt then

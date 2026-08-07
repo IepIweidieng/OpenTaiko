@@ -211,6 +211,11 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 		base.tValueInitialize(bPlayRecord, bPlayState);
 		for (int i = 0; i < 5; i++) { replayCursor[i] = 0; msReplayTjaTime[i] = double.NegativeInfinity; }
 
+		if (bPlayRecord) {
+			for (int i = 0; i < OpenTaiko.MAX_PLAYERS; ++i)
+				OpenTaiko.ReplayInstances[i]?.tStartRegisterInput();
+		}
+
 		if (bPlayState) {
 			this.actGame.tTatakikiriShow_Initialize();
 
@@ -286,7 +291,7 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 		this.actLaneTaiko.ResetPlayStates();
 
 		for (int i = 0; i < 5; i++)
-			PuchiChara.ChangeBPM(CTja.TjaDurationToGameDuration(60.0 / OpenTaiko.stageGameScreen.actPlayInfo.dbBPM[i]));
+			PuchiChara.ChangeBPM(OpenTaiko.stageGameScreen.actPlayInfo.secPerGameBeatAbs(i));
 
 		//dbUnit = Math.Ceiling( dbUnit * 1000.0 );
 		//dbUnit = dbUnit / 1000.0;
@@ -627,8 +632,8 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 				if (bIsFinishedPlaying) {
 					if (OpenTaiko.ConfigIni.bTokkunMode) {
 						bIsFinishedPlaying = false;
-						OpenTaiko.Skin.soundTrainingStopSound.tPlay();
 						actTokkun.tPausePlay();
+						OpenTaiko.Skin.soundTrainingStopSound.tPlay();
 
 						actTokkun.tMatchWithTheChartDisplayPosition(true);
 					} else if (LuaNetworking.Active?.PlaySyncActive == true) {
@@ -835,7 +840,7 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 		}
 
 		var rep = OpenTaiko.ReplayPlayback[0];
-		if (!this.IsReplayValid(0, rep)) {
+		if (!this.IsReplayValid(0, rep?.replay)) {
 			var tx2 = TitleTextureKey.ResolveTitleTexture(this.ttkReplayInvalid);
 			if (tx2 != null) {
 				tx2.Opacity = 255;
@@ -844,7 +849,7 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 		}
 	}
 
-	private bool IsReplayValid(int iPlayer, CSongReplay rep) {
+	private bool IsReplayValid(int iPlayer, CSongReplay? rep) {
 		if (rep == null)
 			return false;
 		if (rep.WarnChecksumMismatch)
@@ -891,15 +896,20 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 			var rep = OpenTaiko.ReplayPlayback[p];
 			CTja tja = OpenTaiko.GetTJA(p);
 			if (rep == null || tja == null) continue;
-			var inputs = rep.Inputs;
+			var inputs = rep.Value.replay.Inputs;
+			var pumpTimes = rep.Value.msInputPumpTjaTimes;
 			// warp-aware chart time: recorded timestamps are in WARPED tja time (see tInputProcess_Drums), so
 			// releasing them against the raw clock desynced Dynamic Beat replays once the factor left 1.0
 			long nowTja = this.GetChartTimeNow(p);
 			this.msReplayTjaTime[p] = nowTja;
-			while (replayCursor[p] < inputs.Count && inputs[replayCursor[p]].Item1 <= nowTja) {
+			for (; replayCursor[p] < inputs.Count; ++replayCursor[p]) {
+				var msPumpTjaTime = pumpTimes[replayCursor[p]];
+				if (double.IsNaN(msPumpTjaTime)) // invalid timestamp
+					continue;
+				if (msPumpTjaTime > nowTja) // future
+					break;
 				long tHit = (long)inputs[replayCursor[p]].Item1;
 				this.ProcessPadInput(p, (EPad)inputs[replayCursor[p]].Item2, tHit);
-				replayCursor[p]++;
 			}
 		}
 	}
@@ -943,14 +953,14 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 		}
 	}
 
-	protected override void ProcessPadInput(int nUsePlayer, EPad nPad, long msHitTjaTime) {
+	protected override void ProcessPadInput(int nUsePlayer, EPad nPad, long msHitTjaTime, CChip? chipNoHit, ENoteJudge? eJudge) {
 		// test judgement
-		var (chipNoHit, eJudge) = GetChipToJudge(msHitTjaTime, nUsePlayer, nPad);
+		eJudge ??= (chipNoHit == null) ? ENoteJudge.Miss : this.eGetChipJudgeAtTime(msHitTjaTime, chipNoHit, nUsePlayer);
 		var gameType = this.eGameType[nUsePlayer];
 		if (eJudge != ENoteJudge.Miss) {
-			eJudge = this.JudgePadInput(nUsePlayer, chipNoHit, nPad, msHitTjaTime, eJudge);
+			eJudge = this.JudgePadInput(nUsePlayer, chipNoHit, nPad, msHitTjaTime, eJudge.Value);
 			if (eJudge is not (ENoteJudge.Miss or ENoteJudge.Auto or ENoteJudge.ADLIB)) // ADLIB here for "empty hit but not a miss"
-				gameType = NotesManager.GetChipGameType(chipNoHit, nUsePlayer);
+				gameType = NotesManager.GetChipGameType(chipNoHit!, nUsePlayer);
 		}
 
 		// Visual and sound effects
@@ -965,7 +975,7 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 
 			// BAD or TIGHT 時の処理。
 			if (eJudge is ENoteJudge.Miss && OpenTaiko.ConfigIni.bTight)
-				this.tChipHitProcess_BadAndTightWhenMiss(EKeyConfigPart.Taiko, eJudge, nUsePlayer, null);
+				this.tChipHitProcess_BadAndTightWhenMiss(EKeyConfigPart.Taiko, eJudge.Value, nUsePlayer, null);
 		}
 		#endregion
 	}
@@ -997,8 +1007,7 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 				return ENoteJudge.ADLIB; // here for "empty hit but not a miss"
 			} else if (chipNoHit.eNoteState == ENoteState.Wait) {
 				bool _isExpected = NotesManager.IsExpectedPadMultiHit(chipNoHit.padStoredHit, nPad, chipNoHit, gameType);
-				var msWaitedTime = msHitTjaTime - chipNoHit.msFirstMultiHit;
-				if (_isExpected && msWaitedTime < OpenTaiko.ConfigIni.nBigNoteWaitTimems) {
+				if (_isExpected && IsAcceptMultiHit(chipNoHit, msHitTjaTime)) {
 					if (skipHit)
 						return ENoteJudge.Perfect;
 					chipNoHit.eNoteState = ENoteState.None;
@@ -1454,10 +1463,8 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 		EGameType _gt = NotesManager.GetChipGameType(chip, iPlayer);
 		bool _isSwapNote = NotesManager.IsSwapNote(chip, _gt);
 
-		int msMaxWaitTime = OpenTaiko.ConfigIni.nBigNoteWaitTimems;
 		var msJudgeTjaTime = Math.Min(msTjaNowTime, msMaxPlayedTjaTime);
-		var msWaitedTime = msJudgeTjaTime - (float)chip.msFirstMultiHit;
-		if (chip.eNoteState == ENoteState.Wait && msWaitedTime >= msMaxWaitTime) {
+		if (chip.eNoteState == ENoteState.Wait && !IsAcceptMultiHit(chip, msJudgeTjaTime)) {
 			if (!_isSwapNote) {
 				this.tDrumsHitProcess((long)chip.msFirstMultiHit, EPad.Unknown, chip, false, iPlayer);
 				chip.padStoredHit = EPad.Unknown;

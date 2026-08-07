@@ -2,6 +2,7 @@
 
 local Gate  = require("gate")
 local Vault = require("vault")
+local NavInput = require("NavInput")
 
 local textures = {}
 local sounds   = {}
@@ -33,6 +34,11 @@ end
 
 function update()
     if phase == "waiting_enum" then
+        -- While songs are loading or unavailable, only allow Cancel/Escape to exit.
+        if NavInput.cancel() then
+            sounds.Cancel:Play()
+            return Exit("title", nil)
+        end
         -- handled by afterSongEnum
     elseif phase == "gate" then
         local result = Gate.update()

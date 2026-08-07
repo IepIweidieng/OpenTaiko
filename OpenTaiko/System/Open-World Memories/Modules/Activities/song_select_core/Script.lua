@@ -19,6 +19,7 @@ local Diff    = require("diffselect")
 local Replay  = require("replaylist")
 local DrawSS  = require("draw_songselect")
 local CFG     = require("sscore_config")
+local NavInput = require("NavInput")
 
 -- Song-preview volume fades (skinner-tunable in Config/layout.json).
 local PREVIEW_FADE_IN_MS  = CFG.num("preview.fade_in_ms", 280)
@@ -82,6 +83,7 @@ local G = {
 
     -- Preview state
     puchiSineY          = 0,
+    puchiIdxFrame       = 0,
     selectedSongNode    = nil,
     previewDemoStartRaw = 0,
     previewDemoStart    = 0,
@@ -108,12 +110,13 @@ local G = {
     holdDir = 0,
 
     -- Per-player input bindings
+    NavInput = NavInput,
     inputSets = {
-        { right = "RightChange", left = "LeftChange", decide1 = "Decide",  decide2 = "Decide",  cancel = "Cancel", auto = "ToggleAutoP1" },
-        { right = "RBlue2P",     left = "LBlue2P",    decide1 = "RRed2P",  decide2 = "LRed2P",  cancel = nil,      auto = "ToggleAutoP2" },
-        { right = "RBlue3P",     left = "LBlue3P",    decide1 = "RRed3P",  decide2 = "LRed3P",  cancel = nil,      auto = nil },
-        { right = "RBlue4P",     left = "LBlue4P",    decide1 = "RRed4P",  decide2 = "LRed4P",  cancel = nil,      auto = nil },
-        { right = "RBlue5P",     left = "LBlue5P",    decide1 = "RRed5P",  decide2 = "LRed5P",  cancel = nil,      auto = nil },
+        { auto = "ToggleAutoP1" },
+        { auto = "ToggleAutoP2" },
+        { auto = nil },
+        { auto = nil },
+        { auto = nil },
     },
 }
 
@@ -178,14 +181,17 @@ G.drawPlayerChara = function(player, x, y, scaleX, scaleY, opacity, flipX)
     end
 end
 
-G.drawPlayerPuchi = function(player, x, y, scaleX, scaleY, opacity)
+local PUCHI_N_FRAMES = 2  -- TODO: Read from PuchiConfig.txt
+G.drawPlayerPuchi = function(player, x, y, scaleX, scaleY, opacity, flipX, idxFrame)
     local puchi = GetSaveFile(player):GetPuchichara()
     if puchi == nil or puchi.tx == nil or not puchi.tx.Loaded then return end
-    local frameW = math.floor(puchi.tx.Width / 2)
+    local frameW = math.floor(puchi.tx.Width / PUCHI_N_FRAMES)
     local frameH = puchi.tx.Height
-    puchi.tx:SetScale(scaleX, scaleY)
+    local esx = (flipX or false) and -scaleX or scaleX
+    idxFrame = idxFrame or 0
+    puchi.tx:SetScale(esx, scaleY)
     puchi.tx:SetOpacity(opacity)
-    puchi.tx:DrawRectAtAnchor(x, y, 0, 0, frameW, frameH, "bottom")
+    puchi.tx:DrawRectAtAnchor(x, y, idxFrame * frameW, 0, frameW, frameH, "bottom")
     puchi.tx:SetOpacity(1); puchi.tx:SetScale(1, 1)
 end
 
@@ -329,6 +335,7 @@ function activate(allowPlayerCount, lockedPlayerCount, mountAISlotToP2, songOnly
     G.sounds.Cancel    = SHARED:GetSharedSound("Cancel")
     G.sounds.Decide    = SHARED:GetSharedSound("Decide")
     G.sounds.SongDecide = SHARED:GetSharedSound("SongDecide")
+    G.sounds.Error     = SHARED:GetSharedSound("Error")
 
     Diff.resetToSongSelect()
     Unlocks.invalidateCondCache()
@@ -370,8 +377,11 @@ function activate(allowPlayerCount, lockedPlayerCount, mountAISlotToP2, songOnly
     G.startCounter("load_animation", 0, 360, 2/300, "loop", function(val)
         if G.bgtx["load"] ~= nil then G.bgtx["load"]:SetRotation(val) end
     end)
-    G.startCounter("puchi_sine", 0, 360, 1/120, "loop", function(val)
+    G.startCounter("puchi_sine", 0, 360, 1/120, "loop", function(val)  -- 1/3 cycles/s
         G.puchiSineY = math.sin(val * math.pi / 180) * PUCHI_FLOAT_AMP
+    end)
+    G.startCounter("puchi_frame", 0, 1, 4.8, "loop", function(val)  -- 1/4.8 cycles/s
+        G.puchiIdxFrame = math.floor(val * PUCHI_N_FRAMES)
     end)
     -- Difficulty-select Note float/rotation phase (0..360, ~8s loop). Ticks in G.ctx every frame regardless of
     -- activeScreen, so the Note animates during the songselect→diffselect transition too. diffselect reads it.
@@ -397,6 +407,7 @@ function deactivate()
     G.lastSignal = nil
 
     for k in pairs(G.ctx) do G.ctx[k] = COUNTER:EmptyCounter() end
+    Diff.resetTransitionVisuals()
 
     SHARED:GetSharedSound("presound"):Stop()
     G.previewFadeVol    = 0
@@ -481,7 +492,7 @@ function update(ts)
 
     -- While songs are loading or unavailable, only allow Cancel/Escape to exit.
     if IsSongsEnumerating() or G.songList == nil or G.songList:GetSongNodeAtOffset(0) == nil then
-        if INPUT:KeyboardPressed("Escape") or INPUT:Pressed("Cancel") then
+        if G.NavInput.cancel() then
             G.sounds.Cancel:Play()
             return "cancel"
         end

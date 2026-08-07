@@ -80,7 +80,7 @@ local function playPreview(songNode)
                 -- preview never starts playing over the next box. (Just don't Play — the load doesn't
                 -- auto-play, and Stopping could cut the shared slot if it's reused for the new selection.)
                 if G.songList == nil or G.songList:GetSelectedSongNode() ~= songNode then return end
-                local speed = CONFIG.SongSpeed / 20
+                local speed = CONFIG.SONGSPEED:ToActual(CONFIG.SongSpeed)
                 snd:SetSpeed(speed)
                 snd:SetVolume(0)            -- start silent; Script.lua fades it in to full
                 snd:Play()
@@ -376,13 +376,14 @@ local function handleDecideSongSelect(Sort)
             G.unlocks.onDecideLocked(G.highlightedPlayer, ssn)
             return nil
         end
-        G.sounds.SongDecide:Play()
+        -- play decide sfx by caller
         return ssn
     elseif ssn.IsRandom == true then
         local rdNd = G.songList:GetRandomNodeInFolder(ssn, true, function(node)
             return G.unlocks == nil or not G.unlocks.isVaultLocked(node)
         end)
-        if rdNd ~= nil then G.sounds.SongDecide:Play(); return rdNd end
+        -- play decide sfx by caller
+        if rdNd ~= nil then return rdNd end
     end
     return nil
 end
@@ -444,19 +445,20 @@ function M.handleSongSelectInput(Sort, Diff)
         if G.highlightedPlayer ~= prev then Sort.applySort(); M.refreshPage(true) end
     end
     if not G.activeConfig.songOnly then   -- online lobby (songOnly): Auto cannot be toggled in song select
-        if INPUT:KeyboardPressed("F3") then
-            G.sounds.Decide:Play(); CONFIG:SetAutoStatus(0, not CONFIG:GetAutoStatus(0))
-        end
-        if INPUT:KeyboardPressed("F4") and CONFIG.PlayerCount >= 2 then
-            G.sounds.Decide:Play(); CONFIG:SetAutoStatus(1, not CONFIG:GetAutoStatus(1))
+        for p = 1, CONFIG.PlayerCount, 1 do
+            local isAI = (G.activeConfig.mountAISlotToP2 and p == 2)
+            local inputPn = G.inputSets[p]
+            if not isAI and inputPn.auto ~= nil and INPUT:Pressed(inputPn.auto) then
+                G.sounds.Decide:Play(); CONFIG:SetAutoStatus(p - 1, not CONFIG:GetAutoStatus(p - 1))
+            end
         end
     end
 
-    local inpset = G.inputSets[G.highlightedPlayer + 1]
+    local navPn = G.NavInput.p[G.highlightedPlayer + 1]
 
     -- Release hold if direction key lifted
-    if G.holdDir ==  1 and not INPUT:Pressing(inpset.right) and not INPUT:KeyboardPressing("RightArrow") then stopHold()
-    elseif G.holdDir == -1 and not INPUT:Pressing(inpset.left)  and not INPUT:KeyboardPressing("LeftArrow")  then stopHold()
+    if G.holdDir ==  1 and not navPn.rightPressing() then stopHold()
+    elseif G.holdDir == -1 and not navPn.leftPressing() then stopHold()
     end
 
     -- Main navigation
@@ -474,14 +476,14 @@ function M.handleSongSelectInput(Sort, Diff)
             local baseFolder = (ssn ~= nil and not ssn.IsRoot) and ssn.Parent or G.songList:GetRoot()
             sd:Activate(G.highlightedPlayer, "search", baseFolder)
         end
-    elseif (INPUT:Pressed(inpset.right) or INPUT:KeyboardPressed("RightArrow")) and G.songList ~= nil then
+    elseif navPn.right() and G.songList ~= nil then
         doMove(1); startHold(1)
-    elseif (INPUT:Pressed(inpset.left) or INPUT:KeyboardPressed("LeftArrow")) and G.songList ~= nil then
+    elseif navPn.left() and G.songList ~= nil then
         doMove(-1); startHold(-1)
-    elseif INPUT:Pressed(inpset.decide1) or INPUT:Pressed(inpset.decide2) or INPUT:KeyboardPressed("Return") then
+    elseif navPn.decide() then
         stopHold()
         G.selectedSongNode = handleDecideSongSelect(Sort)
-    elseif (inpset.cancel ~= nil and INPUT:Pressed(inpset.cancel)) or INPUT:KeyboardPressed("Escape") then
+    elseif navPn.cancel() then
         stopHold()
         if not startCloseAnim(Sort) then
             G.sounds.Cancel:Play()
@@ -510,14 +512,14 @@ function M.handleSongSelectInput(Sort, Diff)
     if INPUT:KeyboardPressed("Q") then
         G.sounds.Skip:Play()
         CONFIG.SongSpeed = CONFIG.SongSpeed - 1
-        local spd = CONFIG.SongSpeed / 20
+        local spd = CONFIG.SONGSPEED:ToActual(CONFIG.SongSpeed)
         SHARED:GetSharedSound("presound"):SetSpeed(spd)
         if G.previewDemoStartRaw > 0 then G.previewDemoStart = math.floor(G.previewDemoStartRaw / spd) end
     end
     if INPUT:KeyboardPressed("W") then
         G.sounds.Skip:Play()
         CONFIG.SongSpeed = CONFIG.SongSpeed + 1
-        local spd = CONFIG.SongSpeed / 20
+        local spd = CONFIG.SONGSPEED:ToActual(CONFIG.SongSpeed)
         SHARED:GetSharedSound("presound"):SetSpeed(spd)
         if G.previewDemoStartRaw > 0 then G.previewDemoStart = math.floor(G.previewDemoStartRaw / spd) end
     end
@@ -540,10 +542,12 @@ function M.handleSongSelectInput(Sort, Diff)
             -- Online lobby: pick the SONG only — NO difficulty prompt. Set it as the chosen song globally
             -- (difficulty is chosen per-player back in the lobby) and signal the parent to return.
             stopHold()
+            G.sounds.SongDecide:Play()
             pcall(function() G.selectedSongNode:Mount(0, 0, 0, 0, 0) end)
             G.lastSignal = "play"
             return "play"
         end
+        G.sounds.Decide:Play()
         Diff.loadDiffBars(G.selectedSongNode)
         require("replaylist").prefetchForSong(G.selectedSongNode)   -- async; lists land while the panel opens
         stopHold()

@@ -119,7 +119,7 @@ local function loadSongMedia()
     end)
     for d = 0, 4 do pcall(function() if node.score[d] ~= nil then net.songLevels[d] = node.nLevel[d] end end) end
     pcall(function()
-        local spd = (net.song.speed or 20) / 20
+        local spd = net.song.speed and CONFIG.SONGSPEED:ToActual(net.song.speed) or 1
         net.previewSpeed = spd
         net.previewDemoStart = floor((node.DemoStart or 0) / spd)
         SHARED:SetSharedPreviewUsingAbsolutePath("presound", node.AudioPath, function(snd)
@@ -268,11 +268,16 @@ function LO.setSong(uid, title, diff, speed, dyn)
 end
 function LO.adjustSpeed(delta)
     if not net.song then return end
-    local sp = (net.song.speed or 20) + delta; if sp < 2 then sp = 2 elseif sp > 200 then sp = 200 end
+    local SPEED = CONFIG.SONGSPEED
+    local sp = (net.song.speed or SPEED.Normal) + delta
+    local actual = SPEED:ToActual(sp)
+    if actual < 0.1 then actual = 0.1; sp = SPEED:FromActual(actual)
+    elseif actual > 10 then actual = 10; sp = SPEED:FromActual(actual)
+    end
     net.song.speed = sp
     -- apply to the live host preview immediately (guests pick it up via the song rebroadcast → applySong reload)
-    net.previewSpeed = sp / 20
-    pcall(function() local snd = SHARED:GetSharedSound("presound"); if snd then snd:SetSpeed(sp / 20) end end)
+    net.previewSpeed = actual
+    pcall(function() local snd = SHARED:GetSharedSound("presound"); if snd then snd:SetSpeed(actual) end end)
     if LO.amController() then LO.rebroadcastSong() end
 end
 function LO.setDiff(d) net.diffByPeer[NET:SelfId()] = d; NET:Broadcast("diff", string.format('{"d":%d}', d)) end

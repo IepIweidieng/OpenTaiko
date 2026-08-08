@@ -742,6 +742,10 @@ public partial class CTexture : IDisposable {   // streaming subsystem is in CTe
 		tRealizeDeferred();
 	}
 
+	/// <summary>Decode + upload this texture now if it is deferred (first draw not yet reached). Used to
+	/// warm gameplay textures during the song-load screen so they don't decode inline on first draw.</summary>
+	public void RealizeIfDeferred() => tRealizeDeferred();
+
 	// Realize a deferred/evicted texture NOW (decode from _sourcePath + GL upload). Also used by
 	// ReadPixelsRGBA: a readback must see the pixels even if the texture was never drawn.
 	private void tRealizeDeferred() {

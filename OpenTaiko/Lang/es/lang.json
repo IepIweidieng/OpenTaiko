@@ -79,6 +79,9 @@
 		// {5}: Name of the current player being processed.
 		"SETTINGS_SYSTEM_IMPORTSCOREINI_STATUS3": "Actualizando las puntuaciones de {0} jugadores...\n<c.#0bb000>{1} de {2} actualizados/c> (<c.#b00000>{3} falló</c>)\n\n{4}: {5}",
 
+		"SETTINGS_SYSTEM_RESETSOUNDTRACK": "Restablecer elección de descarga de banda sonora",
+		"SETTINGS_SYSTEM_RESETSOUNDTRACK_DESC": "Borra la opción \"Nunca\" guardada. La solicitud de banda sonora volverá a aparecer en el próximo inicio.",
+
 		"SETTINGS_SYSTEM_HIDEDANTOWER": "Ocultar Dans/Torres",
 		"SETTINGS_SYSTEM_HIDEDANTOWER_DESC": "Oculta partituras de Dans y Torres en el menú de Modo Taiko.\nNota: Recarga las canciones para aplicar los cambios.",
 
@@ -177,6 +180,7 @@
 		"SETTINGS_SYSTEM_TOUCHDRUMOPACITY_DESC": "Opacidad del tambor en pantalla como porcentaje. 100 es opaco, 0 lo oculta.",
 		"SETTINGS_SYSTEM_TOUCHDRUMSHAPE": "Forma del Tambor Táctil",
 		"SETTINGS_SYSTEM_TOUCHDRUMSHAPE_DESC": "Dibuja zonas Don personalizadas para el tambor táctil. Todo lo demás es Ka.",
+		"EXTERNALDISPLAY_NOTICE": "El juego se muestra en la pantalla externa.",
 		"SETTINGS_SYSTEM_DEBUGHUD": "HUD de Depuración",
 		"SETTINGS_SYSTEM_DEBUGHUD_DESC": "Muestra un overlay de FPS / memoria / etapa en pantalla. Desactivado por defecto.",
 		"TOUCHDRUMEDITOR_HINT": "Dibuja las zonas Don (todo lo demás es Ka). El rectángulo discontinuo es la pantalla; los trazos pueden salirse de él. Guarda sin dibujar nada para volver al círculo.",

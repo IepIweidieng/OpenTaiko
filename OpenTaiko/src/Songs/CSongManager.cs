@@ -1,6 +1,8 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 using OpenTaiko.CSongListNodeComparers;
 
 namespace OpenTaiko;
@@ -13,9 +15,11 @@ internal class CSongManager {
 		get;
 		set;
 	}
+	// Use a private field to allow atomic incrementing when parsing in parallel.
+	private int _nScoresAppliedFromFile;
 	public int nScoresAppliedFromFile {
-		get;
-		set;
+		get => _nScoresAppliedFromFile;
+		set => _nScoresAppliedFromFile = value;
 	}
 	public int nSearchScoreCount {
 		get;
@@ -26,16 +30,20 @@ internal class CSongManager {
 		set;
 	}
 	// Enumeration progress (drives the song_enum ROActivity bar): OpenTaiko song files (.tja, .tci/.optktci,
-	// .tcm/.optktcm) parsed so far, and the total pre-counted before the scan (see CEnumSongs.LoadSongListStructure).
+	// .tcm/.optktcm) processed so far, and the total counted by the pre-parse walk. Backed by a field so the
+	// parallel pre-parse can bump it with Interlocked.
+	private int _nSearchFileCount;
 	public int nSearchFileCount {
-		get;
-		set;
+		get => _nSearchFileCount;
+		set => _nSearchFileCount = value;
 	}
 	public int nTotalSongFilesToSearch {
 		get;
 		set;
 	}
 	public Dictionary<string, CSongListNode> listSongsDB;                   // songs.dbから構築されるlist
+	[NonSerialized]
+	private ConcurrentDictionary<string, (string hash, CSongListNode? node)>? _preparsed;   // unparented song nodes from the parallel pre-parse, keyed by TJA full path
 	public CSongListNode? SongRootDownload = null;
 	public List<CSongListNode> listSongRoot;         // 起動時にフォルダ検索して構築されるlist
 	public HashSet<CSongListNode> SongRootsDan = [];
@@ -107,6 +115,167 @@ internal class CSongManager {
 		this.tSongSearchListCreate(strBaseFolder, bChildBOXRecurse, this.listSongRoot, null, deferredTcm);
 		this.ProcessDeferredTcm(deferredTcm);
 	}
+
+	// Uppercase-hex SHA1 of a chart file, used as the cache key alongside its path.
+	private static string TjaHash(string filePath) {
+		using SHA1 sha = SHA1.Create();
+		using var fs = File.OpenRead(filePath);
+		return Convert.ToHexString(sha.ComputeHash(fs));
+	}
+
+	// Song file extensions counted toward the progress total (must match the ones tSongSearchListCreate
+	// turns into nodes and increments nSearchFileCount for).
+	private static readonly HashSet<string> SongFileExtensions = new(StringComparer.OrdinalIgnoreCase) {
+		".tja", ".tci", ".optktci", ".tcm", ".optktcm"
+	};
+
+	/// <summary>
+	/// One folder walk that sets the enumeration progress total and turns every .tja into a song node
+	/// across CPU cores, so the serial tree build below reuses the nodes instead of hashing and parsing
+	/// one file at a time. nSearchFileCount advances during the parse, so the progress bar moves through
+	/// this phase instead of sitting at 0%.
+	/// </summary>
+	public void PreparseTjaCharts(IEnumerable<string> roots) {
+		var paths = new List<string>();
+		int nonTja = 0;
+		foreach (string root in roots) {
+			try { nonTja += CollectCharts(root, paths); } catch (Exception e) { Trace.TraceWarning(e.Message); }
+		}
+		// Each .tja is counted twice, once here and once when the tree build turns it into a node.
+		// The other song files are counted by the tree build alone.
+		this.nTotalSongFilesToSearch = 2 * paths.Count + nonTja;
+		this.nSearchFileCount = 0;
+		var dict = new ConcurrentDictionary<string, (string, CSongListNode?)>();
+		Parallel.ForEach(paths, p => {
+			try {
+				string hash = TjaHash(p);
+				// Create song nodes except for the charts already in the cache.
+				dict[p] = (hash, listSongsDB.ContainsKey(p + hash) ? null : ParseUnparentedSongNode(p));
+			} catch { }
+			Interlocked.Increment(ref _nSearchFileCount);
+		});
+		_preparsed = dict;
+	}
+
+	// Parses a chart file into an unparented song node, without retaining the CTja object.
+	private CSongListNode? ParseUnparentedSongNode(string filePath) {
+		CTja dtx = new CTja(filePath);
+		CSongListNode? node = CreateUnparentedSongNode(dtx, filePath);
+		dtx.DeActivate();
+		return node;
+	}
+
+	/// <summary>
+	/// Builds the song node for one parsed chart, or returns null when the chart has no course. The node
+	/// carries only the fields the chart itself provides, so this runs before the parent box is known. The
+	/// caller must pass the node to ApplySongNodeParent to complete it.
+	/// </summary>
+	private CSongListNode? CreateUnparentedSongNode(CTja dtx, string filePath) {
+		var fileinfo = new FileInfo(filePath);
+		string strBaseFolder = fileinfo.DirectoryName + Path.DirectorySeparatorChar;
+		CSongListNode node = new CSongListNode();
+		node.nodeType = CSongListNode.ENodeType.SCORE;
+
+		bool hasAnyDifficultyProcessed = false;
+		for (int n = 0; n < (int)Difficulty.Total; n++) {
+			if (!dtx.bChartExists[n]) continue;
+
+			node.difficultiesCount++;
+
+			node.ldTitle = dtx.TITLE;
+			node.ldSubtitle = dtx.SUBTITLE;
+			node.strMaker = dtx.MAKER;
+			node.strNotesDesigner = dtx.SongListCourseMetadata.Select(m => m.NOTESDESIGNER.Equals("") ? node.strMaker : m.NOTESDESIGNER).ToArray();
+			node.nSide = dtx.SIDE;
+			node.bExplicit = dtx.EXPLICIT;
+			node.bMovie = !string.IsNullOrEmpty(dtx.strBGVIDEO_PATH);
+
+			// Shallow copy, works well because dict<string, string> but wouldn't if dict<string, T>
+			node.customMetadataGScope = new Dictionary<string, string>(dtx.GlobalCustomMetadata);
+			node.customMetadataCScope = dtx.SongListCourseMetadata.Select(meta => new Dictionary<string, string>(meta.CustomMetadata)).ToArray();
+
+			node.DanSongs = new();
+			if (dtx.List_DanSongs != null) {
+				for (int i = 0; i < dtx.List_DanSongs.Count; i++) {
+					node.DanSongs.Add(dtx.List_DanSongs[i]);
+				}
+			}
+
+			if (dtx.Dan_C != null)
+				node.Dan_C = dtx.Dan_C;
+
+			// The chart's own genre. ApplySongNodeParent lets the parent box override it.
+			node.songGenre = dtx.GENRE ?? "";
+			node.songGenrePanel = dtx.GENRE ?? "";
+
+			// Left null when the chart has none, so ApplySongNodeParent can fall back to the parent box.
+			node.strSelectBGPath = (dtx.SELECTBG != null && File.Exists(strBaseFolder + dtx.SELECTBG))
+				? strBaseFolder + dtx.SELECTBG : null;
+
+			node.nLevel = dtx.SongListCourseMetadata.Select(m => m.LEVELtaiko).ToArray();
+			node.nLevelIcon = dtx.SongListCourseMetadata.Select(m => m.LEVELtaikoIcon).ToArray();
+			node.uniqueId = dtx.uniqueID;
+
+			node.CutSceneIntro = dtx.CutSceneIntro;
+			node.CutSceneOutros = dtx.CutSceneOutros;
+
+			node.score[n] = new CScore();
+			node.score[n].FileInfo.FileAbsolutePath = strBaseFolder + fileinfo.Name;
+			node.score[n].FileInfo.FolderAbsolutePath = strBaseFolder;
+			node.score[n].FileInfo.FileSize = fileinfo.Length;
+			node.score[n].FileInfo.LastUpdateDateTime = fileinfo.LastWriteTime;
+
+			LoadChartInfo(node, dtx, n);
+
+			hasAnyDifficultyProcessed = true;
+		}
+
+		return hasAnyDifficultyProcessed ? node : null;
+	}
+
+	// Applies the song node fields that come from the parent box.
+	private static void ApplySongNodeParent(CSongListNode node, CSongListNode? parent, string filePath) {
+		node.rParentNode = parent;
+		node.strBreadcrumbs = (parent == null) ? filePath : parent.strBreadcrumbs + " > " + filePath;
+
+		string chartGenre = node.songGenre;
+		string? parentGenre = string.IsNullOrEmpty(parent?.songGenre) ? null : parent.songGenre;
+		node.songGenre = parentGenre ?? chartGenre;
+		node.songGenrePanel = (!string.IsNullOrEmpty(chartGenre) ? chartGenre : parentGenre) ?? "";
+
+		if (node.strSelectBGPath == null) node.strSelectBGPath = parent?.strSelectBGPath;
+		if (!File.Exists(node.strSelectBGPath)) node.strSelectBGPath = null;
+
+		ApplyParentSettings(node, parent);
+
+		// The parent's preimage fills in every course that has none.
+		if (parent?.score[0] != null) {
+			for (int n = 0; n < (int)Difficulty.Total; n++) {
+				if (node.score[n] != null && string.IsNullOrEmpty(node.score[n].ChartInfo.Preimage))
+					node.score[n].ChartInfo.Preimage = parent.score[0].ChartInfo.Preimage;
+			}
+		}
+	}
+
+	public void ClearPreparse() => _preparsed = null;
+
+	// Walk a search root once: collect .tja paths for the parallel parse and return the count of the
+	// other song files (.tci/.tcm). Skips unreadable folders rather than aborting the whole walk.
+	private static int CollectCharts(string dir, List<string> tjaInto) {
+		int nonTja = 0;
+		try {
+			foreach (string f in Directory.EnumerateFiles(dir)) {
+				string ext = Path.GetExtension(f);
+				if (!SongFileExtensions.Contains(ext)) continue;
+				if (ext.Equals(".tja", StringComparison.OrdinalIgnoreCase)) tjaInto.Add(Path.GetFullPath(f));
+				else nonTja++;
+			}
+			foreach (string d in Directory.EnumerateDirectories(dir))
+				nonTja += CollectCharts(d, tjaInto);
+		} catch { /* skip unreadable folders */ }
+		return nonTja;
+	}
+
 	private void tSongSearchListCreate(string strBaseFolder, bool bChildBOXRecurse, List<CSongListNode> listNodeList, CSongListNode nodeParent, List<(string filePath, List<CSongListNode> nodeList, CSongListNode? parent)>? deferredTcm = null) {
 		if (!strBaseFolder.EndsWith(Path.DirectorySeparatorChar))
 			strBaseFolder = strBaseFolder + Path.DirectorySeparatorChar;
@@ -140,15 +309,13 @@ internal class CSongManager {
 
 					string filePath = strBaseFolder + fileinfo.Name;
 
-					using SHA1 hashProvider = SHA1.Create();
-					var fs = File.OpenRead(filePath);
-					byte[] rawhash = hashProvider.ComputeHash(fs);
-					string hash = "";
-					for (int i = 0; i < rawhash.Length; i++) {
-						hash += string.Format("{0:X2}", rawhash[i]);
+					// Use the pre-parse result if possible.
+					string hash; CSongListNode? preNode;
+					if (_preparsed != null && _preparsed.TryGetValue(fileinfo.FullName, out var pp)) {
+						hash = pp.hash; preNode = pp.node;
+					} else {
+						hash = TjaHash(filePath); preNode = null;
 					}
-
-					fs.Dispose();
 
 					if (listSongsDB.TryGetValue(filePath + hash, out CSongListNode value)) {
 						this.nSearchScoreCount++;
@@ -190,118 +357,16 @@ internal class CSongManager {
 
 						this.nSearchSongNodeCount++;
 					} else {
-						CTja dtx = new CTja(filePath);
-						CSongListNode cSongListNode = new CSongListNode();
-						cSongListNode.nodeType = CSongListNode.ENodeType.SCORE;
+						CSongListNode? cSongListNode = preNode ?? ParseUnparentedSongNode(filePath);
 
-						bool hasAnyDifficultyProcessed = false;
-						for (int n = 0; n < (int)Difficulty.Total; n++) {
-							if (dtx.bChartExists[n]) {
-								cSongListNode.difficultiesCount++;
-								cSongListNode.rParentNode = nodeParent;
-								cSongListNode.strBreadcrumbs = (cSongListNode.rParentNode == null) ?
-									strBaseFolder + fileinfo.Name : cSongListNode.rParentNode.strBreadcrumbs + " > " + strBaseFolder + fileinfo.Name;
+						if (cSongListNode != null) {
+							ApplySongNodeParent(cSongListNode, nodeParent, filePath);
+							CSongDict.tAddSongNode(cSongListNode.uniqueId, cSongListNode);
 
-								cSongListNode.ldTitle = dtx.TITLE;
-								cSongListNode.ldSubtitle = dtx.SUBTITLE;
-								cSongListNode.strMaker = dtx.MAKER;
-								cSongListNode.strNotesDesigner = dtx.SongListCourseMetadata.Select(m => m.NOTESDESIGNER.Equals("") ? cSongListNode.strMaker : m.NOTESDESIGNER).ToArray();
-								cSongListNode.nSide = dtx.SIDE;
-								cSongListNode.bExplicit = dtx.EXPLICIT;
-								cSongListNode.bMovie = !string.IsNullOrEmpty(dtx.strBGVIDEO_PATH);
-
-								// Shallow copy, works well because dict<string, string> but wouldn't if dict<string, T>
-								cSongListNode.customMetadataGScope = new Dictionary<string, string>(dtx.GlobalCustomMetadata);
-								cSongListNode.customMetadataCScope = dtx.SongListCourseMetadata.Select(meta => new Dictionary<string, string>(meta.CustomMetadata)).ToArray();
-
-								cSongListNode.DanSongs = new();
-								if (dtx.List_DanSongs != null) {
-									for (int i = 0; i < dtx.List_DanSongs.Count; i++) {
-										cSongListNode.DanSongs.Add(dtx.List_DanSongs[i]);
-									}
-								}
-
-								if (dtx.Dan_C != null)
-									cSongListNode.Dan_C = dtx.Dan_C;
-
-								string? songGenreParent = string.IsNullOrEmpty(cSongListNode.rParentNode?.songGenre) ? null
-									: cSongListNode.rParentNode.songGenre;
-								cSongListNode.songGenre = songGenreParent ?? dtx.GENRE ?? "";
-								cSongListNode.songGenrePanel = (!string.IsNullOrEmpty(dtx.GENRE) ? dtx.GENRE : songGenreParent) ?? "";
-
-								if (!(dtx.SELECTBG != null && File.Exists(strBaseFolder + dtx.SELECTBG))) {
-									cSongListNode.strSelectBGPath = cSongListNode.rParentNode?.strSelectBGPath;
-								} else {
-									cSongListNode.strSelectBGPath = strBaseFolder + dtx.SELECTBG;
-								}
-								if (!File.Exists(cSongListNode.strSelectBGPath)) cSongListNode.strSelectBGPath = null;
-
-								if (cSongListNode.rParentNode != null) {
-									cSongListNode.strScenePresets = cSongListNode.rParentNode.strScenePresets;
-									if (cSongListNode.rParentNode.IsChangedForeColor) {
-										cSongListNode.ForeColor = cSongListNode.rParentNode.ForeColor;
-										cSongListNode.IsChangedForeColor = true;
-									}
-									if (cSongListNode.rParentNode.IsChangedBackColor) {
-										cSongListNode.BackColor = cSongListNode.rParentNode.BackColor;
-										cSongListNode.IsChangedBackColor = true;
-									}
-									if (cSongListNode.rParentNode.isChangedBoxColor) {
-										cSongListNode.BoxColor = cSongListNode.rParentNode.BoxColor;
-										cSongListNode.isChangedBoxColor = true;
-									}
-									if (cSongListNode.rParentNode.isChangedBgColor) {
-										cSongListNode.BgColor = cSongListNode.rParentNode.BgColor;
-										cSongListNode.isChangedBgColor = true;
-									}
-									if (cSongListNode.rParentNode.isChangedBgType) {
-										cSongListNode.BgType = cSongListNode.rParentNode.BgType;
-										cSongListNode.isChangedBgType = true;
-									}
-									if (cSongListNode.rParentNode.isChangedBoxType) {
-										cSongListNode.BoxType = cSongListNode.rParentNode.BoxType;
-										cSongListNode.isChangedBoxType = true;
-									}
-									if (cSongListNode.rParentNode.isChangedBoxChara) {
-										cSongListNode.BoxChara = cSongListNode.rParentNode.BoxChara;
-										cSongListNode.isChangedBoxChara = true;
-									}
-
-
-								}
-
-
-
-
-								cSongListNode.nLevel = dtx.SongListCourseMetadata.Select(m => m.LEVELtaiko).ToArray();
-								cSongListNode.nLevelIcon = dtx.SongListCourseMetadata.Select(m => m.LEVELtaikoIcon).ToArray();
-								cSongListNode.uniqueId = dtx.uniqueID;
-
-								cSongListNode.CutSceneIntro = dtx.CutSceneIntro;
-								cSongListNode.CutSceneOutros = dtx.CutSceneOutros;
-
-								CSongDict.tAddSongNode(cSongListNode.uniqueId, cSongListNode);
-
-								cSongListNode.score[n] = new CScore();
-								cSongListNode.score[n].FileInfo.FileAbsolutePath = strBaseFolder + fileinfo.Name;
-								cSongListNode.score[n].FileInfo.FolderAbsolutePath = strBaseFolder;
-								cSongListNode.score[n].FileInfo.FileSize = fileinfo.Length;
-								cSongListNode.score[n].FileInfo.LastUpdateDateTime = fileinfo.LastWriteTime;
-
-								if (cSongListNode.rParentNode != null && String.IsNullOrEmpty(cSongListNode.score[n].ChartInfo.Preimage)) {
-									cSongListNode.score[n].ChartInfo.Preimage = cSongListNode.rParentNode.score[0].ChartInfo.Preimage;
-								}
-
-								LoadChartInfo(cSongListNode, dtx, n);
-
-								if (hasAnyDifficultyProcessed == false) {
-									this.nSearchScoreCount++;
-									listNodeList.Add(cSongListNode);
-									if (!listSongsDB.ContainsKey(filePath + hash)) listSongsDB.Add(filePath + hash, cSongListNode);
-									this.nSearchSongNodeCount++;
-									hasAnyDifficultyProcessed = true;
-								}
-							}
+							this.nSearchScoreCount++;
+							listNodeList.Add(cSongListNode);
+							if (!listSongsDB.ContainsKey(filePath + hash)) listSongsDB.Add(filePath + hash, cSongListNode);
+							this.nSearchSongNodeCount++;
 						}
 					}
 					#endregion
@@ -539,7 +604,7 @@ internal class CSongManager {
 
 
 
-					this.nScoresAppliedFromFile++;
+					Interlocked.Increment(ref _nScoresAppliedFromFile);
 					cdtx.DeActivate();
 					#region [ 曲検索ログ出力 ]
 					//-----------------

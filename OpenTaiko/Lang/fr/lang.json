@@ -79,6 +79,9 @@
 		// {5}: Name of the current player being processed.
 		"SETTINGS_SYSTEM_IMPORTSCOREINI_STATUS3": "Refreshing {0} players' scores...\n<c.#0bb000>{1} of {2} refreshed/c> (<c.#b00000>{3} failed</c>)\n\n{4}: {5}",
 
+		"SETTINGS_SYSTEM_RESETSOUNDTRACK": "Réinitialiser le choix de téléchargement de la bande-son",
+		"SETTINGS_SYSTEM_RESETSOUNDTRACK_DESC": "Efface le choix « Jamais » enregistré. La proposition de bande-son réapparaîtra au prochain lancement.",
+
 		"SETTINGS_SYSTEM_HIDEDANTOWER": "Masquer Dan/Tour",
 		"SETTINGS_SYSTEM_HIDEDANTOWER_DESC": "Masque les sons de type Dan ou Tour dans le menu Partie rapide.\nNote: Cette option prend effet après le rechargement des sons.",
 
@@ -180,6 +183,7 @@
 		"SETTINGS_SYSTEM_TOUCHDRUMOPACITY_DESC": "Opacité de l'affichage du tambour à l'écran en pourcentage. 100 est opaque, 0 le masque.",
 		"SETTINGS_SYSTEM_TOUCHDRUMSHAPE": "Forme du tambour tactile",
 		"SETTINGS_SYSTEM_TOUCHDRUMSHAPE_DESC": "Dessinez des zones Don personnalisées pour le tambour tactile. Tout le reste est Ka.",
+		"EXTERNALDISPLAY_NOTICE": "Le jeu est affiché sur l'écran externe.",
 		"SETTINGS_SYSTEM_DEBUGHUD": "HUD de débogage",
 		"SETTINGS_SYSTEM_DEBUGHUD_DESC": "Affiche un overlay FPS / mémoire / étape à l'écran. Désactivé par défaut.",
 		"TOUCHDRUMEDITOR_HINT": "Dessinez les zones Don (tout le reste est Ka). Le rectangle en pointillés représente l'écran ; les tracés peuvent le dépasser. Enregistrez sans rien dessiner pour revenir au cercle.",

@@ -79,6 +79,9 @@
 		// {5}: Name of the current player being processed.
 		"SETTINGS_SYSTEM_IMPORTSCOREINI_STATUS3": "Scores van {0} spelers worden vernieuwd...\n<c.#0bb000>{1} van {2} vernieuwd/c> (<c.#b00000>{3} mislukt</c>)\n\n{4}: {5}",
 
+		"SETTINGS_SYSTEM_RESETSOUNDTRACK": "Keuze voor soundtrackdownload opnieuw instellen",
+		"SETTINGS_SYSTEM_RESETSOUNDTRACK_DESC": "Wist de opgeslagen keuze \"Nooit\". De soundtrackvraag verschijnt bij de volgende start opnieuw.",
+
 		"SETTINGS_SYSTEM_HIDEDANTOWER": "Dan/Toren Verbergen",
 		"SETTINGS_SYSTEM_HIDEDANTOWER_DESC": "Verberg de Dan en Toren nummers in de Taiko Modus.\nOpmerking: Herlaad de nummers om dit te activeren.",
 
@@ -179,6 +182,7 @@
 		"SETTINGS_SYSTEM_TOUCHDRUMOPACITY_DESC": "Dekking van de trommelweergave op het scherm in procenten. 100 is dekkend, 0 verbergt hem.",
 		"SETTINGS_SYSTEM_TOUCHDRUMSHAPE": "Vorm Touch-Trommel",
 		"SETTINGS_SYSTEM_TOUCHDRUMSHAPE_DESC": "Teken eigen Don-gebieden voor de touch-trommel. Alles daarbuiten is Ka.",
+		"EXTERNALDISPLAY_NOTICE": "Het spel wordt op het externe scherm weergegeven.",
 		"SETTINGS_SYSTEM_DEBUGHUD": "Debug HUD",
 		"SETTINGS_SYSTEM_DEBUGHUD_DESC": "Toont een overlay met FPS, geheugen en stage op het scherm. Standaard uit.",
 		"TOUCHDRUMEDITOR_HINT": "Teken Don-gebieden (al het andere is Ka). De gestippelde rechthoek is het scherm; lijnen mogen erbuiten komen. Opslaan zonder iets te tekenen herstelt de cirkel.",

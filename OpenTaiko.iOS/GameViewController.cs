@@ -101,13 +101,17 @@ public partial class GameViewController : UIViewController {
 		nfloat scale = View.ContentScaleFactor;
 		_backingWidth = (int)(View.Bounds.Width * scale);
 		_backingHeight = (int)(View.Bounds.Height * scale);
-		_metalPresenter ??= new MetalPresenter((CAMetalLayer)View.Layer, _glContext!);
-		_metalPresenter.UpdateDrawableSize(_backingWidth, _backingHeight);
+		// While an external display shows the game, the presenter belongs to its layer and
+		// internal layout changes must not resize it.
+		if (!ExternalDisplayActive) {
+			_metalPresenter ??= new MetalPresenter((CAMetalLayer)View.Layer, _glContext!);
+			_metalPresenter.UpdateDrawableSize(_backingWidth, _backingHeight);
+		}
 		Console.WriteLine($"[OpenTaiko] Metal drawable: {_backingWidth}x{_backingHeight}");
 		if (!_initialized) {
 			_initialized = true;
 			StartBootstrap();
-		} else {
+		} else if (!ExternalDisplayActive) {
 			_game?.ResizeViewport(_backingWidth, _backingHeight);
 		}
 	}
@@ -339,21 +343,11 @@ public partial class GameViewController : UIViewController {
 			});
 		};
 
-		// Start the display link
-		_displayLink = CADisplayLink.Create(OnFrame);
-		// Request the display's full refresh rate (120 Hz on ProMotion) unless the "Frame Rate"
-		// setting caps it at 60. Requires CADisableMinimumFrameDurationOnPhone=true in Info.plist
-		// to take effect on iPhone. (ConfigIni is loaded by now — InitWithExternalContext ran above.)
-		bool unlimitedFps = global::OpenTaiko.OpenTaiko.ConfigIni?.biOSUnlimitedFrameRate ?? false;
-		int deviceMax = (int)UIScreen.MainScreen.MaximumFramesPerSecond;
-		if (UIDevice.CurrentDevice.CheckSystemVersion(15, 0)) {
-			float maxFps = unlimitedFps ? deviceMax : Math.Min(60, deviceMax);
-			float minFps = Math.Min(60f, maxFps);
-			_displayLink.PreferredFrameRateRange = CAFrameRateRange.Create(minFps, maxFps, maxFps);
-		} else {
-			_displayLink.PreferredFramesPerSecond = unlimitedFps ? deviceMax : Math.Min(60, deviceMax);
-		}
-		_displayLink.AddToRunLoop(NSRunLoop.Current, NSRunLoopMode.Default);
+		// Start the display link.
+		StartDisplayLink(UIScreen.MainScreen);
+
+		// Present on an external display when one is attached, now or later.
+		StartExternalDisplayWatch();
 	}
 
 	private double _lastTimestamp;

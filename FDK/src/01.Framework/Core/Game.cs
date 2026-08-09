@@ -817,14 +817,6 @@ public abstract partial class Game : IDisposable {
 			dbTimeMs = Window_.Time * 1000;
 			TimeMs = (long)(Window_.Time * 1000);
 		}
-		unsafe {
-			if (SdlWindowing.IsViewSdl(Window_)) {
-				Silk.NET.SDL.Event sdlEvent;
-				while (Silk.NET.SDL.SdlProvider.SDL.Value.PollEvent(&sdlEvent) != 0) {
-
-				}
-			}
-		}
 		Update();
 
 		ImGuiController?.Update((float)deltaTime);

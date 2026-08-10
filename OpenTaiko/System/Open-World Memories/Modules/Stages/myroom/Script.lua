@@ -785,6 +785,7 @@ local function getEditCameraFuncs(dt) return {
     move = function()
         local ix, iz = getMoveUnitIsoXZ()
         if ix ~= 0 or iz ~= 0 then
+            local cam = world.cam
             local sp = 7 * dt
             cam:setTarget((cam.tx or 0) + ix * sp, cam.ty or (FY + 0.4), (cam.tz or 0) + iz * sp)
         end

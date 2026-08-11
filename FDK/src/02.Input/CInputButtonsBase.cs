@@ -27,33 +27,35 @@ public abstract class CInputButtonsBase : IInputDevice, IDisposable {
 	public List<STInputEvent> InputEvents { get; protected set; }
 	public string strDeviceName { get; set; }
 
-	public void Polling() {
+	public void Polling(bool accumulate = false) {
 		// clear previous input buffer
+		if (!accumulate)
 		InputEvents.Clear();
 		// update per-frame button state
 		// the input buffer has already been filled.
 		for (int i = 0; i < ButtonStates.Length; i++) {
 			// Use the same timer used in gameplay to prevent desyncs between BGM/chart and input.
-			this.ProcessButtonState(i, this.GetVelocity(i));
+			this.ProcessButtonState(i, this.GetVelocity(i), accumulate);
 		}
 		// swap input buffer
+		if (!accumulate)
 		this.InputEvents = Interlocked.Exchange(ref this.EventBuffer, this.InputEvents);
 	}
 
 	// 0 (temporary): press start this frame, 1: press start, 2: press continue
 	// -1: release start, -2: release continue, -3: press start & end
-	protected void ProcessButtonState(int idxBtn, int velocity = 0) {
+	protected void ProcessButtonState(int idxBtn, int velocity = 0, bool accumulate = false) {
 		lock (this.ButtonStates) { // update thread, concurrent with input thread
 			var isPressed = Volatile.Read(ref ButtonStates[idxBtn].isPressed);
 			var state = Volatile.Read(ref ButtonStates[idxBtn].state);
 			if (isPressed != 0) {
-				if (state >= 1) {
+				if (state == 2 || (state == 1 && !accumulate)) {
 					Volatile.Write(ref ButtonStates[idxBtn].state, 2);
 				} else {
 					Volatile.Write(ref ButtonStates[idxBtn].state, 1);
 				}
 			} else {
-				if (state <= -1) {
+				if (state == -2 || ((state == -1 || state == -3) && !accumulate)) {
 					Volatile.Write(ref ButtonStates[idxBtn].state, -2);
 				} else if (state == 0) {
 					Volatile.Write(ref ButtonStates[idxBtn].state, -3);

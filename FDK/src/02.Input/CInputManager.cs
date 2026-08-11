@@ -159,14 +159,14 @@ public class CInputManager : IDisposable {
 	public IInputDevice? MidiIn(int ID) => FindDevice(InputDeviceType.MidiIn, ID);
 	public IInputDevice? MidiIn(string GUID) => FindDevice(InputDeviceType.MidiIn, GUID);
 
-	public void Polling() {
+	public void Polling(bool accumulate = false) {
 		lock (this.lockInputDevices) {
 			//				foreach( IInputDevice device in this.list入力デバイス )
 			for (int i = this.InputDevices.Count - 1; i >= 0; i--)    // #24016 2011.1.6 yyagi: change not to use "foreach" to avoid InvalidOperation exception by Remove().
 			{
 				try {
 					IInputDevice device = this.InputDevices[i];
-					device.Polling();
+					device.Polling(accumulate);
 				} catch (Exception e)                                      // #24016 2011.1.6 yyagi: catch exception for unplugging USB joystick, and remove the device object from the polling items.
 				{
 					Trace.TraceWarning($"Error polling input device {i}.");

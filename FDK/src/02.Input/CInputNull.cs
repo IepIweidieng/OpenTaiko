@@ -15,7 +15,7 @@ public class CInputNull : IInputDevice {
 
 	private static readonly List<STInputEvent> _empty = new();
 
-	public void Polling() { }
+	public void Polling(bool accumulate = false) { }
 	public bool KeyAvailable(int nKey) => false;
 	public bool KeyPressed(int nKey) => false;
 	public bool KeyPressing(int nKey) => false;

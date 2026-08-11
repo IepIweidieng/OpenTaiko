@@ -29,7 +29,7 @@ public interface IInputDevice : IDisposable {
 
 	// Methods
 
-	void Polling();
+	void Polling(bool accumulate = false);
 
 	// Valid state combinations:
 	// * (none): Device or inputs not available

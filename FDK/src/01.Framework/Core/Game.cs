@@ -658,7 +658,7 @@ public abstract partial class Game : IDisposable {
 
 	}
 
-	protected void EventsNoWait() {
+	public void EventsNoWait() {
 		if (this.thInputLock.Wait(0)) {
 			try {
 				this.OnEvents();
@@ -668,7 +668,7 @@ public abstract partial class Game : IDisposable {
 		}
 	}
 
-	protected void Events() {
+	public void Events() {
 		this.thInputLock.Wait();
 		try {
 			this.OnEvents();

@@ -704,15 +704,7 @@ public class CSound : IDisposable {
 
 	#region [ private ]
 	//-----------------
-	private bool IsBassSound {
-		get {
-			return (
-				this.CurrentSoundDeviceType == ESoundDeviceType.Bass ||
-				this.CurrentSoundDeviceType == ESoundDeviceType.ASIO ||
-				this.CurrentSoundDeviceType == ESoundDeviceType.ExclusiveWASAPI ||
-				this.CurrentSoundDeviceType == ESoundDeviceType.SharedWASAPI);
-		}
-	}
+	private bool IsBassSound => SoundManager.IsDeviceTypeSupported(this.CurrentSoundDeviceType);
 	private int _nPosition = 0;
 	private int _nPositiondb;
 	private Lufs _gain = DefaultGain;

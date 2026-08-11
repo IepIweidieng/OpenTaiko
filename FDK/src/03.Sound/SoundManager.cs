@@ -7,6 +7,12 @@ namespace FDK;
 
 public class SoundManager   // : CSound
 {
+	public static bool IsDeviceTypeSupported(ESoundDeviceType type)
+		=> type is ESoundDeviceType.Bass
+			or ESoundDeviceType.ASIO
+			or ESoundDeviceType.ExclusiveWASAPI
+			or ESoundDeviceType.SharedWASAPI;
+
 	private static ISoundDevice SoundDevice {
 		get; set;
 	}
@@ -261,10 +267,7 @@ public class SoundManager   // : CSound
 				}
 			}
 		}
-		if (soundDeviceType == ESoundDeviceType.Bass
-			|| soundDeviceType == ESoundDeviceType.ExclusiveWASAPI
-			|| soundDeviceType == ESoundDeviceType.SharedWASAPI
-			|| soundDeviceType == ESoundDeviceType.ASIO) {
+		if (IsDeviceTypeSupported(soundDeviceType)) {
 			//Bass.BASS_SetConfig( BASSConfig.BASS_CONFIG_UPDATETHREADS, 4 );
 			//Bass.BASS_SetConfig( BASSConfig.BASS_CONFIG_UPDATEPERIOD, 0 );
 

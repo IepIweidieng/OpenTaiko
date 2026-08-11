@@ -14,6 +14,12 @@ public abstract class CTimerBase : IDisposable {
 	public virtual double SystemTimeMs_Double {
 		get => SystemTimeMs; // default implementation
 	}
+	public virtual long SystemTimeMsReal {
+		get => SystemTimeMs; // default implementation
+	}
+	public virtual double SystemTimeMsReal_Double {
+		get => SystemTimeMsReal; // default implementation
+	}
 	public abstract void Dispose();
 
 	public long NowTimeMs {
@@ -35,7 +41,7 @@ public abstract class CTimerBase : IDisposable {
 			if (this.StopCount > 0)
 				return (this.PauseSystemTimeMs - this.PrevResetTimeMs);
 
-			return (this.SystemTimeMs - this.PrevResetTimeMs);
+			return (this.SystemTimeMsReal - this.PrevResetTimeMs);
 		}
 	}
 	public long PrevResetTimeMs {
@@ -63,7 +69,7 @@ public abstract class CTimerBase : IDisposable {
 			if (this.StopCount > 0)
 				return (this.PauseSystemTimeMs_Double - this.PrevResetTimeMs_Double);
 
-			return (this.SystemTimeMs_Double - this.PrevResetTimeMs_Double);
+			return (this.SystemTimeMsReal_Double - this.PrevResetTimeMs_Double);
 		}
 	}
 	public double PrevResetTimeMs_Double {

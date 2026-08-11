@@ -81,7 +81,7 @@ public partial class CSoundDeviceBASS : ISoundDevice {
 		this.OutputDelay = 0;
 		this.ElapsedTimeMs = 0;
 		this.UpdateSystemTimeMs = CTimer.UnusedNum;
-		this.SystemTimer = new CTimer(CTimer.TimerType.MultiMedia);
+		this.SystemTimer = new CTimer(CTimer.TimerType.GameTimeAtDraw);
 
 		this.IsBASSSoundFree = true;
 

@@ -235,7 +235,7 @@ public abstract partial class Game : IDisposable {
 
 	// ── virtual clock (offline video export) ────────────────────────────────────────────────────
 	// When enabled, TimeMs/dbTimeMs come from VirtualClockMs instead of the window's wall clock.
-	// Everything timed off Game.TimeMs (CTimer.MultiMedia, CSoundTimer in OS-timer mode, video
+	// Everything timed off Game.TimeMs (CTimer.GameTimeAtDraw, CSoundTimer in OS-timer mode, video
 	// decoders) then advances exactly as fast as the exporter steps this value — one fixed step
 	// per rendered frame — so render duration no longer affects game time at all.
 	public static bool VirtualClockEnabled = false;
@@ -307,6 +307,9 @@ public abstract partial class Game : IDisposable {
 
 	public static double dbTimeMs;
 	public static long TimeMs;
+	public static Func<double>? dbGetTimeMsReal;
+	public static double dbTimeMsReal => dbGetTimeMsReal?.Invoke() ?? dbTimeMs;
+	public static long TimeMsReal => (long)dbTimeMsReal;
 
 	public static Matrix4X4<float> Camera;
 
@@ -433,6 +436,8 @@ public abstract partial class Game : IDisposable {
 		ViewPortOffset.X = 0;
 		ViewPortOffset.Y = 0;
 
+		dbGetTimeMsReal = () => VirtualClockEnabled ? VirtualClockMs : Window_.Time * 1000;
+
 		Window_.Load += Window_Load;
 		Window_.Closing += Window_Closing;
 		Window_.Update += Window_Update;
@@ -523,12 +528,12 @@ public abstract partial class Game : IDisposable {
 		if (!_hostTimeInitialized) {
 			_hostStartTimeMs = Stopwatch.GetTimestamp();
 			_hostTimeInitialized = true;
+			dbGetTimeMsReal = () => (Stopwatch.GetTimestamp() - _hostStartTimeMs) * 1000.0 / Stopwatch.Frequency;
 		}
 		// Set BOTH clocks: dbTimeMs feeds CTimer.NowTimeMs_Double -> CFPS.DeltaTime, which drives the Lua
 		// counters that advance screen transitions.
-		double hostElapsedMs = (Stopwatch.GetTimestamp() - _hostStartTimeMs) * 1000.0 / Stopwatch.Frequency;
-		dbTimeMs = hostElapsedMs;
-		TimeMs = (long)hostElapsedMs;
+		dbTimeMs = dbGetTimeMsReal!();
+		TimeMs = (long)dbTimeMs;
 
 		Update();
 
@@ -810,13 +815,8 @@ public abstract partial class Game : IDisposable {
 
 	public void Window_Update(double deltaTime) {
 		double fps = 1.0f / deltaTime;
-		if (VirtualClockEnabled) {
-			dbTimeMs = VirtualClockMs;
-			TimeMs = (long)VirtualClockMs;
-		} else {
-			dbTimeMs = Window_.Time * 1000;
-			TimeMs = (long)(Window_.Time * 1000);
-		}
+		dbTimeMs = dbGetTimeMsReal!();
+		TimeMs = (long)dbTimeMs;
 		Update();
 
 		ImGuiController?.Update((float)deltaTime);

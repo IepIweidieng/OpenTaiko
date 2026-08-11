@@ -109,7 +109,7 @@ internal class CSoundDeviceWASAPI : ISoundDevice {
 		this.OutputDelay = 0;
 		this.ElapsedTimeMs = 0;
 		this.UpdateSystemTimeMs = CTimer.UnusedNum;
-		this.SystemTimer = new CTimer(CTimer.TimerType.MultiMedia);
+		this.SystemTimer = new CTimer(CTimer.TimerType.GameTimeAtDraw);
 		this.bFirstActualOutputDelayCalc = true;
 
 		// BASS の設定。

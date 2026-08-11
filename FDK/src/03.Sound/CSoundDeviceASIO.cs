@@ -108,7 +108,7 @@ internal class CSoundDeviceASIO : ISoundDevice {
 		this.OutputDelay = 0;
 		this.ElapsedTimeMs = 0;
 		this.UpdateSystemTimeMs = CTimer.UnusedNum;
-		this.SystemTimer = new CTimer(CTimer.TimerType.MultiMedia);
+		this.SystemTimer = new CTimer(CTimer.TimerType.GameTimeAtDraw);
 		this.ASIODevice = deviceIndex;
 
 		// BASS の設定。

@@ -225,7 +225,11 @@
 		"SETTINGS_GAME_AUTOP2": "Automatisches Spiel Spieler 2",
 		"SETTINGS_GAME_AUTOP2_DESC": "Bestimmt, ob Spieler 2 automatisch spielt.",
 		"SETTINGS_GAME_AUTOROLL": "Roll-Geschwindigkeit",
-		"SETTINGS_GAME_AUTOROLL_DESC": "Wenn automatisches Spielen aktiviert ist, werden Trommelrollen so oft pro Sekunde automatisch getroffen. Hat keine Auswirkung auf Ballons. 0 deaktiviert Auto-Roll, und der Maximalwert ist ein Treffer pro Frame.",
+		"SETTINGS_GAME_AUTOROLL_DESC": "Wenn automatisches Spielen aktiviert ist, werden Trommelrollen so oft pro Sekunde automatisch getroffen. Hat keine Auswirkung auf Ballons. 0 deaktiviert Auto-Roll. -1 hits as many as possible without causing significant lags.",
+		"SETTINGS_GAME_AUTOBALLOON": "Maximum Balloon Hit Speed",
+		"SETTINGS_GAME_AUTOBALLOON_DESC": "When auto is enabled, balloons will be automatically hit at most this many times per second. 0 disables auto balloon hits. -1 disables the limit but can lag or even freeze the game on balloons with huge amount of hits.",
+		"SETTINGS_GAME_AUTOCANSKIPHIT": "Allow Auto Play to Skip Hits",
+		"SETTINGS_GAME_AUTOCANSKIPHIT_DESC": "Allow auto play to skip further hits if it is possible to lags or even freezes the game. The skip is also allowed temporarily when pressing the pause hotkey.",
 
 		"SETTINGS_GAME_NOINFO": "Kein Informationsmodus",
 		"SETTINGS_GAME_NOINFO_DESC": "Bestimmt, ob Liedinformationen angezeigt werden. Einschalten deaktiviert die Liedinformationen, ausschalten aktiviert sie.",

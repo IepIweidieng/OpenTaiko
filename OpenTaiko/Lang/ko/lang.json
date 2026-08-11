@@ -227,7 +227,11 @@
 		"SETTINGS_GAME_AUTOP2": "플레이어 2 오토 플레이",
 		"SETTINGS_GAME_AUTOP2_DESC": "플레이어 2의 오토 플레이 여부를 설정합니다.",
 		"SETTINGS_GAME_AUTOROLL": "연타 속도",
-		"SETTINGS_GAME_AUTOROLL_DESC": "오토 플레이가 활성화되면 롤은 초당 정한 횟수만큼 자동으로 연타합니다. 풍선에는 영향을 미치지 않습니다. 0은 자동 롤을 비활성화하며, 최대값은 프레임당 한 번입니다.",
+		"SETTINGS_GAME_AUTOROLL_DESC": "오토 플레이가 활성화되면 롤은 초당 정한 횟수만큼 자동으로 연타합니다. 풍선에는 영향을 미치지 않습니다. 0은 자동 롤을 비활성화합니다. -1 hits as many as possible without causing significant lags.",
+		"SETTINGS_GAME_AUTOBALLOON": "Maximum Balloon Hit Speed",
+		"SETTINGS_GAME_AUTOBALLOON_DESC": "When auto is enabled, balloons will be automatically hit at most this many times per second. 0 disables auto balloon hits. -1 disables the limit but can lag or even freeze the game on balloons with huge amount of hits.",
+		"SETTINGS_GAME_AUTOCANSKIPHIT": "Allow Auto Play to Skip Hits",
+		"SETTINGS_GAME_AUTOCANSKIPHIT_DESC": "Allow auto play to skip further hits if it is possible to lags or even freezes the game. The skip is also allowed temporarily when pressing the pause hotkey.",
 
 		"SETTINGS_GAME_NOINFO": "정보 없음 모드",
 		"SETTINGS_GAME_NOINFO_DESC": "노래 정보 표시 여부를 설정합니다. 이 옵션을 켜면 노래 정보가 비활성화되고, 끄면 노래 정보가 활성화됩니다.",

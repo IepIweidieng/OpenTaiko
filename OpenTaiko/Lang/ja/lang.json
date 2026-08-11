@@ -227,7 +227,11 @@
 		"SETTINGS_GAME_AUTOP2": "AUTO 2P",
 		"SETTINGS_GAME_AUTOP2_DESC": "すべての音符を自動で演奏します。",
 		"SETTINGS_GAME_AUTOROLL": "連打速度",
-		"SETTINGS_GAME_AUTOROLL_DESC": "AUTO中で黄色連打の速度を変化します。０で設けったら叩きません。多くとも各フレーム１打。",
+		"SETTINGS_GAME_AUTOROLL_DESC": "AUTO中で黄色連打の速度を変化します。０で設けったら叩きません。-1で設けったら、大きなラグを引き起こさない範囲で可能な限り速く叩きます。",
+		"SETTINGS_GAME_AUTOBALLOON": "ふうせんの最大連打速度",
+		"SETTINGS_GAME_AUTOBALLOON_DESC": "AUTO中でふうせん連打の最大速度を変化します。０で設けったら叩きません。-1で設けったら、制限を無効にしますが、ヒット数が非常に多いふうせんではラグが発生したり、ゲームがフリーズしたりする可能性があります。",
+		"SETTINGS_GAME_AUTOCANSKIPHIT": "AUTO中で叩きをやめできる",
+		"SETTINGS_GAME_AUTOCANSKIPHIT_DESC": "叩きを続けるとラグが発生したり、ゲームがフリーズしたりする場合、AUTO中でそれ以上の叩きをやめできるようにします。一時停止キーを押したときにも一時的に有効になります。",
 
 		"SETTINGS_GAME_NOINFO": "情報なし",
 		"SETTINGS_GAME_NOINFO_DESC": "有効にすると曲情報などが見えなくなります。",

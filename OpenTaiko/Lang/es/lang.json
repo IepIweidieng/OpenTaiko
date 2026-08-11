@@ -223,7 +223,11 @@
 		"SETTINGS_GAME_AUTOP2": "Juego Auto de Jugador 2",
 		"SETTINGS_GAME_AUTOP2_DESC": "Activa si jugador 2 juega automáticamente.",
 		"SETTINGS_GAME_AUTOROLL": "Velocidad de Redoble",
-		"SETTINGS_GAME_AUTOROLL_DESC": "Cuando auto está activado, redobles serán automáticamente golpear estas veces al segundo. No tiene efecto en globos. 0 desactiva redoble auto, y el valor máximo es un golpe al fotograma.",
+		"SETTINGS_GAME_AUTOROLL_DESC": "Cuando auto está activado, redobles serán automáticamente golpear estas veces al segundo. No tiene efecto en globos. 0 desactiva redoble auto. -1 hits as many as possible without causing significant lags.",
+		"SETTINGS_GAME_AUTOBALLOON": "Maximum Balloon Hit Speed",
+		"SETTINGS_GAME_AUTOBALLOON_DESC": "When auto is enabled, balloons will be automatically hit at most this many times per second. 0 disables auto balloon hits. -1 disables the limit but can lag or even freeze the game on balloons with huge amount of hits.",
+		"SETTINGS_GAME_AUTOCANSKIPHIT": "Allow Auto Play to Skip Hits",
+		"SETTINGS_GAME_AUTOCANSKIPHIT_DESC": "Allow auto play to skip further hits if it is possible to lags or even freezes the game. The skip is also allowed temporarily when pressing the pause hotkey.",
 
 		"SETTINGS_GAME_NOINFO": "Modo Sin Información",
 		"SETTINGS_GAME_NOINFO_DESC": "Activa si la información de la canción se muestra. Activar esto se deshabilitará la información de la canción. Desactivar esto se habilitará la información de la canción.",

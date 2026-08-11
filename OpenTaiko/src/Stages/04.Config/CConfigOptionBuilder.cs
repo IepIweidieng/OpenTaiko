@@ -260,9 +260,11 @@ public static class CConfigOptionBuilder {
 			v => { cfg.nControllerDeadzone = v; OpenTaiko.InputManager.Deadzone = v / 100.0f; }));
 
 		// Auto & AI
-		O.Add(CLuaConfigOption.Int_(GAME, secAutoAi,L("SETTINGS_GAME_AUTOROLL"), L("SETTINGS_GAME_AUTOROLL_DESC"), cfg.nRollsPerSec, 0, 1000, 1, v => cfg.nRollsPerSec = v));
+		O.Add(CLuaConfigOption.Int_(GAME, secAutoAi,L("SETTINGS_GAME_AUTOROLL"), L("SETTINGS_GAME_AUTOROLL_DESC"), cfg.nRollsPerSec, -1, 1000, 1, v => cfg.nRollsPerSec = v));
+		O.Add(CLuaConfigOption.Int_(GAME, secAutoAi, L("SETTINGS_GAME_AUTOBALLOON"), L("SETTINGS_GAME_AUTOBALLOON_DESC"), cfg.nBalloonHitsPerSec, -1, 1000, 1, v => cfg.nBalloonHitsPerSec = v));
 		O.Add(CLuaConfigOption.Int_(GAME, secAutoAi,L("SETTINGS_GAME_AILEVEL"), L("SETTINGS_GAME_AILEVEL_DESC"), cfg.nDefaultAILevel, 1, 10, 1,
 			v => { cfg.nDefaultAILevel = v; for (int i = 0; i < 2; i++) OpenTaiko.NamePlate.tNamePlateRefreshTitles(i); }));
+		O.Add(CLuaConfigOption.Toggle_(GAME, secAutoAi, L("SETTINGS_GAME_AUTOCANSKIPHIT"), L("SETTINGS_GAME_AUTOCANSKIPHIT_DESC"), cfg.bTaikoAutoCanSkipHit, v => cfg.bTaikoAutoCanSkipHit = v));
 
 		// Unlockables
 		O.Add(CLuaConfigOption.Toggle_(GAME, secUnlock,L("SETTINGS_GAME_IGNORESONGUNLOCKABLES"), L("SETTINGS_GAME_IGNORESONGUNLOCKABLES_DESC"), cfg.bIgnoreSongUnlockables, v => cfg.bIgnoreSongUnlockables = v));

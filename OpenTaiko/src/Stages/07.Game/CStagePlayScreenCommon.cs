@@ -1094,6 +1094,28 @@ internal abstract class CStagePlayScreenCommon : CStage {
 	protected abstract void ProcessPadInput(int nUsePlayer, EPad nPad, long msHitTjaTime, CChip? chip, ENoteJudge? judge);
 	protected abstract ENoteJudge JudgePadInput(int iPlayer, CChip? chip, EPad pad, long msHitTjaTime, ENoteJudge rawJudge, bool skipHit = false);
 
+	protected long msAutoInputTime = 0;
+	protected long msAutoInputSkipKeyPollTime = 0;
+	protected void TrackMsAutoInputTime() => msAutoInputSkipKeyPollTime = msAutoInputTime = SoundManager.PlayTimer.NowTimeMs;
+	protected bool WithinInputFrame(bool forceSkip = false) {
+		const int msWithinMax = 2;
+		long msGameTime = SoundManager.PlayTimer.RealNowTimeMs;
+		bool within = (msGameTime - msAutoInputTime) < msWithinMax;
+		bool allowSkip = forceSkip || OpenTaiko.ConfigIni.bTaikoAutoCanSkipHit;
+		if (!within && !allowSkip) {
+			bool skipKeyChecked = (msGameTime - msAutoInputSkipKeyPollTime) < msWithinMax;
+			if (!skipKeyChecked) {
+				// Synchronized polling, to avoid threading penalties
+				OpenTaiko.app.EventsNoWait();
+				OpenTaiko.InputManager.Polling(accumulate: true);
+				msAutoInputSkipKeyPollTime = msGameTime;
+			}
+			allowSkip |= OpenTaiko.InputManager.Keyboard.KeyPressed([(int)SlimDXKeys.Key.Escape, (int)SlimDXKeys.Key.F1])
+				|| OpenTaiko.InputManager.Keyboard.KeyPressing([(int)SlimDXKeys.Key.Escape, (int)SlimDXKeys.Key.F1]);
+		}
+		return within || !allowSkip;
+	}
+
 	public static EPad[] GetAutoInput(NotesManager.ENoteType noteType, EGameType gameType, int nHand, bool isBigInput = false, EPad storedHit = EPad.Unknown) {
 		if (isBigInput && NotesManager.IsBigDonTaiko(noteType, gameType))
 			return [EPad.LRed, EPad.RRed];
@@ -1170,7 +1192,7 @@ internal abstract class CStagePlayScreenCommon : CStage {
 		foreach (var pad in new[] { EPad.LRed, EPad.RRed, EPad.LBlue, EPad.RBlue, EPad.Clap }) {
 			var (chipToJudge, judge) = this.GetChipToJudge(msTjaTime, iPlayer, pad);
 			if (chipToJudge != null && !NotesManager.IsGenericRoll(chipToJudge) && judge is not ENoteJudge.Miss) {
-				if (this.AutoplayHitNonCriticalCanHit(chipToJudge, msTjaTime, iPlayer, NotesManager.GetChipGameType(chipToJudge, iPlayer)))
+				if (this.AutoplayHitNonCriticalCanHit(chipToJudge, msTjaTime, iPlayer, NotesManager.GetChipGameType(chipToJudge, iPlayer)) && this.WithinInputFrame())
 					goto retry;
 			}
 		}
@@ -1211,65 +1233,91 @@ internal abstract class CStagePlayScreenCommon : CStage {
 		bool bAutoPlay = OpenTaiko.ConfigIni.bAutoPlay[iPlayer] || (iPlayer == 1 && OpenTaiko.ConfigIni.bAIBattleMode);
 		var puchichara = OpenTaiko.Tx.Puchichara[PuchiChara.tGetPuchiCharaIndexByName(iPlayer)];
 
-		int rollSpeed = bAutoPlay ? OpenTaiko.ConfigIni.nRollsPerSec : puchichara.effect.Autoroll;
+		bool uncappedSpeed = bAutoPlay && OpenTaiko.ConfigIni.nRollsPerSec < 0;
+		int rollSpeed = uncappedSpeed ? int.MaxValue
+			: bAutoPlay ? OpenTaiko.ConfigIni.nRollsPerSec
+			: puchichara.effect.Autoroll;
 		if (OpenTaiko.ConfigIni.bAIBattleMode && iPlayer == 1)
 			rollSpeed = OpenTaiko.ConfigIni.apAIPerformances[OpenTaiko.ConfigIni.nAILevel - 1].nRollSpeed;
 
 		if (rollSpeed <= 0) {
 			return;
 		}
-		long msPerRollTja = (long)CTja.GameDurationToTjaDuration(1000.0 / rollSpeed);
-		if (msTjaTime >= pChip.msAutoLastHit + msPerRollTja) {
-			if (this.AutoplayTryHit(pChip, msTjaTime, iPlayer, gt)) {
-				pChip.msAutoLastHit = msTjaTime;
-			}
+		var msPerRollTja = CTja.GameDurationToTjaDuration(1000.0 / rollSpeed);
+		if (Game.VirtualClockEnabled) // give a hard limit for recording
+			msPerRollTja = Math.Max(1e-3, msPerRollTja);
+		bool unhit = pChip.msAutoLastHit == double.NegativeInfinity;
+		var msFirstHit = unhit ? msTjaTime : pChip.msAutoLastHit + msPerRollTja;
+		int nHits = (int)Math.Min(int.MaxValue, Math.Floor(1 + (msTjaTime - msFirstHit) / msPerRollTja));
+		if (nHits <= 0)
+			return;
+
+		long msLastHit = long.MinValue;
+		for (int i = 0; i < nHits; ++i) {
+			long msHit = Math.Min((long)(msFirstHit + i * msPerRollTja), pChip.end.nSoundTimems - 1);
+			bool didHit = (msHit == msLastHit) ? !pChip.bHit && this.AutoplayDoHit(pChip, Math.Min(msHit, pChip.end.nSoundTimems - 1), iPlayer, gt)
+				: this.AutoplayTryHit(pChip, Math.Min(msHit, pChip.end.nSoundTimems - 1), iPlayer, gt);
+			if (!(didHit && this.WithinInputFrame(uncappedSpeed)))
+				break;
+			msLastHit = msHit;
 		}
+		pChip.msAutoLastHit = msFirstHit + (nHits - 1) * msPerRollTja;
 	}
 
 	protected void AutorollBalloon(CChip pChip, long msTjaTime, int iPlayer, EGameType gt) {
-		if (this.isDeniedPlaying[iPlayer] || this.IsStageFailed_Fast() || !pChip.bVisible || pChip.IsMissed || pChip.bHit || this.bPAUSE || pChip.msAutoLastHit > msTjaTime)
+		bool ended = msTjaTime >= pChip.end.nSoundTimems;
+		if (this.isDeniedPlaying[iPlayer] || this.IsStageFailed_Fast() || !pChip.bVisible || pChip.IsMissed || pChip.bHit || this.bPAUSE || (pChip.msAutoLastHit > msTjaTime && !ended))
 			return;
 
 		bool bAutoPlay = OpenTaiko.ConfigIni.bAutoPlay[iPlayer] || (iPlayer == 1 && OpenTaiko.ConfigIni.bAIBattleMode);
 		var puchichara = OpenTaiko.Tx.Puchichara[PuchiChara.tGetPuchiCharaIndexByName(iPlayer)];
-		if (!(bAutoPlay || puchichara.effect.Autoroll > 0))
+		bool uncappedSpeed = bAutoPlay && OpenTaiko.ConfigIni.nBalloonHitsPerSec < 0;
+		int rollSpeed = uncappedSpeed ? int.MaxValue
+			: bAutoPlay ? OpenTaiko.ConfigIni.nBalloonHitsPerSec
+			: puchichara.effect.Autoroll;
+		if (OpenTaiko.ConfigIni.bAIBattleMode && iPlayer == 1)
+			rollSpeed = OpenTaiko.ConfigIni.apAIPerformances[OpenTaiko.ConfigIni.nAILevel - 1].nRollSpeed;
+
+		if (rollSpeed <= 0) {
 			return;
+		}
 
 		int rollCount = pChip.nRollCount;
 		int balloon = pChip.nBalloon;
 		if (NotesManager.IsKusudama(pChip)) {
-			/*
-			var ts = pChip.db発声時刻ms;
-			var km = TJAPlayer3.DTX.kusudaMAP;
-
-			if (km.ContainsKey(ts))
-			{
-				rollCount = km[ts].nRollCount;
-				balloon = km[ts].nBalloon;
-			}
-			*/
 			rollCount = pChip.KusudamaRollCount;
 			balloon = pChip.KusudamaCount;
-
 		}
 
-		if (balloon == 0) {
+		int remain = balloon - rollCount;
+
+		if (remain == 0) {
 			return;
 		}
-		if (balloon == 1 && NotesManager.IsFuzeRoll(pChip) && this.CanAutoplayHitMine(iPlayer, true)) {
+		if (remain == 1 && NotesManager.IsFuzeRoll(pChip) && this.CanAutoplayHitMine(iPlayer, true)) {
 			pChip.msAutoLastHit = double.PositiveInfinity; // prevent clearing fuze
 			return;
 		}
-		int rollSpeed = bAutoPlay ? (balloon - rollCount) : puchichara.effect.Autoroll;
 
-		long balloonDuration = bAutoPlay ? (pChip.end.nSoundTimems - msTjaTime) : (long)CTja.GameDurationToTjaDuration(1000);
+		var msPerRollTja = CTja.GameDurationToTjaDuration(1000.0 / rollSpeed); // min value
+		if (bAutoPlay)
+			msPerRollTja = Math.Max(msPerRollTja, (pChip.end.nSoundTimems - msTjaTime) / (double)remain);
+		bool unhit = pChip.msAutoLastHit == double.NegativeInfinity;
+		var msFirstHit = unhit ? msTjaTime : pChip.msAutoLastHit + msPerRollTja;
+		int nHits = (int)Math.Min(int.MaxValue, Math.Floor(1 + (msTjaTime - msFirstHit) / msPerRollTja));
+		if (nHits <= 0)
+			return;
 
-		long msPerRollTja = (long)(balloonDuration / (double)rollSpeed);
-		if (msTjaTime >= pChip.msAutoLastHit + msPerRollTja) {
-			if (this.AutoplayTryHit(pChip, msTjaTime, iPlayer, gt)) {
-				pChip.msAutoLastHit = msTjaTime;
-			}
+		long msLastHit = long.MinValue;
+		for (int i = 0; i < nHits; ++i) {
+			long msHit = Math.Min((long)(msFirstHit + i * msPerRollTja), pChip.end.nSoundTimems - 1);
+			bool didHit = (msHit == msLastHit) ? !pChip.bHit && this.AutoplayDoHit(pChip, Math.Min(msHit, pChip.end.nSoundTimems - 1), iPlayer, gt)
+				: this.AutoplayTryHit(pChip, Math.Min(msHit, pChip.end.nSoundTimems - 1), iPlayer, gt);
+			if (!(didHit && this.WithinInputFrame()))
+				break;
+			msLastHit = msHit;
 		}
+		pChip.msAutoLastHit = msFirstHit + (nHits - 1) * msPerRollTja;
 	}
 
 	protected void PlayHitNoteSound(int iPlayer, NotesManager.EInputType input) {
@@ -2511,6 +2559,7 @@ internal abstract class CStagePlayScreenCommon : CStage {
 		=> OpenTaiko.bReplayMode[nPlayer] ? this.msReplayTjaTime[nPlayer] : double.PositiveInfinity;
 
 	protected bool tProgressDraw_Chip(EKeyConfigPart ePlayMode, int nPlayer) {
+		this.TrackMsAutoInputTime();
 		bool drawOnly = this.IsFailStopped() || (this.nCurrentTopChip[nPlayer] == -1) || IsDanFailed;
 
 		CTja tja = OpenTaiko.GetTJA(nPlayer)!;
@@ -2576,7 +2625,10 @@ internal abstract class CStagePlayScreenCommon : CStage {
 			}
 
 			// accurate auto hit
-			if (NotesManager.IsHittableNote(pChip) && !NotesManager.IsGenericRoll(pChip))
+			if (NotesManager.IsHittableNote(pChip) && !NotesManager.IsRollEnd(pChip) && this.WithinInputFrame())
+				if (NotesManager.IsGenericRoll(pChip))
+					this.Autoroll(pChip, pChip.nSoundTimems, nPlayer, NotesManager.GetChipGameType(pChip, nPlayer));
+				else
 				this.AutoplayHitCritical(pChip, nPlayer, NotesManager.GetChipGameType(pChip, nPlayer));
 
 			switch (pChip.nChannelNo) {
@@ -3354,10 +3406,12 @@ internal abstract class CStagePlayScreenCommon : CStage {
 				break;
 			if (NotesManager.IsGenericRoll(pChip) && pChip.nSoundTimems <= nCurrentTimems) {
 				if (!pChip.bProcessed) {
-					if (NotesManager.IsRollEnd(pChip))
+					if (NotesManager.IsRollEnd(pChip)) {
+						this.Autoroll(pChip.start, pChip.nSoundTimems, nPlayer, NotesManager.GetChipGameType(pChip.start, nPlayer));
 						this.ProcessRollEnd(nPlayer, pChip, false);
-					else if (pChip.bVisible)
+					} else if (pChip.bVisible) {
 						this.AddNowProcessingRollChip(nPlayer, pChip);
+					}
 				}
 			}
 
@@ -3427,6 +3481,7 @@ internal abstract class CStagePlayScreenCommon : CStage {
 				if (pChip.end.nSoundTimems <= msTjaHitTime) {
 					var msJudgeTjaTime = (long)Math.Max(pChip.end.nSoundTimems, Math.Min(msTjaHitTime, msMaxPlayedTjaTime));
 					if (this.eGetChipJudgeAtTime(msJudgeTjaTime, pChip, nPlayer) == ENoteJudge.Miss) {
+						this.Autoroll(pChip, pChip.end.nSoundTimems, nPlayer, NotesManager.GetChipGameType(pChip, nPlayer));
 						pChip.bHit = true;
 					}
 				} else if (pChip.nSoundTimems <= msTjaHitTime) {

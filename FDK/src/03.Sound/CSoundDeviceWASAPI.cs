@@ -194,7 +194,7 @@ internal class CSoundDeviceWASAPI : ISoundDevice {
 		}
 		if (nDevNo != -1) {
 			Trace.TraceInformation("Start Bass_Init(device=0(fixed value: no sound), deviceInfo.mixfreq=" + deviceInfo.MixFrequency + ", BASS_DEVICE_DEFAULT, Zero)");
-			if (!Bass.Init(0, deviceInfo.MixFrequency, DeviceInitFlags.Default, IntPtr.Zero))  // device = 0:"no device": BASS からはデバイスへアクセスさせない。アクセスは BASSWASAPI アドオンから行う。
+			if (!Bass.Init(0, deviceInfo.MixFrequency, DeviceInitFlags.Latency, IntPtr.Zero))  // device = 0:"no device": BASS からはデバイスへアクセスさせない。アクセスは BASSWASAPI アドオンから行う。
 				throw new Exception(string.Format("BASS (WASAPI{0}) の初期化に失敗しました。(BASS_Init)[{1}]", mode.ToString(), Bass.LastError.ToString()));
 
 			// Trace.TraceInformation( "Selected Default WASAPI Device: {0}", deviceInfo.name );

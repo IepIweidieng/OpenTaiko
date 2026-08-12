@@ -167,7 +167,7 @@
 		}
 
 		public override int Draw() {
-			if (this.eFadeOutReturnValue == EReturnValue.Continuation) lcStageScript?.Update(DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond);
+			if (this.eFadeOutReturnValue == EReturnValue.Continuation) lcStageScript?.Update(FDK.Game.TimeMs);
 			lcStageScript?.Draw();
 
 			// A transition was requested: hand off this frame (CStageTransition then drives the fade/loading).

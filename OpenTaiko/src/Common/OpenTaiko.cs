@@ -1552,7 +1552,7 @@ internal class OpenTaiko : Game {
 		Trace.TraceInformation("Initializing timer...");
 		Trace.Indent();
 		try {
-			Timer = new CTimer(CTimer.TimerType.MultiMedia);
+			Timer = new CTimer(CTimer.TimerType.GameTimeAtDraw);
 			Trace.TraceInformation("Timer successfully initialized.");
 		} finally {
 			Trace.Unindent();

@@ -225,7 +225,11 @@
 		"SETTINGS_GAME_AUTOP2": "Player 2 Auto Play",
 		"SETTINGS_GAME_AUTOP2_DESC": "Toggle whether player 2 plays automatically.",
 		"SETTINGS_GAME_AUTOROLL": "Roll Speed",
-		"SETTINGS_GAME_AUTOROLL_DESC": "When auto is enabled, rolls will be automatically hit this many times per second. Has no effect on balloons. 0 disables auto roll, and the maximum value is one hit per frame.",
+		"SETTINGS_GAME_AUTOROLL_DESC": "When auto is enabled, rolls will be automatically hit this many times per second. Has no effect on balloons. 0 disables auto roll. -1 hits as many as possible without causing significant lags.",
+		"SETTINGS_GAME_AUTOBALLOON": "Maximum Balloon Hit Speed",
+		"SETTINGS_GAME_AUTOBALLOON_DESC": "When auto is enabled, balloons will be automatically hit at most this many times per second. 0 disables auto balloon hits. -1 disables the limit but can lag or even freeze the game on balloons with huge amount of hits.",
+		"SETTINGS_GAME_AUTOCANSKIPHIT": "Allow Auto Play to Skip Hits",
+		"SETTINGS_GAME_AUTOCANSKIPHIT_DESC": "Allow auto play to skip further hits if it is possible to lags or even freezes the game. The skip is also allowed temporarily when pressing the pause hotkey.",
 
 		"SETTINGS_GAME_NOINFO": "No Information Mode",
 		"SETTINGS_GAME_NOINFO_DESC": "Toggle whether song information is shown. Turning this on will disable song information. Turning this off will enable song information.",

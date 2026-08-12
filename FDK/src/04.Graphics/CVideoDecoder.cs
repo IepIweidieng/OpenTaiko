@@ -68,7 +68,7 @@ public unsafe class CVideoDecoder : IDisposable {
 			for (int i = 0; i < framelist.Length; i++)
 				framelist[i] = new CDecodedFrame(new Size(codec_context->width, codec_context->height));
 
-			CTimer = new CTimer(CTimer.TimerType.MultiMedia);
+			CTimer = new CTimer(CTimer.TimerType.GameTimeAtDraw);
 		}
 		Interlocked.Increment(ref LiveCount);
 	}

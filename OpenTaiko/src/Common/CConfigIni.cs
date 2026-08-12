@@ -387,8 +387,10 @@ internal class CConfigIni : INotifyPropertyChanged {
 
 	public bool[] bAutoPlay = new bool[5];
 
+	public bool bTaikoAutoCanSkipHit;
 	public bool bAutoSenseiRoll;
 	public int nRollsPerSec;
+	public int nBalloonHitsPerSec;
 	public int nDefaultAILevel = 4;
 	public int nAILevel = 4;
 	public bool bAIBattleMode = false;
@@ -838,7 +840,9 @@ internal class CConfigIni : INotifyPropertyChanged {
 
 		this.bIncludeSubfoldersOnRandomSelect = true;
 		this.nMinDisplayedCombo = 10;
+		this.bTaikoAutoCanSkipHit = false;
 		this.nRollsPerSec = 15;
+		this.nBalloonHitsPerSec = 30;
 		this.nAILevel = 1;
 		this.bAIBattleMode = false;
 
@@ -1509,8 +1513,10 @@ internal class CConfigIni : INotifyPropertyChanged {
 		sw.WriteLine("Taiko3P={0}", this.bAutoPlay[2] ? 1 : 0);
 		sw.WriteLine("Taiko4P={0}", this.bAutoPlay[3] ? 1 : 0);
 		sw.WriteLine("Taiko5P={0}", this.bAutoPlay[4] ? 1 : 0);
+		sw.WriteLine("TaikoAutoCanSkipHit={0}", this.bTaikoAutoCanSkipHit ? 1 : 0);
 		sw.WriteLine("TaikoAutoRoll={0}", this.bAutoSenseiRoll ? 1 : 0);
 		sw.WriteLine("RollsPerSec={0}", this.nRollsPerSec);
+		sw.WriteLine("BalloonHitsPerSec={0}", this.nBalloonHitsPerSec);
 		sw.WriteLine("DefaultAILevel={0}", this.nDefaultAILevel);
 		sw.WriteLine();
 		sw.WriteLine(";-------------------");
@@ -2329,11 +2335,17 @@ internal class CConfigIni : INotifyPropertyChanged {
 			case "Taiko5P":
 				this.bAutoPlay[4] = CConversion.bONorOFF(value[0]);
 				break;
+			case "TaikoAutoCanSkipHit":
+				this.bTaikoAutoCanSkipHit = CConversion.bONorOFF(value[0]);
+				break;
 			case "TaikoAutoRoll":
 				this.bAutoSenseiRoll = CConversion.bONorOFF(value[0]);
 				break;
 			case "RollsPerSec":
 				this.nRollsPerSec = int.Parse(value);
+				break;
+			case "BalloonHitsPerSec":
+				this.nBalloonHitsPerSec = int.Parse(value);
 				break;
 			case "DefaultAILevel":
 				this.nDefaultAILevel = int.Parse(value);

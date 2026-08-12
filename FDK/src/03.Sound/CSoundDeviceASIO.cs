@@ -108,7 +108,7 @@ internal class CSoundDeviceASIO : ISoundDevice {
 		this.OutputDelay = 0;
 		this.ElapsedTimeMs = 0;
 		this.UpdateSystemTimeMs = CTimer.UnusedNum;
-		this.SystemTimer = new CTimer(CTimer.TimerType.MultiMedia);
+		this.SystemTimer = new CTimer(CTimer.TimerType.GameTimeAtDraw);
 		this.ASIODevice = deviceIndex;
 
 		// BASS の設定。
@@ -128,7 +128,7 @@ internal class CSoundDeviceASIO : ISoundDevice {
 
 		int nDevice = 0;      // 0:"no device" … BASS からはデバイスへアクセスさせない。アクセスは BASSASIO アドオンから行う。
 		int nFrequency = 44100;   // 仮決め。最終的な周波数はデバイス（≠ドライバ）が決める。
-		if (!Bass.Init(nDevice, nFrequency, DeviceInitFlags.Default, IntPtr.Zero))
+		if (!Bass.Init(nDevice, nFrequency, DeviceInitFlags.Latency, IntPtr.Zero))
 			throw new Exception(string.Format("BASS の初期化に失敗しました。(BASS_Init)[{0}]", Bass.LastError.ToString()));
 
 		Bass.Configure(Configuration.LogarithmicVolumeCurve, true);

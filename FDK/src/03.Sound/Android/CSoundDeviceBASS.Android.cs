@@ -49,6 +49,6 @@ partial class CSoundDeviceBASS {
 		Bass.Configure(Configuration.DevicePeriod, 10);
 		Bass.Configure(Configuration.DeviceBufferLength, 60);
 		freq = 48000;
-		return Bass.Init(-1, freq, DeviceInitFlags.Default);
+		return Bass.Init(-1, freq, DeviceInitFlags.Latency);
 	}
 }

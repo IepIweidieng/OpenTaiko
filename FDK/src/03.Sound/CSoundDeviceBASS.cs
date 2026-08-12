@@ -81,7 +81,7 @@ public partial class CSoundDeviceBASS : ISoundDevice {
 		this.OutputDelay = 0;
 		this.ElapsedTimeMs = 0;
 		this.UpdateSystemTimeMs = CTimer.UnusedNum;
-		this.SystemTimer = new CTimer(CTimer.TimerType.MultiMedia);
+		this.SystemTimer = new CTimer(CTimer.TimerType.GameTimeAtDraw);
 
 		this.IsBASSSoundFree = true;
 
@@ -94,7 +94,7 @@ public partial class CSoundDeviceBASS : ISoundDevice {
 		if (OperatingSystem.IsAndroid())
 			freq = ConfigureAndroidLowLatency();
 
-		if (!Bass.Init(-1, freq, DeviceInitFlags.Default)) {
+		if (!Bass.Init(-1, freq, DeviceInitFlags.Latency)) {
 			// The tuned Android config can be rejected by some devices/HALs — fall back to safe
 			// defaults before giving up (audio at default latency beats no audio).
 			if (!(OperatingSystem.IsAndroid() && RetryAndroidDefaultInit(out freq)))
@@ -118,6 +118,7 @@ public partial class CSoundDeviceBASS : ISoundDevice {
 		}
 
 		Bass.Configure(Configuration.PlaybackBufferLength, bufferSize);
+		Bass.Configure(Configuration.DeviceBufferLength, bufferSize);
 		Bass.Configure(Configuration.LogarithmicVolumeCurve, true);
 
 		this.STREAMPROC = new StreamProcedure(StreamProc);

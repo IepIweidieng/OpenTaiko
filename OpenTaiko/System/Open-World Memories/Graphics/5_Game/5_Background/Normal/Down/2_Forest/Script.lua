@@ -1,11 +1,7 @@
 ---@diagnostic disable: undefined-global  -- TEXTURE/fps injected by CLuaScript at runtime
--- Normal down background 2 (Forest): day sky + clear overlay (BG/FG), four twinkling star layers
--- (sin/cos opacity fades) and a parallax cloud layer, faded in globally on clear.
--- Ported from the old ScriptBG func: API to the ROActivity LuaTexture API (pixel-identical).
+-- Ported from the old ScriptBG func: API to the ROActivity LuaTexture API.
 
-local loopWidth = 1920
-local loopHeight = 474
-local downY = 540
+local loopWidth = 1640
 
 local tx = {}            -- name -> LuaTexture
 
@@ -13,92 +9,113 @@ local bgClearFade = 0
 
 local bgScrollX = 0
 
-local starsFadeTime = 0
-local starsFade1 = 0
-local starsFade2 = 0
-local starsFade3 = 0
-local starsFade4 = 0
+local clearInAnime_Common = 0
+local clearInAnime_Scroll = 0
+local clearInAnime_Deco = 0
+local clearInAnime_Left = 0
+local clearInAnime_Taiko = 0
+local lightCounter = 0
+
+local taiko_rotate = 0
 
 -- onStart runs BEFORE the script receives `state`, so the original init()'s simplemode-gated
 -- star-fade seeding is deferred to the first update() via this one-shot flag.
 local simpleSeeded = false
 
 function clearIn(player)
+    clearInAnime_Common = 0
+    clearInAnime_Scroll = 0
+    clearInAnime_Deco = -0.4
+    clearInAnime_Left = -0.6
+    clearInAnime_Taiko = -0.8
+
+    taiko_rotate = 0.0
 end
 
 function clearOut(player)
 end
 
 function onStart()
-    tx["Day.png"] = TEXTURE:CreateTextureSync("Day.png")
-    tx["Clear_BG.png"] = TEXTURE:CreateTextureSync("Clear_BG.png")
-    tx["Clear_FG.png"] = TEXTURE:CreateTextureSync("Clear_FG.png")
-    tx["Stars_1.png"] = TEXTURE:CreateTextureSync("Stars_1.png")
-    tx["Stars_2.png"] = TEXTURE:CreateTextureSync("Stars_2.png")
-    tx["Stars_3.png"] = TEXTURE:CreateTextureSync("Stars_3.png")
-    tx["Stars_4.png"] = TEXTURE:CreateTextureSync("Stars_4.png")
-    tx["Clouds.png"] = TEXTURE:CreateTextureSync("Clouds.png")
+    tx["Sky.png"] = TEXTURE:CreateTextureSync("Sky.png")
+    tx["Tatemono.png"] = TEXTURE:CreateTextureSync("Tatemono.png")
+    tx["Tyoutin.png"] = TEXTURE:CreateTextureSync("Tyoutin.png")
+    tx["Tyoutin_Light.png"] = TEXTURE:CreateTextureSync("Tyoutin_Light.png")
+
+    tx["Down_Scroll.png"] = TEXTURE:CreateTextureSync("Down_Scroll.png")
+    tx["Down_Clear_Deco.png"] = TEXTURE:CreateTextureSync("Down_Clear_Deco.png")
+    tx["Down_Clear_Left.png"] = TEXTURE:CreateTextureSync("Down_Clear_Left.png")
+    tx["Down_Clear_Taiko.png"] = TEXTURE:CreateTextureSync("Down_Clear_Taiko.png")
 end
 
 function update(timestamp, state)
-    -- original init() seeded these when simplemode; deferred here (state unavailable in onStart)
-    if not simpleSeeded then
-        if state.simplemode then
-            starsFade1 = 0.83
-            starsFade2 = 0.75
-            starsFade3 = 0.25
-            starsFade4 = 0.49
-        end
-        simpleSeeded = true
-    end
-
-    -- Clear fade
     if state.isClear[0] then
-        bgClearFade = bgClearFade + (2000 * fps.deltaTime);
+        bgClearFade = bgClearFade + (2000 * fps.deltaTime)
     else
-        bgClearFade = bgClearFade - (2000 * fps.deltaTime);
+        bgClearFade = bgClearFade - (2000 * fps.deltaTime)
     end
 
+    lightCounter = lightCounter + (6 * fps.deltaTime)
+
+    clearInAnime_Common = clearInAnime_Common + (1 * fps.deltaTime)
+    clearInAnime_Scroll = clearInAnime_Scroll + (2 * fps.deltaTime)
+    clearInAnime_Deco = clearInAnime_Deco + (2 * fps.deltaTime)
+    clearInAnime_Left = clearInAnime_Left + (2 * fps.deltaTime)
+    clearInAnime_Taiko = clearInAnime_Taiko + (2 * fps.deltaTime)
+
+    if clearInAnime_Common > 1.0 then
+        taiko_rotate = taiko_rotate + (45 * fps.deltaTime)
+    end
+
+    bgScrollX = bgScrollX + (100 * fps.deltaTime)
+    
     if bgClearFade > 255 then
-        bgClearFade = 255;
+        bgClearFade = 255
     end
     if bgClearFade < 0 then
-        bgClearFade = 0;
+        bgClearFade = 0
+    end
+    
+    if bgScrollX > loopWidth then
+        bgScrollX = 0
     end
 
-    if not state.simplemode then
-        starsFadeTime = starsFadeTime + fps.deltaTime
-
-        starsFade1 = 0.38 * math.sin(((5 * starsFadeTime) / 1.37)) + 0.83
-        starsFade2 = 0.38 * math.cos(((5 * starsFadeTime) / 1.56)) + 0.75
-        starsFade3 = 0.38 * math.sin(((5 * starsFadeTime) / 1.71)) + 0.25
-        starsFade4 = 0.38 * math.cos(((5 * starsFadeTime) / 2.3)) + 0.49
+    if clearInAnime_Scroll > 1 then
+        clearInAnime_Scroll = 1
     end
 
-    -- Cloud scroll
-    if not state.simplemode then
-        bgScrollX = bgScrollX + (50 * fps.deltaTime);
+    if clearInAnime_Deco > 1 then
+        clearInAnime_Deco = 1
+    end
+    if clearInAnime_Left > 1 then
+        clearInAnime_Left = 1
+    end
+    if clearInAnime_Taiko > 1 then
+        clearInAnime_Taiko = 1
     end
 end
 
 function draw(state)
-    tx["Clear_BG.png"]:SetOpacity(bgClearFade / 255);
-    tx["Clear_FG.png"]:SetOpacity(bgClearFade / 255);
-    tx["Clouds.png"]:SetOpacity(bgClearFade / 255);
-    tx["Stars_1.png"]:SetOpacity((bgClearFade * starsFade1) / 255);
-    tx["Stars_2.png"]:SetOpacity((bgClearFade * starsFade2) / 255);
-    tx["Stars_3.png"]:SetOpacity((bgClearFade * starsFade3) / 255);
-    tx["Stars_4.png"]:SetOpacity((bgClearFade * starsFade4) / 255);
+    tx["Down_Scroll.png"]:SetOpacity(bgClearFade / 255)
+    tx["Down_Clear_Deco.png"]:SetOpacity(bgClearFade / 255)
+    tx["Down_Clear_Left.png"]:SetOpacity(bgClearFade / 255)
+    tx["Down_Clear_Taiko.png"]:SetOpacity(bgClearFade / 255)
 
-    tx["Day.png"]:Draw(0, downY)
+    tx["Sky.png"]:Draw(0, 540);
+    tx["Tatemono.png"]:Draw(0, 540);
+    tx["Tyoutin.png"]:Draw(0, 540);
+    tx["Tyoutin_Light.png"]:SetOpacity((155 - (math.sin(lightCounter * math.pi) * 100)) / 255)
+    tx["Tyoutin_Light.png"]:Draw(0, 540)
+    
+    for i = 0, 3 do
+        tx["Down_Scroll.png"]:Draw((0 + (loopWidth * i) - bgScrollX, 540 + ((1.0 - (clearInAnime_Scroll + (math.sin(clearInAnime_Scroll * math.pi) / 2.0))) * 474)) / 255)
+    end
 
-    tx["Clear_BG.png"]:Draw(0, downY)
-    tx["Stars_1.png"]:DrawRect(0, downY, bgScrollX * 0.35, 0, loopWidth, loopHeight)
-    tx["Stars_2.png"]:DrawRect(0, downY, bgScrollX * 0.3, 0, loopWidth, loopHeight)
-    tx["Stars_3.png"]:DrawRect(0, downY, bgScrollX * 0.25, 0, loopWidth, loopHeight)
-    tx["Stars_4.png"]:DrawRect(0, downY, bgScrollX * 0.2, 0, loopWidth, loopHeight)
-    tx["Clouds.png"]:DrawRect(0, downY, bgScrollX, 0, loopWidth, 474)
-    tx["Clear_FG.png"]:Draw(0, downY)
+    tx["Down_Clear_Deco.png"]:Draw(0, 540 + ((1.0 - (clearInAnime_Deco + (math.sin(clearInAnime_Deco * math.pi) / 2.0))) * 474))
+    tx["Down_Clear_Left.png"]:Draw(0, 540 + ((1.0 - (clearInAnime_Left + (math.sin(clearInAnime_Left * math.pi) / 2.0))) * 474))
+    
+    tx["Down_Clear_Taiko.png"]:SetRotation(taiko_rotate)
+    tx["Down_Clear_Taiko.png"]:Draw(400 - ((1.0 - (clearInAnime_Taiko + (math.sin(clearInAnime_Taiko * math.pi) / 2.0))) * 700), 540)
+    
 end
 
 function onDestroy()

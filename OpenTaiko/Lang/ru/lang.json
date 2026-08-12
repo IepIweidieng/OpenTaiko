@@ -225,7 +225,11 @@
 		"SETTINGS_GAME_AUTOP2": "Автоигра игрока 2",
 		"SETTINGS_GAME_AUTOP2_DESC": "Выбрать, будет ли игрок 2 играть автоматически.",
 		"SETTINGS_GAME_AUTOROLL": "Скорость дроби",
-		"SETTINGS_GAME_AUTOROLL_DESC": "Когда автоигра включена, дроби будут ударить автоматически столько раз в секунду. Не оказывает никакого воздействия на шарике. 0 выключает автоматический дробь, и максимальное значение составляет один удар за кадр.",
+		"SETTINGS_GAME_AUTOROLL_DESC": "Когда автоигра включена, дроби будут ударить автоматически столько раз в секунду. Не оказывает никакого воздействия на шарике. 0 выключает автоматический дробь. -1 hits as many as possible without causing significant lags.",
+		"SETTINGS_GAME_AUTOBALLOON": "Maximum Balloon Hit Speed",
+		"SETTINGS_GAME_AUTOBALLOON_DESC": "When auto is enabled, balloons will be automatically hit at most this many times per second. 0 disables auto balloon hits. -1 disables the limit but can lag or even freeze the game on balloons with huge amount of hits.",
+		"SETTINGS_GAME_AUTOCANSKIPHIT": "Allow Auto Play to Skip Hits",
+		"SETTINGS_GAME_AUTOCANSKIPHIT_DESC": "Allow auto play to skip further hits if it is possible to lags or even freezes the game. The skip is also allowed temporarily when pressing the pause hotkey.",
 
 		"SETTINGS_GAME_NOINFO": "Режим отсутствия информации",
 		"SETTINGS_GAME_NOINFO_DESC": "Переключать, будет ли отображаться информация о песне. Включение (ON) эту настройки приведёт к выключению информации о песне. Выключение (OFF) эту настройки будет доступна информация о песне.",

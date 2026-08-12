@@ -109,7 +109,7 @@ internal class CSoundDeviceWASAPI : ISoundDevice {
 		this.OutputDelay = 0;
 		this.ElapsedTimeMs = 0;
 		this.UpdateSystemTimeMs = CTimer.UnusedNum;
-		this.SystemTimer = new CTimer(CTimer.TimerType.MultiMedia);
+		this.SystemTimer = new CTimer(CTimer.TimerType.GameTimeAtDraw);
 		this.bFirstActualOutputDelayCalc = true;
 
 		// BASS の設定。
@@ -194,7 +194,7 @@ internal class CSoundDeviceWASAPI : ISoundDevice {
 		}
 		if (nDevNo != -1) {
 			Trace.TraceInformation("Start Bass_Init(device=0(fixed value: no sound), deviceInfo.mixfreq=" + deviceInfo.MixFrequency + ", BASS_DEVICE_DEFAULT, Zero)");
-			if (!Bass.Init(0, deviceInfo.MixFrequency, DeviceInitFlags.Default, IntPtr.Zero))  // device = 0:"no device": BASS からはデバイスへアクセスさせない。アクセスは BASSWASAPI アドオンから行う。
+			if (!Bass.Init(0, deviceInfo.MixFrequency, DeviceInitFlags.Latency, IntPtr.Zero))  // device = 0:"no device": BASS からはデバイスへアクセスさせない。アクセスは BASSWASAPI アドオンから行う。
 				throw new Exception(string.Format("BASS (WASAPI{0}) の初期化に失敗しました。(BASS_Init)[{1}]", mode.ToString(), Bass.LastError.ToString()));
 
 			// Trace.TraceInformation( "Selected Default WASAPI Device: {0}", deviceInfo.name );

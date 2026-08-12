@@ -225,7 +225,11 @@
 		"SETTINGS_GAME_AUTOP2": "Speler 1 Automatisch Spelen",
 		"SETTINGS_GAME_AUTOP2_DESC": "Schakelt het automatisch spelen van liedjes op speler 2 aan/uit.",
 		"SETTINGS_GAME_AUTOROLL": "Rolsnelheid",
-		"SETTINGS_GAME_AUTOROLL_DESC": "Wanneer Auto is ingeschakeld, zullen rollen automatisch worden geraakt # keer per seconde. Heeft geen effect op ballonnen. 0 schakelt automatisch rollen uit, en de maximumwaarde is een input per frame.",
+		"SETTINGS_GAME_AUTOROLL_DESC": "Wanneer Auto is ingeschakeld, zullen rollen automatisch worden geraakt # keer per seconde. Heeft geen effect op ballonnen. 0 schakelt automatisch rollen uit. -1 raakt rollen zo snel mogelijk zonder noemenswaardige vertraging te veroorzaken.",
+		"SETTINGS_GAME_AUTOBALLOON": "Maximum Balloon Hit Speed",
+		"SETTINGS_GAME_AUTOBALLOON_DESC": "When auto is enabled, balloons will be automatically hit at most this many times per second. 0 disables auto balloon hits. -1 disables the limit but can lag or even freeze the game on balloons with huge amount of hits.",
+		"SETTINGS_GAME_AUTOCANSKIPHIT": "Allow Auto Play to Skip Hits",
+		"SETTINGS_GAME_AUTOCANSKIPHIT_DESC": "Allow auto play to skip further hits if it is possible to lags or even freezes the game. The skip is also allowed temporarily when pressing the pause hotkey.",
 
 		"SETTINGS_GAME_NOINFO": "Geen Informatie Modus",
 		"SETTINGS_GAME_NOINFO_DESC": "Schakelt weergave van lied informatie aan/uit. Als dit aan staat, wordt lied informatie verborgen. Als dit uit staat word lied informatie weergeven.",

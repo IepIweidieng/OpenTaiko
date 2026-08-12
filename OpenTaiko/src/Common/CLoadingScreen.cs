@@ -17,7 +17,7 @@ public static class CLoadingScreen {
 
 	public static void Draw() {
 		// Advance the eased display value using our own frame delta (clamped inside Tick).
-		long now = DateTime.Now.Ticks;
+		long now = Game.TimeMsReal;
 		double deltaMs = _lastDrawTicks == 0 ? 0.0 : (now - _lastDrawTicks) / (double)TimeSpan.TicksPerMillisecond;
 		_lastDrawTicks = now;
 		CLoadingProgress.Tick(deltaMs);

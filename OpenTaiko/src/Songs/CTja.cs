@@ -794,7 +794,7 @@ internal class CTja : CActivity {
 		switch (eRandom) {
 			case ERandomMode.Mirror:
 				foreach (var chip in this.listChip) {
-					switch (chip.nChannelNo) {
+					switch (chip.nChannelNo) { // 100% flip
 						case 0x11:
 							chip.nChannelNo = 0x12;
 							break;
@@ -816,7 +816,7 @@ internal class CTja : CActivity {
 				foreach (var chip in this.listChip) {
 					int n = rnd.Next(100);
 
-					if (n >= 0 && n <= 20) {
+					if (n >= 0 && n <= 20) { // 21% flip
 						switch (chip.nChannelNo) {
 							case 0x11:
 								chip.nChannelNo = 0x12;
@@ -840,7 +840,7 @@ internal class CTja : CActivity {
 				foreach (var chip in this.listChip) {
 					int n = rnd.Next(100);
 
-					if (n >= 0 && n <= 50) {
+					if (n >= 0 && n <= 50) { // 51% flip
 						switch (chip.nChannelNo) {
 							case 0x11:
 								chip.nChannelNo = 0x12;
@@ -864,7 +864,7 @@ internal class CTja : CActivity {
 				foreach (var chip in this.listChip) {
 					int n = rnd.Next(100);
 
-					if (n >= 0 && n <= 80) {
+					if (n >= 0 && n <= 80) { // 81% flip
 						switch (chip.nChannelNo) {
 							case 0x11:
 								chip.nChannelNo = 0x12;

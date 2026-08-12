@@ -82,7 +82,7 @@
         },
         "Headquarters": {
             "UP": [ "0","1" ],
-            "DOWN": [ "0","1","2" ],
+            "DOWN": [ "0_TaikoClub", "1_Field", "2_Forest" ],
             "DANCER": [ "0" ],
             "FOOTER": [ "0" ],
             "MOB": [ "0" ],

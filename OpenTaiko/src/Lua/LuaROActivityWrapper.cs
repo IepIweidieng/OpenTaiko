@@ -63,7 +63,7 @@ namespace OpenTaiko {
 		public object[]? Activate(params object[] args) => lcActScript?.Activate(args);
 		public object[]? Deactivate(params object[] args) => lcActScript?.Deactivate(args);
 		public object[]? Draw(params object[] args) => lcActScript?.Draw(args);
-		public object[]? Update(params object[] args) => lcActScript?.Update(DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond, args);
+		public object[]? Update(params object[] args) => lcActScript?.Update(FDK.Game.TimeMs, args);
 
 		#endregion
 

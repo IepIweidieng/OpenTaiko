@@ -77,22 +77,21 @@ end
 local KANJI_NUMS = { "一","二","三","四","五","六","七","八","九","十" }
 
 local function _level_name(level)
-    if     level == 1 then return "初級"
-    elseif level == 2 then return "四級"
-    elseif level == 3 then return "三級"
-    elseif level == 4 then return "二級"
-    elseif level == 5 then return "一級"
-    elseif level >= 6 and level <= 15 then
-        return "扉" .. (KANJI_NUMS[level - 5] or tostring(level - 5))
+    if level >= 1 and level <= 10 then
+        -- 一題 … 十題
+        return (KANJI_NUMS[level] or tostring(level)) .. "題"
+    elseif level >= 11 and level <= 20 then
+        -- level 11 → 扉一, level 20 → 扉十
+        return "扉" .. (KANJI_NUMS[level - 10] or tostring(level - 10))
     else
-        -- level 16 → 屋根1, level 17 → 屋根2, ...
-        return "屋根" .. tostring(level - 15)
+        -- level 21 → 穹天1, level 22 → 穹天2, ...
+        return "穹天" .. tostring(level - 20)
     end
 end
 
 local function _level_tick(level)
-    if     level <= 5  then return 0
-    elseif level <= 15 then return 2
+    if     level <= 10 then return 0
+    elseif level <= 20 then return 2
     end
     return 4
 end
@@ -115,55 +114,62 @@ local function _hsv_to_rgb(h, s, v)
 end
 
 local function _level_tick_color(level)
-    if level <= 5 then
-        return { 139, 69, 19 }       -- brown
-    elseif level <= 15 then
-        -- rainbow gradient: blue (level 6) → red (level 15)
-        local t = (level - 6) / 9        -- 0.0 at level 6, 1.0 at level 15
-        local h = 240 * (1 - t)^1.4     -- 240° (blue) → 0° (red)
+    if level <= 10 then
+        return { 139, 69, 19 }       -- brown (題)
+    elseif level <= 20 then
+        -- rainbow: blue (扉一) → red (扉八) → magenta (扉九) → magenta-purple (扉十)
+        local d = level - 10             -- door index 1..10
+        local h
+        if d <= 8 then
+            local t = (d - 1) / 7        -- 0.0 at 扉一, 1.0 at 扉八
+            h = 240 * (1 - t)^1.4        -- 240° (blue) → 0° (red)
+        else
+            h = 360 - (d - 8) * 35       -- 扉九 → 325° (magenta), 扉十 → 290° (magenta-purple)
+        end
         local r, g, b = _hsv_to_rgb(h, 0.88, 1.0)
         return { r, g, b }
     else
-        return { 0, 0, 0 }           -- black
+        return { 0, 0, 0 }           -- black (穹天)
     end
 end
 
 -- EXAM 1: Gauge thresholds (red / gold), range = More (player must reach)
 local function _exam1_gauge(level)
-    if level <= 3 then
+    if level <= 5 then
         return 70, 80
-    elseif level <= 5 then
+    elseif level <= 10 then
         return 80, 90
-    elseif level <= 15 then
-        local n = level - 6
+    elseif level <= 20 then
+        local n = level - 11
         return math.min(100, 90 + n), math.min(100, 95 + n)
     else
         return 100, 100
     end
 end
 
--- EXAM 2: Accuracy % (levels 1-15, More) or Ok count (levels 16+, Less)
+-- EXAM 2: Accuracy % (kyuu/doors levels 1-20, More) or Ok count (穹天 levels 21+, Less)
 -- Returns: type, red, gold, lessThan
 local function _exam2(level)
-    if level <= 15 then
+    if level <= 20 then
         local t = {
-            [1]={80,90},  [2]={84,92},  [3]={88,94},
-            [4]={70,85},  [5]={75,87},
-            [6]={80,90},  [7]={84,92},  [8]={88,94},  [9]={90,95},
-            [10]={92,96}, [11]={94,97}, [12]={95,97}, [13]={96,98},
-            [14]={97,98}, [15]={98,99},
+            -- 題 (kyuu) 1-10 : Easy band 1-4, Normal band 5-7, Hard band 8-10 (accuracy resets at 8)
+            [1]={78,88},  [2]={80,90},  [3]={84,92},  [4]={86,93},  [5]={88,94},
+            [6]={90,95},  [7]={92,96},  [8]={70,85},  [9]={72,86},  [10]={75,87},
+            -- 扉 (doors) 11-20 (was old doors 6-15)
+            [11]={80,90}, [12]={84,92}, [13]={88,94}, [14]={90,95}, [15]={92,96},
+            [16]={94,97}, [17]={95,97}, [18]={96,98}, [19]={97,98}, [20]={98,99},
         }
         local e = t[level] or {80, 90}
         return "a", e[1], e[2], false
-    elseif level == 16 then return "jg", 50, 25, true
-    elseif level == 17 then return "jg", 40, 20, true
-    elseif level == 18 then return "jg", 30, 15, true
-    elseif level == 19 then return "jg", 20, 10, true
-    elseif level == 20 then return "jg", 15,  8, true
-    elseif level == 21 then return "jg", 10,  5, true
+    elseif level == 21 then return "jg", 50, 25, true
+    elseif level == 22 then return "jg", 40, 20, true
+    elseif level == 23 then return "jg", 30, 15, true
+    elseif level == 24 then return "jg", 20, 10, true
+    elseif level == 25 then return "jg", 15,  8, true
+    elseif level == 26 then return "jg", 10,  5, true
     else
-        -- level 22+: red -1/level, gold -1/2 levels, both floor at 1
-        local n    = level - 22
+        -- level 27+: red -1/level, gold -1/2 levels, both floor at 1
+        local n    = level - 27
         local red  = math.max(1, 10 - n)
         local gold = math.max(1, 5 - math.floor(n / 2))
         return "jg", red, gold, true
@@ -172,30 +178,31 @@ end
 
 -- EXAM 3: Bad count base values (red / gold); multiply by 1.25 (floor) if purple picked
 local function _exam3_base(level)
-    if level <= 15 then
+    if level <= 20 then
         local t = {
-            [1]={30,20}, [2]={28,19}, [3]={26,18},
-            [4]={24,17}, [5]={22,16},
-            [6]={20,15}, [7]={16,12}, [8]={12,8},  [9]={10,7},
-            [10]={9,6},  [11]={8,6},  [12]={7,5},  [13]={6,4},
-            [14]={5,3},  [15]={4,2},
+            -- 題 (kyuu) 1-10
+            [1]={32,22}, [2]={30,20}, [3]={28,19}, [4]={27,18}, [5]={26,18},
+            [6]={25,18}, [7]={25,17}, [8]={24,17}, [9]={23,16}, [10]={22,16},
+            -- 扉 (doors) 11-20 (was old doors 6-15)
+            [11]={20,15}, [12]={16,12}, [13]={12,8}, [14]={10,7}, [15]={9,6},
+            [16]={8,6},   [17]={7,5},   [18]={6,4},  [19]={5,3},  [20]={4,2},
         }
         local e = t[level] or {4, 2}
         return e[1], e[2]
-    elseif level <= 18 then return 3, 1
-    elseif level <= 21 then return 2, 1
+    elseif level <= 23 then return 3, 1
+    elseif level <= 26 then return 2, 1
     else                    return 1, 1
     end
 end
 
 
 local function _purple_prob(level)
-    if     level <= 14 then return 0.10
-    elseif level == 15 then return 1.00
-    elseif level <= 21 then return 0.10
+    if     level <= 19 then return 0.10
+    elseif level == 20 then return 1.00   -- 扉十 (last door): guaranteed purple
+    elseif level <= 26 then return 0.10
     else
-        -- level 22 → 0 %, level 23 → 10 %, level 24 → 20 %, …
-        return math.max(0.0, math.min(1.0, (level - 22) * 0.10))
+        -- level 27 → 0 %, level 28 → 10 %, level 29 → 20 %, …
+        return math.max(0.0, math.min(1.0, (level - 27) * 0.10))
     end
 end
 
@@ -313,9 +320,28 @@ local function _set_highest_level(level)
     end
 end
 
+-- One-time migration for the 題/扉/穹天 restructure: the kyuu range grew from 5 to 10 levels and the
+-- 扉/穹天 tiers shifted +5, so a saved highest_level from before this update must be renumbered or the
+-- player would lose progress / start-point unlocks. Old level → new level:
+--   kyuu 1..5 → 2, 3, 5, 8, 10   (the old kyuu pools now live at those positions)
+--   anything ≥ 6 (扉/屋根) → +5
+-- Version-gated so it runs exactly once; brand-new saves (highest 0) are left untouched.
+local function _migrate_save()
+    local sf = GetSaveFile(0)
+    if math.floor(sf:GetGlobalCounter("pagoda_structure_version")) >= 2 then return end
+    local old = math.floor(sf:GetGlobalCounter("pagoda_highest_level"))
+    if old >= 1 then
+        local KYUU = { [1] = 2, [2] = 3, [3] = 5, [4] = 8, [5] = 10 }
+        local new  = (old <= 5) and (KYUU[old] or old) or (old + 5)
+        sf:SetGlobalCounter("pagoda_highest_level", new)
+    end
+    sf:SetGlobalCounter("pagoda_structure_version", 2)
+end
+
 -- Returns the checkpoint level to restart from when failing at `level`.
 local function _checkpoint_for(level)
-    if level >= 16     then return 16
+    if level >= 21     then return 21
+    elseif level >= 16 then return 16
     elseif level >= 11 then return 11
     elseif level >= 6  then return 6
     else                    return 1
@@ -323,11 +349,12 @@ local function _checkpoint_for(level)
 end
 
 -- Returns the list of valid challenge starting levels for the current save.
+--   一題(1) / 六題(6) / 扉一(11) always ; 扉六(16) after clearing 扉五(15) ; 穹天1(21) after 扉十(20)
 local function _start_options()
     local highest = _highest_level()
-    local opts = { 1, 6 }
-    if highest >= 10 then table.insert(opts, 11) end
+    local opts = { 1, 6, 11 }
     if highest >= 15 then table.insert(opts, 16) end
+    if highest >= 20 then table.insert(opts, 21) end
     return opts
 end
 
@@ -337,7 +364,8 @@ local DIFF_NAMES = { [0] = "Easy", [1] = "Normal", [2] = "Hard", [3] = "Oni", [4
 
 local function _spd_range(level)
     local SPEED = CONFIG.SONGSPEED
-    local min = (level >= 33) and (1 + (level - 32) / SPEED.ScaleFromActual) or 1
+    -- speed starts ramping at 穹天18 (level 38); below that it stays x1
+    local min = (level >= 38) and (1 + (level - 37) / SPEED.ScaleFromActual) or 1
     local max = min + 1
     return SPEED:FromActual(min), SPEED:FromActual(max)
 end
@@ -468,7 +496,7 @@ local function _build_dan(level)
     local g_red, g_gold = _exam1_gauge(level)
     DANBUILDER:SetGlobalExam(1, "g", g_red, g_gold, false)
 
-    -- EXAM 2: Accuracy (levels 1-15, More) / Ok count (levels 16+, Less)
+    -- EXAM 2: Accuracy (題/扉 levels 1-20, More) / Ok count (穹天 levels 21+, Less)
     local e2_type, e2_red, e2_gold, e2_less = _exam2(level)
     DANBUILDER:SetGlobalExam(2, e2_type, e2_red, e2_gold, e2_less)
 
@@ -509,6 +537,7 @@ end
 -- Called when the player selects Pagoda from the 3-way menu
 function M.enter(CB)
     _CB    = CB
+    _migrate_save()
     _btn_timer    = 0.15
     _status_msg   = ""
     _status_timer = 0.0
@@ -540,6 +569,7 @@ end
 -- Called from Script.lua's activate() whenever the pagoda module is active
 function M.activate(CB)
     _CB = CB
+    _migrate_save()
     _btn_timer = 0.15
     _ensure_fonts()
 
@@ -773,7 +803,7 @@ function M.update(dt)
 
     -- ── PRACTICE SELECT ────────────────────────────────────────────────────────
     if _pagoda_state == "practice_select" then
-        local highest = math.max(_highest_level(), 6)
+        local highest = math.max(_highest_level(), 11)
         if up_p   then
             _practice_sel = math.max(1,       _practice_sel - 1)
             SHARED:GetSharedSound("Move"):Play()
@@ -1001,7 +1031,7 @@ function M.draw()
 
     -- ── PRACTICE SELECT ────────────────────────────────────────────────────────
     elseif _pagoda_state == "practice_select" then
-        local highest = math.max(_highest_level(), 6)
+        local highest = math.max(_highest_level(), 11)
         _font_title:GetText("Practice", false, 600, C_WHITE):DrawAtAnchor(cx, base_y - 170, "center")
 
         local start_lv = math.max(1, _practice_sel - 4)

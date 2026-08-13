@@ -98,9 +98,13 @@ namespace OpenTaiko {
 				// A failed bake (e.g. the font resource was swapped by a language change) degrades to an
 				// advance-only glyph instead of aborting the caller's whole draw pass.
 				try {
-					using var bmp = grad
-						? ((CFontRenderer)_font).DrawText(s, fore, outline, null, gradTop.Value, gradBottom.Value, 30, false)
-						: ((CFontRenderer)_font).DrawText(s, tintable ? Color.White : fore, outline, null, 30, false);
+					// The text renderer only paints a vertical gradient for a token that carries a <g.#top.#bottom>
+					// TAG — the DrawMode.Gradation flag and the gradient-colour args alone are ignored. So wrap the
+					// glyph in that tag to trigger it (the outline still bakes). Non-gradient glyphs bake flat.
+					string bake = grad
+						? $"<g.#{gradTop.Value.R:X2}{gradTop.Value.G:X2}{gradTop.Value.B:X2}.#{gradBottom.Value.R:X2}{gradBottom.Value.G:X2}{gradBottom.Value.B:X2}>{s}</g>"
+						: s;
+					using var bmp = ((CFontRenderer)_font).DrawText(bake, (grad || tintable) ? Color.White : fore, outline, null, 30, false);
 					entry.Tex = new LuaTexture(OpenTaiko.tTextureCreate(bmp, false));
 					if (entry.Tex != null) Interlocked.Increment(ref LiveGlyphs);
 				} catch (Exception e) {

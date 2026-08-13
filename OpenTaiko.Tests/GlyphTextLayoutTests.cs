@@ -208,5 +208,43 @@ namespace OpenTaikoTests {
 			Assert.True(font.MeasureText(" ") > 0);        // advance includes spaces
 			Assert.True(font.GetLineHeight() > 0);
 		}
+
+		// Verifies the actual bake: a <g.#top.#bottom> tag paints a vertical gradient, while a plain string does
+		// not (the pre-fix bug baked flat because the renderer only gradients tagged tokens, ignoring the
+		// DrawMode.Gradation flag). LuaGlyphText baked gradient glyphs by wrapping them in this tag.
+		[Fact]
+		public void DrawText_GradientTag_PaintsVerticalGradient_PlainDoesNot() {
+			using var font = new CFontRenderer(null, 60);
+
+			// red at top → blue at bottom; transparent outline so only the gradient fill shows
+			using var grad = font.DrawText("<g.#ff0000.#0000ff>A</g>", Color.White, Color.Transparent, null, 30, false);
+			var (gTopR, gTopB, gBotR, gBotB) = TopBottom(grad);
+			Assert.True(gTopR > gBotR + 20, $"gradient top should be redder (top R={gTopR:F0}, bot R={gBotR:F0})");
+			Assert.True(gBotB > gTopB + 20, $"gradient bottom should be bluer (top B={gTopB:F0}, bot B={gBotB:F0})");
+
+			// no tag, flat red fore: top and bottom equally red, ~no blue (what the nameplate used to bake)
+			using var flat = font.DrawText("A", Color.Red, Color.Transparent, null, 30, false);
+			var (fTopR, fTopB, fBotR, fBotB) = TopBottom(flat);
+			Assert.True(Math.Abs(fTopR - fBotR) < 25, $"flat text should not gradient ({fTopR:F0} vs {fBotR:F0})");
+			Assert.True(fTopB < 40 && fBotB < 40, "flat red text should have ~no blue");
+		}
+
+		// average (R,B) of opaque glyph pixels in the top vs bottom half of their vertical extent
+		private static (double topR, double topB, double botR, double botB) TopBottom(SkiaSharp.SKBitmap bmp) {
+			int minY = int.MaxValue, maxY = int.MinValue;
+			for (int y = 0; y < bmp.Height; y++)
+				for (int x = 0; x < bmp.Width; x++)
+					if (bmp.GetPixel(x, y).Alpha >= 128) { if (y < minY) minY = y; if (y > maxY) maxY = y; }
+			Assert.True(maxY > minY, "no opaque glyph pixels found");
+			int mid = (minY + maxY) / 2;
+			double tR = 0, tB = 0, bR = 0, bB = 0; int tn = 0, bn = 0;
+			for (int y = minY; y <= maxY; y++)
+				for (int x = 0; x < bmp.Width; x++) {
+					var p = bmp.GetPixel(x, y);
+					if (p.Alpha < 128) continue;
+					if (y < mid) { tR += p.Red; tB += p.Blue; tn++; } else { bR += p.Red; bB += p.Blue; bn++; }
+				}
+			return (tR / Math.Max(1, tn), tB / Math.Max(1, tn), bR / Math.Max(1, bn), bB / Math.Max(1, bn));
+		}
 	}
 }

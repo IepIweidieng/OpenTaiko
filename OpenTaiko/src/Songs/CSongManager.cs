@@ -213,6 +213,7 @@ internal class CSongManager {
 				? strBaseFolder + dtx.SELECTBG : null;
 
 			node.nLevel = dtx.SongListCourseMetadata.Select(m => m.LEVELtaiko).ToArray();
+			node.dLevel = dtx.SongListCourseMetadata.Select(m => m.LEVELtaikoDecimal).ToArray();
 			node.nLevelIcon = dtx.SongListCourseMetadata.Select(m => m.LEVELtaikoIcon).ToArray();
 			node.uniqueId = dtx.uniqueID;
 

@@ -60,6 +60,7 @@ internal class CTci {
 	public class CourseInfo {
 		public int DifficultyIndex;
 		public int Level;
+		public double LevelDecimal = -1;   // the .tci "level" with its fraction kept (e.g. 12.888); Level is truncated
 		public CTja.ELevelIcon LevelIcon;
 		public string NotesDesigner = "";
 		public string OsuFilePath = "";
@@ -93,10 +94,12 @@ internal class CTci {
 
 		var notesDesigners = new string[(int)Difficulty.Total];
 		var levels         = new int[(int)Difficulty.Total];
+		var levelDecimals  = new double[(int)Difficulty.Total];
 		var levelIcons     = new CTja.ELevelIcon[(int)Difficulty.Total];
 		for (int i = 0; i < (int)Difficulty.Total; i++) {
 			notesDesigners[i] = "";
 			levels[i]         = -1;
+			levelDecimals[i]  = -1;
 			levelIcons[i]     = CTja.ELevelIcon.eNone;
 		}
 
@@ -104,6 +107,7 @@ internal class CTci {
 			int i = course.DifficultyIndex;
 			notesDesigners[i] = course.NotesDesigner;
 			levels[i]         = course.Level;
+			levelDecimals[i]  = course.LevelDecimal;
 			levelIcons[i]     = course.LevelIcon;
 			node.difficultiesCount++;
 
@@ -146,6 +150,7 @@ internal class CTci {
 
 		node.strNotesDesigner = notesDesigners;
 		node.nLevel    = levels;
+		node.dLevel    = levelDecimals;
 		node.nLevelIcon = levelIcons;
 		node.nLife = Courses.FirstOrDefault(c => (Difficulty)c.DifficultyIndex == Difficulty.Tower)?.Life ?? 5;
 		return node;
@@ -191,6 +196,7 @@ internal class CTci {
 		BuildChips(tja, osu, bgmRelative, bgmAbsolute);
 
 		tja.SongListCourseMetadata[difficulty].LEVELtaiko      = course.Level;
+		tja.SongListCourseMetadata[difficulty].LEVELtaikoDecimal = course.LevelDecimal;
 		tja.SongListCourseMetadata[difficulty].LEVELtaikoIcon  = course.LevelIcon;
 		tja.SongListCourseMetadata[difficulty].NOTESDESIGNER   = course.NotesDesigner;
 		return tja;
@@ -240,10 +246,13 @@ internal class CTci {
 					FIRST_BPM = MIN_BPM = MAX_BPM = BPM.Value;
 				}
 				double level = c.Level;
+				double frac  = level - (int)level;   // fractional part → +/− icon (whole numbers stay iconless)
 				Courses.Add(new CourseInfo {
 					DifficultyIndex = diffIdx,
 					Level     = (int)level,
-					LevelIcon = (level - (int)level >= 0.5) ? CTja.ELevelIcon.ePlus : CTja.ELevelIcon.eNone,
+					LevelDecimal = level,
+					LevelIcon = frac >= 0.5 ? CTja.ELevelIcon.ePlus
+						: (frac > 0 ? CTja.ELevelIcon.eMinus : CTja.ELevelIcon.eNone),
 					NotesDesigner = notesDesigner,
 					OsuFilePath   = osuPath,
 					Life = c.Life,

@@ -153,6 +153,7 @@ internal class CTcm {
 		score.ChartInfo.cDanTickColor = DAN_TICK_COLOR;
 		node.score[(int)Difficulty.Dan] = score;
 		node.nLevel[(int)Difficulty.Dan] = 10;
+		node.dLevel[(int)Difficulty.Dan] = 10;
 
 		return node;
 	}

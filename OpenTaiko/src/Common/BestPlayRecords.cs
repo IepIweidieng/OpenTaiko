@@ -126,6 +126,19 @@ internal class BestPlayRecords {
 		}
 	}
 
+	/// <summary>Total plays a player has on a chart, summed across all mod-flag variants — i.e. per song
+	/// (ChartUniqueId) and per difficulty, ignoring PlayMods. Each raw best-play record's PlayCount is the
+	/// cumulative play count for its (chart, mods) combo, so summing over the matching records gives the total.</summary>
+	static public long SumPlayCount(IEnumerable<CBestPlayRecord> records, string chartUniqueId, int difficulty) {
+		if (records == null || chartUniqueId == null) return 0;
+		long total = 0;
+		foreach (CBestPlayRecord r in records) {
+			if (r.ChartUniqueId == chartUniqueId && (int)r.ChartDifficulty == difficulty)
+				total += r.PlayCount;
+		}
+		return total;
+	}
+
 	static private void InitOrAddDict<T>(Dictionary<T, int> dict, T entry) where T : notnull {
 		if (!dict.ContainsKey(entry))
 			dict[entry] = 0;

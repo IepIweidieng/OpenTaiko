@@ -294,6 +294,9 @@ internal class CTja : CActivity {
 	public class QueryableCourseMetadata {
 		public string NOTESDESIGNER = "";
 		public int LEVELtaiko = -1;
+		// The LEVEL value with its fractional part preserved (e.g. 12.888). LEVELtaiko is the truncated int.
+		// -1 mirrors LEVELtaiko for hidden/unset levels.
+		public double LEVELtaikoDecimal = -1;
 		public ELevelIcon LEVELtaikoIcon = ELevelIcon.eNone;
 		public EGameType? GameType;
 
@@ -1516,8 +1519,13 @@ internal class CTja : CActivity {
 				if (this.bChartExists[i]) {
 					nChartCount++;
 					this.SongListCourseMetadata[i].LEVELtaiko = Math.Max(0, this.SongListCourseMetadata[i].LEVELtaiko);
+					// keep the decimal aligned with the truncated level; fall back to the int when no decimal was parsed
+					this.SongListCourseMetadata[i].LEVELtaikoDecimal = this.SongListCourseMetadata[i].LEVELtaikoDecimal >= 0
+						? Math.Max(0, this.SongListCourseMetadata[i].LEVELtaikoDecimal)
+						: this.SongListCourseMetadata[i].LEVELtaiko;
 				} else {
 					this.SongListCourseMetadata[i].LEVELtaiko = -1;
+					this.SongListCourseMetadata[i].LEVELtaikoDecimal = -1;
 				}
 			}
 
@@ -3293,8 +3301,10 @@ internal class CTja : CActivity {
 				}
 			}
 			this.LEVEL = (int)level;
-			foreach (var metadata in metadatas)
+			foreach (var metadata in metadatas) {
 				metadata.LEVELtaiko = (int)level;
+				metadata.LEVELtaikoDecimal = Math.Max(0, level_dec);
+			}
 		} else if (strCommandName.Equals("SCOREMODE")) {
 			ParseOptionalInt16(value => {
 				foreach (var metadata in metadatas)

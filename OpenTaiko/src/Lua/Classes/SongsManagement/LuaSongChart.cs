@@ -2,6 +2,7 @@
 	internal class LuaSongChart {
 		private Difficulty _difficulty;
 		private int _level;
+		private double _levelDecimal;
 		private CTja.ELevelIcon _levelIcon;
 		private string _notesDesigner = "";
 		private CScore _score;
@@ -48,6 +49,34 @@
 			get {
 				return _levelIcon == CTja.ELevelIcon.ePlus;
 			}
+		}
+
+		public bool IsMinus {
+			get {
+				return _levelIcon == CTja.ELevelIcon.eMinus;
+			}
+		}
+
+		/// <summary>The chart's difficulty with its fractional part kept (e.g. 12.888).
+		/// Falls back to the integer Level for charts authored without a decimal (.tci/.tcm, plain LEVEL).</summary>
+		public double LevelDecimal {
+			get {
+				return _levelDecimal;
+			}
+		}
+
+		/// <summary>The first decimal digit of the difficulty, truncated, as 0..9 (e.g. 12.888 → 8).</summary>
+		public int LevelFirstDecimal {
+			get {
+				return FirstDecimalDigit(_levelDecimal);
+			}
+		}
+
+		// Truncated first-decimal digit (tenths place) of a difficulty value, as 0..9. Internal (not part of the
+		// Lua-facing surface); LevelFirstDecimal is the exposed property. Kept internal so tests can reach it.
+		internal static int FirstDecimalDigit(double level) {
+			if (level < 0) return 0;
+			return (int)(Math.Floor(level * 10.0) % 10.0);
 		}
 
 		public Difficulty Difficulty {
@@ -217,6 +246,9 @@
 			if (_from != null) {
 				_difficulty = (Difficulty)_chart;
 				_level = _from.nLevel[_chart];
+				// prefer the fractional level; fall back to the int when no decimal was authored (dLevel = -1)
+				_levelDecimal = (_from.dLevel != null && _chart >= 0 && _chart < _from.dLevel.Length && _from.dLevel[_chart] >= 0)
+					? _from.dLevel[_chart] : _level;
 				_levelIcon = _from.nLevelIcon[_chart];
 				_notesDesigner = _from.strNotesDesigner[_chart];
 				_chartInfo = _from.score[_chart]?.ChartInfo ?? null;

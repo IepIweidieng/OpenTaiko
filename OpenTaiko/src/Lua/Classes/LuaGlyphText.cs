@@ -18,7 +18,7 @@ namespace OpenTaiko {
 		private CCachedFontRenderer? _font;
 		internal HashSet<LuaGlyphText>? _disposeList = null;
 
-		private readonly record struct GlyphKey(int CodePoint, int ForeArgb, int OutlineArgb);
+		private readonly record struct GlyphKey(int CodePoint, int ForeArgb, int OutlineArgb, int GradTopArgb, int GradBottomArgb);
 		private sealed class GlyphEntry {
 			public LuaTexture? Tex;      // null for whitespace (advance only)
 			public double Advance;
@@ -76,21 +76,31 @@ namespace OpenTaiko {
 		private static bool IsTintable(Color outline)
 			=> outline.A == 0 || (outline.R == 0 && outline.G == 0 && outline.B == 0);
 
-		private GlyphEntry GetGlyph(int cp, Color fore, Color outline) {
-			bool tintable = IsTintable(outline);
-			var key = new GlyphKey(cp, tintable ? Color.White.ToArgb() : fore.ToArgb(), outline.ToArgb());
+		private GlyphEntry GetGlyph(int cp, Color fore, Color outline, Color? gradTop = null, Color? gradBottom = null) {
+			bool grad = gradTop.HasValue && gradBottom.HasValue;
+			// gradient glyphs bake their vertical gradient in and are never tinted; otherwise a black/transparent
+			// outline lets us bake WHITE once and tint the fore at draw so many fore colors share one glyph.
+			bool tintable = !grad && IsTintable(outline);
+			var key = new GlyphKey(cp,
+				grad ? fore.ToArgb() : (tintable ? Color.White.ToArgb() : fore.ToArgb()),
+				outline.ToArgb(),
+				grad ? gradTop.Value.ToArgb() : 0,
+				grad ? gradBottom.Value.ToArgb() : 0);
+			Color tint = (grad || !tintable) ? Color.White : fore;
 			if (_glyphs.TryGetValue(key, out var entry)) {
-				entry.Tint = tintable ? fore : Color.White;
+				entry.Tint = tint;
 				return entry;
 			}
-			entry = new GlyphEntry { Advance = AdvanceOf(cp), Tint = tintable ? fore : Color.White };
+			entry = new GlyphEntry { Advance = AdvanceOf(cp), Tint = tint };
 			string s = char.ConvertFromUtf32(cp);
 			if (!string.IsNullOrWhiteSpace(s) && _font != null) {
 				// base cast: render directly, skipping CCachedFontRenderer's FIFO (it would hold a duplicate copy).
 				// A failed bake (e.g. the font resource was swapped by a language change) degrades to an
 				// advance-only glyph instead of aborting the caller's whole draw pass.
 				try {
-					using var bmp = ((CFontRenderer)_font).DrawText(s, tintable ? Color.White : fore, outline, null, 30, false);
+					using var bmp = grad
+						? ((CFontRenderer)_font).DrawText(s, fore, outline, null, gradTop.Value, gradBottom.Value, 30, false)
+						: ((CFontRenderer)_font).DrawText(s, tintable ? Color.White : fore, outline, null, 30, false);
 					entry.Tex = new LuaTexture(OpenTaiko.tTextureCreate(bmp, false));
 					if (entry.Tex != null) Interlocked.Increment(ref LiveGlyphs);
 				} catch (Exception e) {
@@ -166,12 +176,14 @@ namespace OpenTaiko {
 					double adv = AdvanceOf(cp);
 					int styleId = runes[i].StyleId;
 					Color gFore = fore, gOutline = outline;
+					Color? gGradTop = null, gGradBottom = null;
 					if (styleId >= 0) {
 						var st = styles[styleId];
 						if (!st.Fore.IsEmpty) gFore = st.Fore;
 						if (st.Outline != null) gOutline = st.Outline.Value;
+						gGradTop = st.GradTop; gGradBottom = st.GradBottom;
 					}
-					var glyph = GetGlyph(cp, gFore, gOutline);
+					var glyph = GetGlyph(cp, gFore, gOutline, gGradTop, gGradBottom);
 					if (glyph.Tex != null) {
 						glyph.Tex.SetScale((float)(f * scale), (float)sy);
 						glyph.Tex.SetColor(glyph.Tint.R / 255f, glyph.Tint.G / 255f, glyph.Tint.B / 255f);
@@ -264,12 +276,14 @@ namespace OpenTaiko {
 					double adv = AdvanceOf(cp);
 					int styleId = runes[i].StyleId;
 					Color gFore = fore, gOutline = outline;
+					Color? gGradTop = null, gGradBottom = null;
 					if (styleId >= 0) {
 						var st = styles[styleId];
 						if (!st.Fore.IsEmpty) gFore = st.Fore;
 						if (st.Outline != null) gOutline = st.Outline.Value;
+						gGradTop = st.GradTop; gGradBottom = st.GradBottom;
 					}
-					var glyph = GetGlyph(cp, gFore, gOutline);
+					var glyph = GetGlyph(cp, gFore, gOutline, gGradTop, gGradBottom);
 					if (glyph.Tex != null) {
 						glyph.Tex.SetScale((float)scale, (float)scale);
 						glyph.Tex.SetColor(glyph.Tint.R / 255f, glyph.Tint.G / 255f, glyph.Tint.B / 255f);

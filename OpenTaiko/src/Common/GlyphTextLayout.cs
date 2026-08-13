@@ -13,15 +13,17 @@ public static class GlyphTextLayout {
 	// keep in sync with CSkiaSharpTextRenderer.TagRegex and StringExtensions.TagRegex
 	private static readonly Regex TagRegex = new(@"<(/?)([gc](?:\.#[0-9a-fA-F]{6})*?)>", RegexOptions.Compiled);
 
-	// a color override introduced by a <c.#rrggbb> or <c.#rrggbb#rrggbb> tag (fore / fore+outline)
-	public readonly record struct Style(Color Fore, Color? Outline);
+	// a color override introduced by a <c.#rrggbb>/<c.#rrggbb.#rrggbb> (fore / fore+outline) or a
+	// <g.#top.#bottom> vertical-gradient tag (GradTop/GradBottom set, applied per glyph at bake time)
+	public readonly record struct Style(Color Fore, Color? Outline, Color? GradTop = null, Color? GradBottom = null);
 
 	// one Unicode code point with the style active at its position; StyleId -1 = the caller's default colors
 	public readonly record struct StyledRune(int CodePoint, int StyleId);
 
 	// Split text into code points + a style table. Mirrors CSkiaSharpTextRenderer.Tokenize semantics:
 	// <c.#fore> / <c.#fore#outline> push a color override, </c> pops, tags nest, unclosed tags run to the end.
-	// <g.…> gradient tags are structural only here (pushed so their close pops correctly, colors unchanged).
+	// <g.#top.#bottom> pushes a vertical-gradient override (GradTop/GradBottom); the caller (LuaGlyphText)
+	// bakes each glyph with that gradient. </g> pops. Gradient and flat-color tags may nest.
 	public static (List<StyledRune> Runes, List<Style> Styles) Tokenize(string text) {
 		var runes = new List<StyledRune>();
 		var styles = new List<Style>();
@@ -37,12 +39,14 @@ public static class GlyphTextLayout {
 				if (stack.Count > 0) stack.Pop();
 				continue;
 			}
-			// inherit the current style, then apply the tag's colors on top (c only; g keeps colors)
+			// inherit the current style, then apply the tag's colors on top
 			Style current = stack.Count > 0 ? styles[stack.Peek()] : new Style(Color.Empty, null);
 			string[] parts = match.Groups[2].Value.Split('.');
 			if (parts[0] == "c") {
 				if (parts.Length > 1) current = current with { Fore = ColorTranslator.FromHtml(parts[1]) };
 				if (parts.Length > 2) current = current with { Outline = ColorTranslator.FromHtml(parts[2]) };
+			} else if (parts[0] == "g") {
+				if (parts.Length > 2) current = current with { GradTop = ColorTranslator.FromHtml(parts[1]), GradBottom = ColorTranslator.FromHtml(parts[2]) };
 			}
 			styles.Add(current);
 			stack.Push(styles.Count - 1);

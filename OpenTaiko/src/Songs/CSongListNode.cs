@@ -64,6 +64,9 @@ internal class CSongListNode {
 	public bool bExplicit = false;
 	public bool bMovie = false;
 	public int[] nLevel = new int[(int)Difficulty.Total] { 0, 0, 0, 0, 0, 0, 0 };
+	// The LEVEL value with its fractional part kept (e.g. 12.888); parallels nLevel. -1 = no decimal known,
+	// in which case consumers fall back to nLevel. Only the .tja path carries a real fraction; .tci/.tcm use the int.
+	public double[] dLevel = new double[(int)Difficulty.Total] { -1, -1, -1, -1, -1, -1, -1 };
 	public CTja.ELevelIcon[] nLevelIcon = new CTja.ELevelIcon[(int)Difficulty.Total] { CTja.ELevelIcon.eNone, CTja.ELevelIcon.eNone, CTja.ELevelIcon.eNone, CTja.ELevelIcon.eNone, CTja.ELevelIcon.eNone, CTja.ELevelIcon.eNone, CTja.ELevelIcon.eNone };
 
 	// Custom metadata handlers

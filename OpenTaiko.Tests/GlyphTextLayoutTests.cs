@@ -134,12 +134,25 @@ namespace OpenTaikoTests {
 		}
 
 		[Fact]
-		public void Tokenize_GradientTag_StrippedButBalanced() {
+		public void Tokenize_GradientTag_AppliesColorsAndBalances() {
 			var (runes, styles) = Tok("<g.#ff0000.#00ff00>ab</g>c");
 			Assert.Equal(3, runes.Count);
-			// g keeps the current colors (empty default), and its close pops correctly
-			Assert.True(styles[runes[0].StyleId].Fore.IsEmpty);
+			var st = styles[runes[0].StyleId];
+			// <g> sets the vertical-gradient colors (not a flat fore) and its close pops correctly
+			Assert.Equal(Color.FromArgb(255, 0, 0).ToArgb(), st.GradTop.Value.ToArgb());
+			Assert.Equal(Color.FromArgb(0, 255, 0).ToArgb(), st.GradBottom.Value.ToArgb());
+			Assert.True(st.Fore.IsEmpty);
 			Assert.Equal(-1, runes[2].StyleId);
+		}
+
+		[Fact]
+		public void Tokenize_GradientNestsWithColor() {
+			// <c> inside <g>: the inner run carries both the gradient and the flat fore
+			var (runes, styles) = Tok("<g.#112233.#445566>a<c.#ffffff>b</c>c</g>d");
+			var inner = styles[runes[1].StyleId];
+			Assert.Equal(Color.FromArgb(0x11, 0x22, 0x33).ToArgb(), inner.GradTop.Value.ToArgb());
+			Assert.Equal(Color.FromArgb(0xff, 0xff, 0xff).ToArgb(), inner.Fore.ToArgb());
+			Assert.Equal(-1, runes[3].StyleId);   // after </g>: back to default
 		}
 
 		[Fact]

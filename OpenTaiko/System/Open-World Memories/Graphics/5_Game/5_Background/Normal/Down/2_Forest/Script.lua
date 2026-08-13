@@ -107,7 +107,7 @@ function draw(state)
     tx["Tyoutin_Light.png"]:Draw(0, 540)
     
     for i = 0, 3 do
-        tx["Down_Scroll.png"]:Draw((0 + (loopWidth * i) - bgScrollX, 540 + ((1.0 - (clearInAnime_Scroll + (math.sin(clearInAnime_Scroll * math.pi) / 2.0))) * 474)) / 255)
+        tx["Down_Scroll.png"]:Draw(0 + (loopWidth * i) - bgScrollX, 540 + ((1.0 - (clearInAnime_Scroll + (math.sin(clearInAnime_Scroll * math.pi) / 2.0))) * 474))
     end
 
     tx["Down_Clear_Deco.png"]:Draw(0, 540 + ((1.0 - (clearInAnime_Deco + (math.sin(clearInAnime_Deco * math.pi) / 2.0))) * 474))

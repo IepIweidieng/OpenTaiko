@@ -62,7 +62,7 @@
 		"SETTINGS_SYSTEM_RELOADSONG_STATUS": " La lista de canciones se está cargando.\n         Por favor, espere...",
 
 		"SETTINGS_SYSTEM_IMPORTSCOREINI": "Importar Archivos de Score.ini",
-		"SETTINGS_SYSTEM_IMPORTSCOREINI_DESC": "Importa archivos de Score.ini a la base de datos.\n\n<c.#f0ad4e>ADVERTENCIA\nLos siguientes no serán transferidos:\n- Estados de Completados\n- Modificadores de jugabilidad\n- # de golpes (Bien, Vale, Mal, Redobles, etcétera)\n- Puntos del examen Dan",
+		"SETTINGS_SYSTEM_IMPORTSCOREINI_DESC": "Importa archivos de Score.ini a la base de datos.\n\n<c.#f0ad4e>ADVERTENCIA\nLos siguientes no serán transferidos:\n- Marcas de Completado\n- Modificadores de jugabilidad\n- # de golpes (Bien, Vale, Mal, Redobles, etcétera)\n- Puntos del examen Dan",
 		"SETTINGS_SYSTEM_IMPORTSCOREINI_STATUS1": "Búsqueda de partituras...",
 		// {0}: Total # of score.ini files to be processed
 		// {1}: # of score.ini files successfully imported
@@ -77,7 +77,7 @@
 		// {3}: # of players whose scores failed to import due to an error
 		// {4}: ID of the current player being processed.
 		// {5}: Name of the current player being processed.
-		"SETTINGS_SYSTEM_IMPORTSCOREINI_STATUS3": "Actualizando las puntuaciones de {0} jugadores...\n<c.#0bb000>{1} de {2} actualizados/c> (<c.#b00000>{3} falló</c>)\n\n{4}: {5}",
+		"SETTINGS_SYSTEM_IMPORTSCOREINI_STATUS3": "Actualizando las puntuaciones de {0} jugadores...\n<c.#0bb000>{1} de {2} actualizados</c> (<c.#b00000>{3} falló</c>)\n\n{4}: {5}",
 
 		"SETTINGS_SYSTEM_RESETSOUNDTRACK": "Restablecer elección de descarga de banda sonora",
 		"SETTINGS_SYSTEM_RESETSOUNDTRACK_DESC": "Borra la opción \"Nunca\" guardada. La solicitud de banda sonora volverá a aparecer en el próximo inicio.",
@@ -218,9 +218,9 @@
 		"SETTINGS_GAME_NORMALGAUGE": "Siempre Usar Medidor Normal",
 		"SETTINGS_GAME_NORMALGAUGE_DESC": "Fuerza el medidor normal en todo momento, independientemente de los modificadores de un personaje.",
 
-		"SETTINGS_GAME_AUTOP1": "Juego Auto de Jugador 1",
+		"SETTINGS_GAME_AUTOP1": "Juego AUTO de Jugador 1",
 		"SETTINGS_GAME_AUTOP1_DESC": "Activa si el jugador 1 juega automáticamente.",
-		"SETTINGS_GAME_AUTOP2": "Juego Auto de Jugador 2",
+		"SETTINGS_GAME_AUTOP2": "Juego AUTO de Jugador 2",
 		"SETTINGS_GAME_AUTOP2_DESC": "Activa si jugador 2 juega automáticamente.",
 		"SETTINGS_GAME_AUTOROLL": "Velocidad de Redoble",
 		"SETTINGS_GAME_AUTOROLL_DESC": "Cuando auto está activado, redobles serán automáticamente golpear estas veces al segundo. No tiene efecto en globos. 0 desactiva redoble auto. -1 hits as many as possible without causing significant lags.",
@@ -523,7 +523,7 @@
 		"HEYA_DESCRIPTION_EFFECTS_GAUGETYPE_EXTREME": "Extremo",
 		"HEYA_DESCRIPTION_EFFECTS_GAUGETYPE_NORMAL_DESC": "¡Termina la canción dentro de la zona de completado del medidor!",
 		"HEYA_DESCRIPTION_EFFECTS_GAUGETYPE_HARD_DESC": "¡El medidor empieza lleno y se agota bruscamente en cada falla!\n¡Ten cuidado, si el valor del medidor llega a 0, tu partida está automáticamente perdida!",
-		"HEYA_DESCRIPTION_EFFECTS_GAUGETYPE_EXTREME_DESC": "¡El medidor empieza lleno y se agota bruscamente en cada falla!\nUn poder extraño parece reducir el margen de error por la canción...",
+		"HEYA_DESCRIPTION_EFFECTS_GAUGETYPE_EXTREME_DESC": "¡El medidor empieza lleno y se agota bruscamente en cada falla!\nUn poder extraño parece reducir el margen de error durante la canción...",
 		// {0}: Percentage of mines
 		"HEYA_DESCRIPTION_EFFECTS_BOMBFACTOR": "Factor de Bomba: {0}% de notas se convierten a minas en Buscaminas",
 		// {0}: Percentage of fuse rolls
@@ -532,13 +532,13 @@
 		"HEYA_DESCRIPTION_EFFECTS_SHOWADLIB": "Notas de <c.#c4ffe2>ADLib</c> se vuelven visibles",
 		// {0}: # of auto-rolls per second
 		"HEYA_DESCRIPTION_EFFECTS_AUTOROLL": "<c.#ffff00>Redoble</c> automáticamente en {0} golpes/s",
-		"HEYA_DESCRIPTION_EFFECTS_SPLITLANE": "<c.#ff4040>Divide</c> <c.#0088ff>Carriles</c>",
+		"HEYA_DESCRIPTION_EFFECTS_SPLITLANE": "<c.#ff4040>Separar</c> <c.#0088ff>Carriles</c>",
 		// {0}: Coin multiplier
 		"HEYA_DESCRIPTION_COIN_MULTIPLIER": "Multiplicador de Monedas: x{0}",
 
 		// Unlock requirements & messages (Any Menu)
 		"UNLOCK_CONDITION_INVALID": "[ERROR] Condición no valida",
-		"UNLOCK_CONDITION_SHOP": "Artículo está solamente disponible en la Tienda.", // cs
+		"UNLOCK_CONDITION_SHOP": "Este artículo está disponible solamente en la Tienda.", // cs
 		// {0}: Price of item
 		"UNLOCK_CONDITION_COST": "Precio: {0}", // ch, cs, cm
 		"UNLOCK_COIN_BOUGHT": "¡Artículo comprado!",
@@ -601,21 +601,21 @@
 		"UNLOCK_CONDITION_TRIGGER_0": "Desactiva",
 		"UNLOCK_CONDITION_TRIGGER_1": "Activa",
 
-		"UNLOCK_CONDITION_TYPE_l": "es menos que",
+		"UNLOCK_CONDITION_TYPE_l": "es menor que",
 		"UNLOCK_CONDITION_TYPE_le": "es menor o igual a",
 		"UNLOCK_CONDITION_TYPE_e": "es igual a",
-		"UNLOCK_CONDITION_TYPE_me": "es más o igual a",
-		"UNLOCK_CONDITION_TYPE_m": "es más que",
+		"UNLOCK_CONDITION_TYPE_me": "es mayor o igual a",
+		"UNLOCK_CONDITION_TYPE_m": "es mayor que",
 		"UNLOCK_CONDITION_TYPE_d": "no es igual a",
 
 		"UNLOCK_CONDITION_REQUIRE_PLAY": "Juega",
 		"UNLOCK_CONDITION_REQUIRE_PLAY_MORE": "Juega",
-		"UNLOCK_CONDITION_REQUIRE_ASSIST": "Obtén un Completado Asistido en",
-		"UNLOCK_CONDITION_REQUIRE_ASSIST_MORE": "Obtén al menos un Completado Asistido en",
-		"UNLOCK_CONDITION_REQUIRE_CLEAR": "Obtén un Completado en",
-		"UNLOCK_CONDITION_REQUIRE_CLEAR_MORE": "Obtén al menos un Completado en",
-		"UNLOCK_CONDITION_REQUIRE_FC": "Obtén un Combo Completo en",
-		"UNLOCK_CONDITION_REQUIRE_FC_MORE": "Obtén al menos un Combo Completo en",
+		"UNLOCK_CONDITION_REQUIRE_ASSIST": "Supera con asistencia",
+		"UNLOCK_CONDITION_REQUIRE_ASSIST_MORE": "Supera con asistencia al menos",
+		"UNLOCK_CONDITION_REQUIRE_CLEAR": "Supera",
+		"UNLOCK_CONDITION_REQUIRE_CLEAR_MORE": "Supera al menos",
+		"UNLOCK_CONDITION_REQUIRE_FC": "Obtén un Full Combo en",
+		"UNLOCK_CONDITION_REQUIRE_FC_MORE": "Obtén al menos un Full Combo en",
 		"UNLOCK_CONDITION_REQUIRE_PERFECT": "Obtén un Perfecto en",
 		"UNLOCK_CONDITION_REQUIRE_PERFECT_MORE": "Obtén un Perfecto en",
 
@@ -643,9 +643,9 @@
 		"MOD_SPEED": "Vel. de Desplazamiento",
 
 		"MOD_HIDE": "Notas Invisibles",
-		"MOD_STEALTH": "Cauteloso",
+		"MOD_STEALTH": "Sigilo",
 
-		"MOD_FLIP": "Notas Opuestas",
+		"MOD_FLIP": "Notas invertidas",
 
 		"MOD_RANDOM": "Aleatorio",
 		"MOD_RANDOM_SHUFFLE": "Mezclado",
@@ -653,12 +653,12 @@
 
 		"MOD_TIMING": "Timing",
 		"MOD_TIMING1": "Relajado",
-		"MOD_TIMING2": "Leve",
+		"MOD_TIMING2": "Permisivo",
 		"MOD_TIMING3": "Normal",
 		"MOD_TIMING4": "Estricto",
-		"MOD_TIMING5": "Rigoroso",
+		"MOD_TIMING5": "Riguroso",
 
-		"MOD_JUSTICE": "Modo Estricto",
+		"MOD_JUSTICE": "Modo Justo",
 		"MOD_SAFE": "Seguro",
 		"MOD_JUST": "Exacto",
 
@@ -681,7 +681,7 @@
 		"MOD_FUN_MINESWEEPER": "Buscaminas"
 	},
 	// In the case that a key is missing, this message will display, with the name of the missing/unknown key.
-	"InvalidKey": "La llave no se ha encontrado: {0}",
+	"InvalidKey": "La clave no se ha encontrado: {0}",
 	// If a skin does not include a font for a specific language, the game will fallback to this language's fonts. This ensures that all text for all languages can be clearly read.
 	// Font name can be a file, or the name of an already installed font (i.e. "Arial"). If using a font name instead of a file name, please ensure that the user already has this font installed on their computer.
 	"FontName": "../font.ttf",

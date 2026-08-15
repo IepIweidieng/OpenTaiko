@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.6.0.109] - 2026-08-15 (Beta)
+
+- [Fix] Song list enumeration not started at launch every next time since 0.6.0.108, because StartUp stage had always been mistreating system sound done loading as song list done enumerating long before exposed as a bug in 0.6.0.108
+- [Fix] Lessen song list enumeration start condition to not rely on transition edge
+- [Feat] Can now hit don on the main menu to enter the game by shrandonm (adapted)
+- [Fix] Could not exit from song select screen if no songs are available
+- [Fix] Unknown nameplate ID crashed 0.6.0 Heya screen
+- [Fix] Stop replay from containing old inputs before retrying [0.6.1 backport]
+- [Fix] Mac BASS audio driver configuration by shrandonm (adapted)
+- [Fix] dx11 color issue [0.6.1 backport]
+
+## [0.6.0.108] - 2026-07-18 (Beta)
+
+* [Fix] MIDI input crashed, fixed by updating managed-midi to 1.10.2, which includes the fix for wrong WinMM MIDI header structure
+* [Fix] Input thread concurrency crashed SDL event handling, fixed using modified window loop with mutex access to `DoEvents()`
+* [Fix] Kusudama never downgraded to regular Balloon since 0.6.0.106
+* [Fix] Rotated barline suddenly disappeared near left or right screen edges
+* [Fix] built-in dev skin: Playing All-Perfect animation in 5P mode truncated out its SENote lane part forever
+* [Feat] Restore the readme screen requiring <kbd>Enter</kbd> removed in 0.6.0.106 and allow song list enumeration at the screen
+* [Chore] Pin release version in `linux_installer_standalone.bash` for release assets in auto build
+* [Fix] speculative wayland fix [0.6.1 backport]
+
 ## [0.6.0.107] - 2026-05-23 (Beta)
 
 - [Chore] Add Unlockables for Chapter 7 (and few more)

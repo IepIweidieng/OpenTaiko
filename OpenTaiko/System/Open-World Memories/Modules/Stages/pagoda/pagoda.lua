@@ -1,6 +1,7 @@
 -- pagoda.lua  —  Pagoda of the Unknown sub-module for dan_select
 
 local NavInput = require("NavInput")
+local selector = require("selector")
 
 local M = {}
 
@@ -226,6 +227,7 @@ end
 local _pagoda_state    = "main_menu"
 local _challenge_level = 1
 local _practice_level  = 1
+local _practice_hover  = nil     -- last floor hovered in practice, so it reopens there
 local _in_challenge    = false   -- true  = we just exited to play (challenge)
 local _in_practice     = false   -- true  = we just exited to play (practice)
 local _song_list_cache    = nil
@@ -240,6 +242,7 @@ local _preview_speed   = 20     -- current slider value
 -- ── Per-activation state ──────────────────────────────────────────────────────
 
 local _CB                 = nil
+local _font_hero          = nil   -- big title-screen heading
 local _font_title         = nil
 local _font_body          = nil
 local _font_hint          = nil
@@ -356,6 +359,24 @@ local function _start_options()
     if highest >= 15 then table.insert(opts, 16) end
     if highest >= 20 then table.insert(opts, 21) end
     return opts
+end
+
+-- Open the shared floor selector for challenge (checkpoints) or practice (every beaten level).
+local function _selector_info()
+    return { name = _level_name, color = _level_tick_color, highest = _highest_level() }
+end
+
+local function _open_checkpoint_select()
+    selector.open("checkpoint", _start_options(), _challenge_level, _selector_info())
+end
+
+local function _open_practice_select()
+    local highest = math.max(_highest_level(), 11)
+    local levels = {}
+    for lv = 1, highest do levels[#levels + 1] = lv end
+    -- reopen on the last hovered floor; selector.open() falls back to the bottom floor
+    -- if that level isn't in the list (the "is it still playable" gate)
+    selector.open("practice", levels, _practice_hover or _practice_level, _selector_info())
 end
 
 -- ── Challenge preview (pre-rolled song selection) ────────────────────────────
@@ -518,9 +539,17 @@ end
 
 local function _ensure_fonts()
     if _font_title ~= nil then return end
+    _font_hero  = TEXT:Create(72, "regular")
     _font_title = TEXT:Create(44, "regular")
     _font_body  = TEXT:Create(32, "regular")
     _font_hint  = TEXT:Create(22, "regular")
+end
+
+-- Skin-locale string with an English fallback (skin Locales/*.json via THEME).
+local function _sk(key, fallback)
+    local s = THEME:GetSkinString(key)
+    if s == nil or s == "" then return fallback end
+    return s
 end
 
 local function _set_status(msg, t)
@@ -600,8 +629,11 @@ function M.on_return(CB)
             _pagoda_state = "game_over"
         end
     elseif _in_practice then
+        -- practice has no result screen: drop straight back onto the selector, on the floor
+        -- that was just played (the last hover)
         _in_practice  = false
-        _pagoda_state = "practice_result"
+        _pagoda_state = "practice_select"
+        _open_practice_select()
     end
 
     _menu_sel  = 1
@@ -616,6 +648,7 @@ function M.afterSongEnum()
 end
 
 function M.destroy()
+    if _font_hero  ~= nil then _font_hero:Dispose()  ; _font_hero  = nil end
     if _font_title ~= nil then _font_title:Dispose() ; _font_title = nil end
     if _font_body  ~= nil then _font_body:Dispose()  ; _font_body  = nil end
     if _font_hint  ~= nil then _font_hint:Dispose()  ; _font_hint  = nil end
@@ -668,10 +701,12 @@ function M.update(dt)
         end
         if ok_p then
             if _menu_sel == 1 then
-                _pagoda_state = "start_choice" ; _menu_sel = 1
+                _pagoda_state = "start_choice"
+                _open_checkpoint_select()
                 SHARED:GetSharedSound("Decide"):Play()
             elseif _menu_sel == 2 then
-                _practice_sel = 1 ; _pagoda_state = "practice_select"
+                _pagoda_state = "practice_select"
+                _open_practice_select()
                 SHARED:GetSharedSound("Decide"):Play()
             elseif _menu_sel == 3 then
                 SHARED:GetSharedSound("Cancel"):Play()
@@ -681,33 +716,17 @@ function M.update(dt)
         return nil
     end
 
-    -- ── START CHOICE ───────────────────────────────────────────────────────────
+    -- ── START CHOICE (checkpoint selector) ──────────────────────────────────────
     if _pagoda_state == "start_choice" then
-        local opts = _start_options()
-        local n    = #opts + 1  -- +1 for Cancel
-        if up_p   then
-            _menu_sel = math.max(1, _menu_sel - 1)
-            SHARED:GetSharedSound("Move"):Play()
-        end
-        if down_p then
-            _menu_sel = math.min(n, _menu_sel + 1)
-            SHARED:GetSharedSound("Move"):Play()
-        end
-        if back_p then
-            _pagoda_state = "main_menu"; _menu_sel = 1
-            SHARED:GetSharedSound("Cancel"):Play()
-            return nil
-        end
-        if ok_p then
-            if _menu_sel <= #opts then
-                _challenge_level = opts[_menu_sel]
-                _build_preview(_challenge_level)
-                _pagoda_state = "level_preview"
-                SHARED:GetSharedSound("Decide"):Play()
-            else
-                _pagoda_state = "main_menu" ; _menu_sel = 1
-                SHARED:GetSharedSound("Cancel"):Play()
-            end
+        local r = selector.update(dt, navPn)
+        if r == "exit" then
+            selector.close()
+            _pagoda_state = "main_menu" ; _menu_sel = 1   -- back to title on "Challenge"
+        elseif type(r) == "table" and r.sel ~= nil then
+            selector.close()
+            _challenge_level = r.sel
+            _build_preview(_challenge_level)
+            _pagoda_state = "level_preview"
         end
         return nil
     end
@@ -801,25 +820,27 @@ function M.update(dt)
         return nil
     end
 
-    -- ── PRACTICE SELECT ────────────────────────────────────────────────────────
+    -- ── PRACTICE SELECT (level selector) ────────────────────────────────────────
+    -- The selector runs the sword "Accept the Challenge?" confirm itself, so a returned
+    -- selection is already confirmed — build the dan and play straight away.
     if _pagoda_state == "practice_select" then
-        local highest = math.max(_highest_level(), 11)
-        if up_p   then
-            _practice_sel = math.max(1,       _practice_sel - 1)
-            SHARED:GetSharedSound("Move"):Play()
-        end
-        if down_p then
-            _practice_sel = math.min(highest, _practice_sel + 1)
-            SHARED:GetSharedSound("Move"):Play()
-        end
-        if back_p then
-            _pagoda_state = "main_menu" ; _menu_sel = 1
-            SHARED:GetSharedSound("Cancel"):Play()
-            return nil
-        end
-        if ok_p   then
-            _practice_level = _practice_sel ; _pagoda_state = "practice_preview" ; _menu_sel = 1
-            SHARED:GetSharedSound("Decide"):Play()
+        local r = selector.update(dt, navPn)
+        if r == "exit" then
+            selector.close()
+            _pagoda_state = "main_menu" ; _menu_sel = 2   -- back to title on "Practice"
+        elseif type(r) == "table" and r.sel ~= nil then
+            selector.close()
+            _practice_level = r.sel
+            if _build_dan(_practice_level) then
+                _in_practice = true
+                if _CB ~= nil then _CB.stopBGM() end
+                return "play"
+            else
+                SHARED:GetSharedSound("Error"):Play()
+                _open_practice_select()                   -- reopen and let them try again
+            end
+        else
+            _practice_hover = selector.hovered_level() or _practice_hover   -- remember the floor
         end
         return nil
     end
@@ -836,7 +857,7 @@ function M.update(dt)
         end
         if back_p then
             SHARED:GetSharedSound("Cancel"):Play()
-            _pagoda_state = "practice_select" ; return nil
+            _pagoda_state = "practice_select" ; _open_practice_select() ; return nil
         end
         if ok_p then
             if _menu_sel == 1 then
@@ -852,6 +873,7 @@ function M.update(dt)
                 end
             else
                 _pagoda_state = "practice_select"
+                _open_practice_select()
                 SHARED:GetSharedSound("Cancel"):Play()
             end
         end
@@ -862,6 +884,7 @@ function M.update(dt)
     if _pagoda_state == "practice_result" then
         if ok_p or back_p then
             _pagoda_state = "practice_select"
+            _open_practice_select()
             SHARED:GetSharedSound("Cancel"):Play()
             if _CB ~= nil then _CB.startBGM() end
         end
@@ -905,32 +928,27 @@ function M.draw()
         _font_hint:GetText("(Missing song count: " .. tostring(_missing_song_count) .. ")", false, 600, C_DIM):DrawAtAnchor(cx, base_y + 80, "center")
         _font_hint:GetText("Press any button to go back", false, 600, C_DIM):DrawAtAnchor(cx, base_y + 130, "center")
 
-    -- ── MAIN MENU ──────────────────────────────────────────────────────────────
+    -- ── TITLE SCREEN (main menu) ────────────────────────────────────────────────
+    -- The stage draws the day-sky + landbg/floor/normal layers behind this; here we
+    -- lay the heading over the upper half, the best rank just below it, and the
+    -- Challenge / Practice / Exit options across the lower half.
     elseif _pagoda_state == "main_menu" then
-        _font_title:GetText("Pagoda of the Unknown", false, 800, C_WHITE):DrawAtAnchor(cx, base_y - 150, "center")
+        _font_hero:GetText(_sk("PAGODA_TITLE", "Pagoda of the Unknown"), false, 1600, C_WHITE)
+            :DrawAtAnchor(cx, res_h * 0.24, "center")
 
         local hl = _highest_level()
-        _font_hint:GetText(
-            "Highest reached: " .. _level_name(hl) .. "  (Lv." .. tostring(hl) .. ")",
-            false, 700, C_DIM):DrawAtAnchor(cx, base_y - 90, "center")
+        _font_body:GetText(
+            _sk("PAGODA_BEST", "Best") .. ":  " .. _level_name(hl) .. "  (Lv." .. tostring(hl) .. ")",
+            false, 900, level_color(hl)):DrawAtAnchor(cx, res_h * 0.40, "center")
 
-        opt("Challenge",    cx, base_y - 10,  _menu_sel == 1)
-        opt("Practice",     cx, base_y + 55,  _menu_sel == 2)
-        opt("Back",         cx, base_y + 120, _menu_sel == 3)
+        opt(_sk("PAGODA_CHALLENGE", "Challenge"), cx, res_h * 0.58, _menu_sel == 1)
+        opt(_sk("PAGODA_PRACTICE",  "Practice"),  cx, res_h * 0.68, _menu_sel == 2)
+        opt(_sk("PAGODA_EXIT",      "Exit"),      cx, res_h * 0.78, _menu_sel == 3)
+        -- (input-helper hints intentionally omitted for now — design TBD)
 
-        _font_hint:GetText(
-            "[Up/Down] Select   [Confirm] OK   [Cancel] Back",
-            false, 800, C_DIM):DrawAtAnchor(cx, res_h - 50, "center")
-
-    -- ── START CHOICE ───────────────────────────────────────────────────────────
+    -- ── START CHOICE (checkpoint selector) ──────────────────────────────────────
     elseif _pagoda_state == "start_choice" then
-        _font_title:GetText("Choose starting level", false, 800, C_WHITE):DrawAtAnchor(cx, base_y - 130, "center")
-        local opts = _start_options()
-        for i, lv in ipairs(opts) do
-            opt("Lv." .. tostring(lv) .. " — " .. _level_name(lv),
-                cx, base_y - 30 + (i - 1) * 55, _menu_sel == i)
-        end
-        opt("Cancel", cx, base_y - 30 + #opts * 55, _menu_sel == #opts + 1)
+        selector.draw()
 
     -- ── LEVEL PREVIEW ──────────────────────────────────────────────────────────
     elseif _pagoda_state == "level_preview" then
@@ -1029,25 +1047,9 @@ function M.draw()
         opt(retry_lbl,   cx, base_y + 70, _menu_sel == 1)
         opt("Main menu", cx, base_y + 130, _menu_sel == 2)
 
-    -- ── PRACTICE SELECT ────────────────────────────────────────────────────────
+    -- ── PRACTICE SELECT (level selector) ────────────────────────────────────────
     elseif _pagoda_state == "practice_select" then
-        local highest = math.max(_highest_level(), 11)
-        _font_title:GetText("Practice", false, 600, C_WHITE):DrawAtAnchor(cx, base_y - 170, "center")
-
-        local start_lv = math.max(1, _practice_sel - 4)
-        local end_lv   = math.min(highest, start_lv + 8)
-        for lv = start_lv, end_lv do
-            local y   = base_y - 100 + (lv - start_lv) * 36
-            local sel = (lv == _practice_sel)
-            local col = sel and level_color(lv) or C_DIM
-            local lbl = string.format("Lv.%d  %s", lv, _level_name(lv))
-            local f   = sel and _font_body or _font_hint
-            f:GetText(lbl, false, 600, col):DrawAtAnchor(cx, y, "center")
-        end
-
-        _font_hint:GetText(
-            "[Up/Down] Select   [Confirm] Practice   [Cancel] Back",
-            false, 800, C_DIM):DrawAtAnchor(cx, res_h - 50, "center")
+        selector.draw()
 
     -- ── PRACTICE PREVIEW ───────────────────────────────────────────────────────
     elseif _pagoda_state == "practice_preview" then
@@ -1080,11 +1082,10 @@ function M.draw()
             COLOR:CreateColorFromRGBA(255, 220, 80, alpha)):DrawAtAnchor(cx, res_h - 90, "center")
     end
 
-    -- Nameplate + character
-    NAMEPLATE:DrawPlayerNameplate(NP_X, NP_Y, 255, 0)
-    if _CB then
-        _CB.drawPlayerChara(NP_X + 140, NP_Y - 6,            1.0)
-        _CB.drawPlayerPuchi(NP_X + 220, NP_Y + _CB.puchiSineY, 1.0, _CB.puchiIdxFrame)
+    -- Nameplate only — the character / puchichara are intentionally not drawn on the pagoda.
+    -- Hidden while the floor selector is up (it's a full-screen scene of its own).
+    if not selector.active then
+        NAMEPLATE:DrawPlayerNameplate(NP_X, NP_Y, 255, 0)
     end
 end
 

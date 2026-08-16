@@ -1,6 +1,18 @@
 {
     // 로케일 파일 — 한국어
     "Entries": {
+        // Pagoda of the Unknown (title screen)
+        "PAGODA_TITLE":     "미지의 탑",
+        "PAGODA_BEST":      "최고 도달",
+        "PAGODA_CHALLENGE": "도전",
+        "PAGODA_PRACTICE":  "연습",
+        "PAGODA_START_AT":   "시작 지점…",
+        "PAGODA_LEVEL":      "레벨",
+        "PAGODA_ACCEPT":     "도전을 받아들이시겠습니까?",
+        "PAGODA_YES":        "예",
+        "PAGODA_NO":         "아니오",
+        "PAGODA_EXIT":      "나가기",
+
         "SETTINGS_UI_KEYS": "입력 설정",
         "SETTINGS_UI_EXIT": "뒤로",
         "SETTINGS_UI_BACK": "< 뒤로",

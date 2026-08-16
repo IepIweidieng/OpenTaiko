@@ -1,6 +1,18 @@
 {
     // スキンローカルファイル — 日本語
     "Entries": {
+        // Pagoda of the Unknown (title screen)
+        "PAGODA_TITLE":     "未知の塔",
+        "PAGODA_BEST":      "最高到達",
+        "PAGODA_CHALLENGE": "挑戦",
+        "PAGODA_PRACTICE":  "練習",
+        "PAGODA_START_AT":   "開始地点…",
+        "PAGODA_LEVEL":      "レベル",
+        "PAGODA_ACCEPT":     "挑戦を受けますか？",
+        "PAGODA_YES":        "はい",
+        "PAGODA_NO":         "いいえ",
+        "PAGODA_EXIT":      "退出",
+
         "SETTINGS_UI_KEYS": "入力設定",
         "SETTINGS_UI_EXIT": "戻る",
         "SETTINGS_UI_BACK": "< 戻る",

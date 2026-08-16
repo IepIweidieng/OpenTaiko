@@ -4,7 +4,6 @@
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 local standard_dan = require("standard_dan")
-local pagoda       = require("pagoda")
 
 local NavInput     = require("NavInput")
 
@@ -39,12 +38,10 @@ local startBGM, stopBGM
   "menu_3way"        – 3-option selection
   "menu_3way_exit"   – scroll-down transition into a sub-module
   "standard_dan"     – delegating to standard_dan module
-  "pagoda"           – delegating to pagoda module
+  (Pagoda of the Unknown is now its own stage, entered via the dan_doors transition.)
 ]]
 local state = "loading"
 
--- Persists: once the door intro has been shown, skip it on all re-entries
-local intro_shown    = false
 local song_enum_done = false
 
 -- Door / intro
@@ -62,14 +59,17 @@ local menu_exit_counter = nil
 -- 3-way menu
 local menu_sel    = 1
 local menu_exit_y = 0.0
-local menu_exit_target = nil   -- "standard_dan" | "pagoda"
+local menu_exit_target = nil   -- "standard_dan" (pagoda is now its own door-transitioned stage)
+
+-- Fade the dojo BGM out as the doors close on the way into the Pagoda stage
+local pagoda_exiting = false
+local dan_bgm_vol    = 100.0
 
 -- ── Textures / sounds ─────────────────────────────────────────────────────────
 
 local tx_bg   = nil
 local tx_door = nil
 
-local snd_entry = nil
 local snd_bgm   = nil
 
 -- ── Fonts ────────────────────────────────────────────────────────────────────
@@ -147,7 +147,6 @@ function onDestroy()
     if font_loading ~= nil then font_loading:Dispose() ; font_loading = nil end
     if font_menu    ~= nil then font_menu:Dispose()    ; font_menu    = nil end
     standard_dan.destroy()
-    pagoda.destroy()
 end
 
 local function _load_menu_chara()
@@ -159,12 +158,14 @@ function activate()
     CONFIG.PlayerCount = 1
     CONFIG.SongSpeed   = 20   -- reset speed (pagoda may have changed it)
 
+    pagoda_exiting = false
+    dan_bgm_vol    = 100.0
+
     _load_menu_chara()
 
     -- Load shared resources (the door moved to the dan_doors transition)
     tx_bg   = TEXTURE:CreateTexture(TX .. "Background.png")
 
-    snd_entry = SOUND:CreateSFX(SND .. "Entry.ogg")
     snd_bgm   = SOUND:CreateBGM(SND .. "BGM.ogg")
 
     CB.startCounter("puchi_sine", 0, 360, 1/120, "loop", function(val)  -- 1/3 cycles/s
@@ -173,16 +174,6 @@ function activate()
     CB.startCounter("puchi_frame", 0, 1, 4.8, "loop", function(val)  -- 1/4.8 cycles/s
         CB.puchiIdxFrame = math.floor(val * PUCHI_N_FRAMES)
     end)
-
-    -- ── Returning from pagoda play ─────────────────────────────────────────────
-    if pagoda.is_returning_from_play() then
-        door_done = true
-        state     = "pagoda"
-        pagoda.activate(CB)
-        pagoda.on_return(CB)
-        startBGM()
-        return
-    end
 
     -- ── Returning from standard dan play ──────────────────────────────────────
     if standard_dan.is_returning_from_play() then
@@ -195,13 +186,13 @@ function activate()
 
     -- ── Enter the menu directly ───────────────────────────────────────────────
     -- The dan doors are now the `dan_doors` transition (played by _title on entry), not an in-stage intro.
-    -- Start un-zoomed; play the entry sound once on the first visit (matching the old intro).
+    -- The dojo doors are the dan_doors transition now; the old long in-stage door intro
+    -- and its Entry.ogg sound are deprecated, so nothing plays on entry here.
     door_done = true
     bg_zoom   = BG_ZOOM_END
     if song_enum_done then
         state = "menu_3way"
         startBGM()
-        if not intro_shown then intro_shown = true; if snd_entry ~= nil then snd_entry:Play() end end
     else
         state = "loading"
     end
@@ -213,8 +204,6 @@ function deactivate()
     -- Deactivate the active sub-module (if any)
     if state == "standard_dan" then
         standard_dan.deactivate()
-    elseif state == "pagoda" then
-        pagoda.deactivate()
     end
 
     for k in pairs(CB.ctx) do CB.ctx[k] = COUNTER:EmptyCounter() end
@@ -222,7 +211,6 @@ function deactivate()
     if tx_bg   ~= nil then tx_bg:Dispose()   ; tx_bg   = nil end
     if tx_door ~= nil then tx_door:Dispose()  ; tx_door = nil end
 
-    if snd_entry ~= nil then snd_entry:Dispose() ; snd_entry = nil end
     if snd_bgm   ~= nil then snd_bgm:Dispose()   ; snd_bgm   = nil end
 
     bg_zoom_counter    = nil
@@ -232,12 +220,10 @@ end
 function afterSongEnum()
     song_enum_done = true
     standard_dan.afterSongEnum()
-    pagoda.afterSongEnum()
 
     if state == "loading" then
         state = "menu_3way"
         startBGM()
-        if not intro_shown then intro_shown = true; if snd_entry ~= nil then snd_entry:Play() end end
     end
 end
 
@@ -264,20 +250,6 @@ function update()
             _load_menu_chara()
         elseif result == "play" then
             -- standard_dan already called stopBGM() and set _in_play = true
-            return Exit("play", nil)
-        end
-        return
-    end
-
-    if state == "pagoda" then
-        local result = pagoda.update(dt)
-        if result == "back" then
-            pagoda.leave()
-            state = "menu_3way"
-            startBGM()
-            _load_menu_chara()
-        elseif result == "play" then
-            -- pagoda already called stopBGM() and set _in_challenge/_in_practice
             return Exit("play", nil)
         end
         return
@@ -314,7 +286,6 @@ function update()
                 door_post_delay = door_post_delay + dt
                 if door_post_delay >= DOOR_POST_DELAY_SEC then
                     door_done   = true
-                    intro_shown = true
                     state       = "menu_3way"
                     startBGM()
                 end
@@ -355,13 +326,11 @@ function update()
                 menu_exit_counter:SetEasing("IN", "QUAD")
                 menu_exit_counter:Start()
             elseif menu_sel == 2 then
+                -- Pagoda of the Unknown is its own stage now: close the dojo doors over
+                -- dan_select and open onto it, fading the dojo BGM out as they close.
                 SHARED:GetSharedSound("Decide"):Play()
-                menu_exit_target  = "pagoda"
-                state             = "menu_3way_exit"
-                menu_exit_y       = 0.0
-                menu_exit_counter = COUNTER:CreateCounterDuration(0.0, 1080.0, 0.4)
-                menu_exit_counter:SetEasing("IN", "QUAD")
-                menu_exit_counter:Start()
+                pagoda_exiting = true
+                return Exit("stage", "pagoda", "dan_doors")
             else
                 -- Option 3 (Forest of Strata): not yet implemented
                 SHARED:GetSharedSound("Error"):Play()
@@ -381,9 +350,6 @@ function update()
                 if menu_exit_target == "standard_dan" then
                     state = "standard_dan"
                     standard_dan.enter(CB, false)
-                elseif menu_exit_target == "pagoda" then
-                    state = "pagoda"
-                    pagoda.enter(CB)
                 end
                 menu_exit_target = nil
             end
@@ -398,6 +364,14 @@ function draw()
     local res   = THEME:GetResolution()
     local res_w = res.X
     local res_h = res.Y
+
+    -- Fade the dojo BGM out while the doors close on the way into the Pagoda stage.
+    -- update() stops the frame Exit() is called; draw() keeps running through the
+    -- transition's fade-out phase, so the ramp lives here (0.7s = dan_doors close).
+    if pagoda_exiting and snd_bgm ~= nil then
+        dan_bgm_vol = math.max(0, dan_bgm_vol - fps.deltaTime / 0.7 * 100)
+        snd_bgm:SetVolumePercent(dan_bgm_vol)
+    end
 
     -- ── LOADING ───────────────────────────────────────────────────────────────
     if state == "loading" then
@@ -431,14 +405,9 @@ function draw()
 
     if state == "intro" then return end
 
-    -- ── Sub-module draw (standard_dan / pagoda) ────────────────────────────────
+    -- ── Sub-module draw (standard_dan) ─────────────────────────────────────────
     if state == "standard_dan" then
         standard_dan.draw()
-        return
-    end
-
-    if state == "pagoda" then
-        pagoda.draw()
         return
     end
 

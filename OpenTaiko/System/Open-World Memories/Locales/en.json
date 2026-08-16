@@ -3,6 +3,18 @@
     // Format: { "Entries": { "KEY": "value", ... } }
     // Keys are shared across all locale files for this skin.
     "Entries": {
+        // Pagoda of the Unknown (title screen)
+        "PAGODA_TITLE":     "Pagoda of the Unknown",
+        "PAGODA_BEST":      "Best",
+        "PAGODA_CHALLENGE": "Challenge",
+        "PAGODA_PRACTICE":  "Practice",
+        "PAGODA_START_AT":   "Start at...",
+        "PAGODA_LEVEL":      "Level",
+        "PAGODA_ACCEPT":     "Accept the Challenge?",
+        "PAGODA_YES":        "Yes",
+        "PAGODA_NO":         "No",
+        "PAGODA_EXIT":      "Exit",
+
         "SETTINGS_UI_KEYS": "Input",
         "SETTINGS_UI_EXIT": "Exit",
         "SETTINGS_UI_BACK": "< Back",

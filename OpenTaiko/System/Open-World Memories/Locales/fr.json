@@ -1,6 +1,18 @@
 ﻿{
     // Fichier de locale — Français
     "Entries": {
+        // Pagoda of the Unknown (title screen)
+        "PAGODA_TITLE":     "Pagode de l'Inconnu",
+        "PAGODA_BEST":      "Meilleur",
+        "PAGODA_CHALLENGE": "Défi",
+        "PAGODA_PRACTICE":  "Entraînement",
+        "PAGODA_START_AT":   "Commencer à…",
+        "PAGODA_LEVEL":      "Niveau",
+        "PAGODA_ACCEPT":     "Relever le défi ?",
+        "PAGODA_YES":        "Oui",
+        "PAGODA_NO":         "Non",
+        "PAGODA_EXIT":      "Quitter",
+
         "SETTINGS_UI_KEYS": "Entrées",
         "SETTINGS_UI_EXIT": "Retour",
         "SETTINGS_UI_BACK": "< Retour",

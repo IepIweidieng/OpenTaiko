@@ -1,6 +1,18 @@
 {
     // 本地化文件 — 中文
     "Entries": {
+        // Pagoda of the Unknown (title screen)
+        "PAGODA_TITLE":     "未知之塔",
+        "PAGODA_BEST":      "最佳",
+        "PAGODA_CHALLENGE": "挑战",
+        "PAGODA_PRACTICE":  "练习",
+        "PAGODA_START_AT":   "从此开始…",
+        "PAGODA_LEVEL":      "关卡",
+        "PAGODA_ACCEPT":     "接受挑战吗？",
+        "PAGODA_YES":        "是",
+        "PAGODA_NO":         "否",
+        "PAGODA_EXIT":      "退出",
+
         "SETTINGS_UI_KEYS": "输入设置",
         "SETTINGS_UI_EXIT": "返回",
         "SETTINGS_UI_BACK": "< 返回",

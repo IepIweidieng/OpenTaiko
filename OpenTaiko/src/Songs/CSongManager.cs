@@ -427,6 +427,9 @@ internal class CSongManager {
 			if (File.Exists(infoDir.FullName + @$"{Path.DirectorySeparatorChar}box.def")) {
 				CBoxDef boxdef = new CBoxDef(infoDir.FullName + @$"{Path.DirectorySeparatorChar}box.def");
 				CSongListNode cSongListNode = new CSongListNode();
+
+				ApplyParentSettings(cSongListNode, nodeParent);
+
 				cSongListNode.nodeType = CSongListNode.ENodeType.BOX;
 				cSongListNode.ldTitle = boxdef.Title;
 				cSongListNode.songGenre = boxdef.Genre;

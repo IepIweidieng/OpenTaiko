@@ -1015,7 +1015,7 @@ internal class CTja : CActivity {
 				) ||
 				(((0x80 <= nChannelNumber) && (nChannelNumber <= 0x89)) || ((0x90 <= nChannelNumber) && (nChannelNumber <= 0x92)))
 			   ) {
-				this.listChip[i].nSoundTimems += nBGMAdjustIncDecValue;
+				this.listChip[i].dbSoundTimems += nBGMAdjustIncDecValue;
 			}
 		}
 		foreach (CWAV cwav in this.listWAV.Values) {
@@ -1185,7 +1185,7 @@ internal class CTja : CActivity {
 					switch (ch) {
 						case 0x01: {
 								if (this.isOFFSET_Negative == false)
-									chip.nSoundTimems += this.msOFFSET_Abs;
+									chip.dbSoundTimems += this.msOFFSET_Abs;
 
 								#region[listlyric2の時間合わせ]
 								// has #NEXTSONG -> skip WAVE: (if exist)
@@ -1204,13 +1204,13 @@ internal class CTja : CActivity {
 						case 0x02:  // BarLength
 						{
 								if (this.isOFFSET_Negative)
-									chip.nSoundTimems += this.msOFFSET_Abs;
+									chip.dbSoundTimems += this.msOFFSET_Abs;
 								continue;
 							}
 						case 0x03:  // Initial BPM
 						{
 								if (this.isOFFSET_Negative)
-									chip.nSoundTimems += this.msOFFSET_Abs;
+									chip.dbSoundTimems += this.msOFFSET_Abs;
 								// this.dbNowBPM has already been initialized
 								continue;
 							}
@@ -1241,7 +1241,7 @@ internal class CTja : CActivity {
 						case 0x08:  // 拡張BPM
 						{
 								if (this.isOFFSET_Negative)
-									chip.nSoundTimems += this.msOFFSET_Abs;
+									chip.dbSoundTimems += this.msOFFSET_Abs;
 								if (this.COMPAT is ETjaCompat.TJAP3 or ETjaCompat.OOS && this.listBPM.ElementAtOrDefault(chip.nIntValue_InternalNumber) is CBPM cBPM) {
 									bpm = cBPM.dbBPMValue;
 									this.dbNowBPM = bpm;
@@ -1251,21 +1251,21 @@ internal class CTja : CActivity {
 						case 0x54:  // 動画再生
 						{
 								if (this.isOFFSET_Negative == false)
-									chip.nSoundTimems += this.msOFFSET_Abs;
+									chip.dbSoundTimems += this.msOFFSET_Abs;
 								continue;
 							}
 						case 0x97:
 						case 0x98:
 						case 0x99: {
 								if (this.isOFFSET_Negative) {
-									chip.nSoundTimems += this.msOFFSET_Abs;
+									chip.dbSoundTimems += this.msOFFSET_Abs;
 								}
 								continue;
 							}
 						case 0x9A: {
 
 								if (this.isOFFSET_Negative) {
-									chip.nSoundTimems += this.msOFFSET_Abs;
+									chip.dbSoundTimems += this.msOFFSET_Abs;
 								}
 								continue;
 							}
@@ -1274,12 +1274,12 @@ internal class CTja : CActivity {
 							}
 						case 0xDC: {
 								if (this.isOFFSET_Negative)
-									chip.nSoundTimems += this.msOFFSET_Abs;
+									chip.dbSoundTimems += this.msOFFSET_Abs;
 								continue;
 							}
 						case 0xDE: {
 								if (this.isOFFSET_Negative) {
-									chip.nSoundTimems += this.msOFFSET_Abs;
+									chip.dbSoundTimems += this.msOFFSET_Abs;
 									chip.nBranchTimems += this.msOFFSET_Abs;
 								}
 								this.nCurrentCourse = chip.nBranch;
@@ -1287,7 +1287,7 @@ internal class CTja : CActivity {
 							}
 						case 0x52: {
 								if (this.isOFFSET_Negative) {
-									chip.nSoundTimems += this.msOFFSET_Abs;
+									chip.dbSoundTimems += this.msOFFSET_Abs;
 									chip.nBranchTimems += this.msOFFSET_Abs;
 								}
 								this.nCurrentCourse = chip.nBranch;
@@ -1295,7 +1295,7 @@ internal class CTja : CActivity {
 							}
 						case 0xDF: {
 								if (this.isOFFSET_Negative)
-									chip.nSoundTimems += this.msOFFSET_Abs;
+									chip.dbSoundTimems += this.msOFFSET_Abs;
 								continue;
 							}
 						case 0xE0: {
@@ -1303,7 +1303,7 @@ internal class CTja : CActivity {
 							}
 						case 0xE2: { // #JPOSSCROLL
 								if (this.isOFFSET_Negative)
-									chip.nSoundTimems += this.msOFFSET_Abs;
+									chip.dbSoundTimems += this.msOFFSET_Abs;
 
 								// calculate accumulated movement by time order (not definition order)
 								CJPOSSCROLL jposs = this.listJPOSSCROLL[chip.nIntValue_InternalNumber];
@@ -1335,16 +1335,16 @@ internal class CTja : CActivity {
 									&& chip.msMoveOffset < float.PositiveInfinity
 									&& chip.eScrollMode is EScrollMode.BMScroll or EScrollMode.HBScroll
 									) {
-									var msMoveTime = chip.nSoundTimems - chip.msMoveOffset;
+									var msMoveTime = chip.dbSoundTimems - chip.msMoveOffset;
 									var bpmDefMove = CStagePlayScreenCommon.GetNowPBPMPoint(this, msMoveTime, chip.nBranch);
 									var th16BeatMove = CStagePlayScreenCommon.GetNowPBMTime(bpmDefMove, msMoveTime, this.COMPAT);
-									var bpmDef = CStagePlayScreenCommon.GetNowPBPMPoint(this, chip.nSoundTimems, chip.nBranch);
-									var th16Beat = CStagePlayScreenCommon.GetNowPBMTime(bpmDef, chip.nSoundTimems, this.COMPAT);
+									var bpmDef = CStagePlayScreenCommon.GetNowPBPMPoint(this, chip.dbSoundTimems, chip.nBranch);
+									var th16Beat = CStagePlayScreenCommon.GetNowPBMTime(bpmDef, chip.dbSoundTimems, this.COMPAT);
 									chip.th16DBeatPreMove = th16Beat - th16BeatMove;
 								}
 
 								if (this.isOFFSET_Negative)
-									chip.nSoundTimems += this.msOFFSET_Abs;
+									chip.dbSoundTimems += this.msOFFSET_Abs;
 								if (this.COMPAT is ETjaCompat.TJAP3 or ETjaCompat.OOS) {
 									chip.dbBPM = bpm;
 								} else {
@@ -2816,7 +2816,7 @@ internal class CTja : CActivity {
 		// チップを配置。
 		var gameFadeOutChip = this.NewEventChipAtDefCursor(0xFF, 1, argInt: 0xFF);
 		gameFadeOutChip.nSoundPos = ((measurePos + 2) * 384);
-		gameFadeOutChip.nSoundTimems = (int)(msTjaTimeRaw + msFadeOutDelay);
+		gameFadeOutChip.dbSoundTimems = (msTjaTimeRaw + msFadeOutDelay);
 		this.InsertChipOrdered(gameFadeOutChip, sortListChip);
 
 		// last note before end of chart
@@ -2830,7 +2830,7 @@ internal class CTja : CActivity {
 
 		var chartEndChip = this.NewEventChipAtDefCursor(0xFF, 1, argInt: 0);
 		chartEndChip.nSoundPos = lastChip.nSoundPos;
-		chartEndChip.nSoundTimems = Math.Min(lastChip.nSoundTimems + 2000, gameFadeOutChip.nSoundTimems);
+		chartEndChip.dbSoundTimems = Math.Min(lastChip.dbSoundTimems + 2000, gameFadeOutChip.dbSoundTimems);
 		this.InsertChipOrdered(chartEndChip, sortListChip);
 	}
 
@@ -3203,7 +3203,7 @@ internal class CTja : CActivity {
 			dbBPM = this.dbNowBPM,
 			dbSCROLL = this.dbNowScroll,
 			dbSCROLL_Y = this.dbNowScrollY,
-			nSoundTimems = (int)this.dbNowTime,
+			dbSoundTimems = this.dbNowTime,
 			fBMSCROLLTime = this.dbNowBMScollTime,
 			fNow_Measure_m = this.fNow_Measure_m,
 			fNow_Measure_s = this.fNow_Measure_s,

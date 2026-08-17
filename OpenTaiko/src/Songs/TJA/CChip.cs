@@ -72,14 +72,15 @@ internal class CChip : IComparable<CChip>, ICloneable {
 
 	public double dbSoundPos;  // 発声時刻を格納していた変数のうちの１つをfloat型からdouble型に変更。(kairera0467)
 	public double fBMSCROLLTime;
-	private int _nSoundTimems;
-	public int nSoundTimems { get => _nSoundTimems; set => dbSoundTimems = _nSoundTimems = value; }
+	public int _nSoundTimems;
+	public int nSoundTimems { get => _nSoundTimems; set => _dbSoundTimems = _nSoundTimems = value; }
 
 	private double _msBorder = double.PositiveInfinity; // Branch judge chip: Branch point time, Kusudama: Bonus border time
 	public double nBranchTimems { get => _msBorder; set => _msBorder = value; } // Branch judge chip
 	public double msKusudamaBonusBorder { get => _msBorder; set => _msBorder = value; } // Kusudama
 
-	public double dbSoundTimems;
+	public double _dbSoundTimems;
+	public double dbSoundTimems { get => _dbSoundTimems; set => _nSoundTimems = (int)Math.Floor(_dbSoundTimems = value); }
 
 	// for #SUDDEN
 	public bool bShowSudden;
@@ -141,7 +142,7 @@ internal class CChip : IComparable<CChip>, ICloneable {
 	//EXTENDED COMMANDS
 	public Color4 borderColor;
 
-	public int fObjTimeMs;
+	public double fObjTimeMs;
 	public string strObjName;
 	public string strObjEaseType;
 	public Easing.CalcType objCalcType;
@@ -224,7 +225,6 @@ internal class CChip : IComparable<CChip>, ICloneable {
 		this.dbDoubleValue = 0.0;
 		this.nSoundPos = 0;
 		this.dbSoundPos = 0.0D;
-		this.nSoundTimems = 0;
 		this.dbSoundTimems = 0.0D;
 		this.fBMSCROLLTime = 0;
 		this.nLag = int.MinValue;

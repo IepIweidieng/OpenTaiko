@@ -757,7 +757,7 @@ internal abstract class CStagePlayScreenCommon : CStage {
 	public static bool hasChipBeenPlayedAt(int chipListIndex, int targetChipListIndex)
 		=> chipListIndex < targetChipListIndex;
 	public static bool hasChipBeenPlayedAt(CChip chip, double msTargetTjaTime)
-		=> chip.nSoundTimems <= msTargetTjaTime;
+		=> Math.Floor(chip.dbSoundTimems) <= msTargetTjaTime;
 	public bool hasChipBeenPlayed(int chipListIndex, int iPlayer)
 		=> hasChipBeenPlayedAt(chipListIndex, nCurrentTopChip[iPlayer]);
 
@@ -2116,7 +2116,7 @@ internal abstract class CStagePlayScreenCommon : CStage {
 			return (null, ENoteJudge.Miss);
 
 		int getIdxChip(long msTjaTime, double direction) {
-			CChip searchChip = new() { nSoundTimems = (int)msTjaTime, dbSoundTimems = direction };
+			CChip searchChip = new() { _nSoundTimems = (int)msTjaTime, _dbSoundTimems = direction };
 			int iTop = this.listChip[nPlayer].BinarySearch(0, count, searchChip, Comparer<CChip>.Default);
 			if (iTop < 0)
 				iTop = ~iTop;
@@ -4092,10 +4092,10 @@ internal abstract class CStagePlayScreenCommon : CStage {
 			if (bpm.bpm_change_course != branch)
 				continue;
 			CTja.CBPM? bpm_next = (iNext < tja.listBPM.Count) ? tja.listBPM[iNext] : null;
-			bool afterHead = (bpm.time_signness < 0) ? (bpm_next == null || ((long)play_time > (long)bpm_next.bpm_change_time))
-				: ((long)play_time >= (long)bpm.bpm_change_time);
-			bool beforeEnd = (bpm.time_signness < 0) ? ((long)play_time <= (long)bpm.bpm_change_time)
-				: (bpm_next == null || ((long)play_time < (long)bpm_next.bpm_change_time));
+			bool afterHead = (bpm.time_signness < 0) ? (bpm_next == null || (Math.Floor(play_time) > Math.Floor(bpm_next.bpm_change_time)))
+				: (Math.Floor(play_time) >= Math.Floor(bpm.bpm_change_time));
+			bool beforeEnd = (bpm.time_signness < 0) ? (Math.Floor(play_time) <= Math.Floor(bpm.bpm_change_time))
+				: (bpm_next == null || (Math.Floor(play_time) < Math.Floor(bpm_next.bpm_change_time)));
 			if (afterHead && beforeEnd) {
 				last_match = i;
 				if (bpm.point_type == CTja.EBPMPointType.Delay && first_match_delay <= 0)

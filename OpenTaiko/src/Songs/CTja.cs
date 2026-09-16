@@ -1186,7 +1186,7 @@ internal class CTja : CActivity {
 					CBPM bpmPoint = listBPM[0];
 					double th16_beat = 0;
 					if (this.COMPAT is not (ETjaCompat.TJAP3 or ETjaCompat.OOS)) {
-						bpmPoint = CStagePlayScreenCommon.GetNowPBPMPoint(this, chip.dbSoundTimems, chip.nBranch, ignoreDelay: true, roundToMs: false);
+						bpmPoint = CStagePlayScreenCommon.GetNowPBPMPoint(this, chip.dbSoundTimems, chip.nBranch, ignoreDelay: true);
 						// do not use earlier or cross-branch bpm points
 						if (chip.bpmPoint != null && bpmPoint.bpm_change_course == chip.nBranch)
 							bpmPoint = chip.bpmPoint;
@@ -1345,9 +1345,9 @@ internal class CTja : CActivity {
 									&& chip.eScrollMode is EScrollMode.BMScroll or EScrollMode.HBScroll
 									) {
 									var msMoveTime = chip.dbSoundTimems - chip.msMoveOffset;
-									var bpmDefMove = CStagePlayScreenCommon.GetNowPBPMPoint(this, msMoveTime, chip.nBranch, ignoreDelay: true, roundToMs: false);
+									var bpmDefMove = CStagePlayScreenCommon.GetNowPBPMPoint(this, msMoveTime, chip.nBranch, ignoreDelay: true);
 									var th16BeatMove = CStagePlayScreenCommon.GetNowPBMTime(bpmDefMove, msMoveTime, this.COMPAT);
-									var bpmDef = CStagePlayScreenCommon.GetNowPBPMPoint(this, chip.dbSoundTimems, chip.nBranch, ignoreDelay: true, roundToMs: false);
+									var bpmDef = CStagePlayScreenCommon.GetNowPBPMPoint(this, chip.dbSoundTimems, chip.nBranch, ignoreDelay: true);
 									var th16Beat = CStagePlayScreenCommon.GetNowPBMTime(bpmDef, chip.dbSoundTimems, this.COMPAT);
 									chip.th16DBeatPreMove = th16Beat - th16BeatMove;
 								}

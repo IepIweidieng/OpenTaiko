@@ -221,14 +221,14 @@ internal static class VideoExporter {
 
 	// ── sound capture ────────────────────────────────────────────────────────────────────────────
 
-	private static void OnSoundPlay(CSound snd) {
+	private static void OnSoundPlay(CSound snd, double msFrameworkTime) {
 		if (_phase != Phase.Capturing && _phase != Phase.Loading) return;
 		string? f = snd.FileName;
 		if (string.IsNullOrEmpty(f) || !File.Exists(f)) return;
 		var (vol, pan) = snd.tGetChannelLevels();
 		if (vol <= 0.0001f) return;
 		lock (_eventsLock)
-			_events.Add(new SoundEvent(f, Game.VirtualClockMs, snd.SoundPosition, vol, pan, snd.PlaySpeed * snd.Frequency));
+			_events.Add(new SoundEvent(f, msFrameworkTime, snd.SoundPosition, vol, pan, snd.PlaySpeed * snd.Frequency));
 	}
 
 	// ── chart lookup ─────────────────────────────────────────────────────────────────────────────

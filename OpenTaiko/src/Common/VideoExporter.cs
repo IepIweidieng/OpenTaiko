@@ -41,7 +41,7 @@ internal static class VideoExporter {
 	private static byte[]? _bgra;
 	private static string _tempVideoPath = "";
 
-	private readonly record struct SoundEvent(string Path, double TimeMs, float Vol, float Pan, double Speed);
+	private readonly record struct SoundEvent(string Path, double TimeMs, double msSeek, float Vol, float Pan, double Speed);
 	private static readonly List<SoundEvent> _events = new();
 	private static readonly object _eventsLock = new();
 
@@ -228,7 +228,7 @@ internal static class VideoExporter {
 		var (vol, pan) = snd.tGetChannelLevels();
 		if (vol <= 0.0001f) return;
 		lock (_eventsLock)
-			_events.Add(new SoundEvent(f, Game.VirtualClockMs, vol, pan, snd.PlaySpeed * snd.Frequency));
+			_events.Add(new SoundEvent(f, Game.VirtualClockMs, snd.SoundPosition, vol, pan, snd.PlaySpeed * snd.Frequency));
 	}
 
 	// ── chart lookup ─────────────────────────────────────────────────────────────────────────────
@@ -324,7 +324,7 @@ internal static class VideoExporter {
 
 	private static readonly Dictionary<string, float[]> _pcmCache = new();
 
-	private static float[] DecodeToStereo48k(string path) {
+	private static float[] DecodeToStereo48k(string path, double msSeek) {
 		if (_pcmCache.TryGetValue(path, out var cached)) return cached;
 		float[] result = Array.Empty<float>();
 		int src = Bass.CreateStream(path, 0, 0, BassFlags.Decode | BassFlags.Float | BassFlags.Prescan);
@@ -332,6 +332,9 @@ internal static class VideoExporter {
 			int mix = BassMix.CreateMixerStream(48000, 2, BassFlags.Decode | BassFlags.Float | BassFlags.MixerEnd);
 			if (mix != 0) {
 				BassMix.MixerAddChannel(mix, src, BassFlags.MixerDownMix);
+				long byteSeek = Bass.ChannelSeconds2Bytes(mix, msSeek / 1000.0);
+				if (byteSeek >= 0)
+					BassMix.ChannelSetPosition(mix, byteSeek, PositionFlags.Bytes);
 				var chunks = new List<float[]>();
 				var buf = new float[48000 * 2];
 				long total = 0;
@@ -371,7 +374,7 @@ internal static class VideoExporter {
 			long start = (long)(relMs / 1000.0 * 48000);
 			if (start >= samples) continue;
 
-			float[] pcm = DecodeToStereo48k(ev.Path);
+			float[] pcm = DecodeToStereo48k(ev.Path, ev.msSeek);
 			if (pcm.Length == 0) continue;
 
 			float volL = ev.Vol * Math.Min(1f, 1f - ev.Pan);

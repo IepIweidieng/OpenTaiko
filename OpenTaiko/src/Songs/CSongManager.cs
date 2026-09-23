@@ -237,24 +237,14 @@ internal class CSongManager {
 
 	// Applies the song node fields that come from the parent box.
 	private static void ApplySongNodeParent(CSongListNode node, CSongListNode? parent, string filePath) {
-		node.rParentNode = parent;
+		node.SetParent(parent);
 		node.strBreadcrumbs = (parent == null) ? filePath : parent.strBreadcrumbs + " > " + filePath;
 
-		string chartGenre = node.songGenre;
-		string? parentGenre = string.IsNullOrEmpty(parent?.songGenre) ? null : parent.songGenre;
-		node.songGenre = parentGenre ?? chartGenre;
-		node.songGenrePanel = (!string.IsNullOrEmpty(chartGenre) ? chartGenre : parentGenre) ?? "";
-
-		if (node.strSelectBGPath == null) node.strSelectBGPath = parent?.strSelectBGPath;
-		if (!File.Exists(node.strSelectBGPath)) node.strSelectBGPath = null;
-
-		ApplyParentSettings(node, parent);
-
 		// The parent's preimage fills in every course that has none.
-		if (parent?.score[0] != null) {
+		if (node.inherited.Preimage != null) {
 			for (int n = 0; n < (int)Difficulty.Total; n++) {
-				if (node.score[n] != null && string.IsNullOrEmpty(node.score[n].ChartInfo.Preimage))
-					node.score[n].ChartInfo.Preimage = parent.score[0].ChartInfo.Preimage;
+				if (node.score[n] != null)
+					node.score[n].ChartInfo.Preimage ??= node.inherited.Preimage;
 			}
 		}
 	}
@@ -323,44 +313,7 @@ internal class CSongManager {
 						this.nSearchScoreCount++;
 						listNodeList.Add(value);
 						CSongDict.tAddSongNode(value.uniqueId, value);
-						value.rParentNode = nodeParent;
-
-						if (value.rParentNode != null) {
-							if (string.IsNullOrWhiteSpace(value.strScenePresets))
-								value.strScenePresets = value.rParentNode.strScenePresets;
-							if (value.rParentNode.IsChangedForeColor) {
-								value.ForeColor = value.rParentNode.ForeColor;
-								value.IsChangedForeColor = true;
-							}
-							if (value.rParentNode.IsChangedBackColor) {
-								value.BackColor = value.rParentNode.BackColor;
-								value.IsChangedBackColor = true;
-							}
-							if (value.rParentNode.isChangedBoxColor) {
-								value.BoxColor = value.rParentNode.BoxColor;
-								value.isChangedBoxColor = true;
-							}
-							if (value.rParentNode.isChangedBgColor) {
-								value.BgColor = value.rParentNode.BgColor;
-								value.isChangedBgColor = true;
-							}
-							if (value.rParentNode.isChangedBgType) {
-								value.BgType = value.rParentNode.BgType;
-								value.isChangedBgType = true;
-							}
-							if (value.rParentNode.isChangedBoxType) {
-								value.BoxType = value.rParentNode.BoxType;
-								value.isChangedBoxType = true;
-							}
-							if (value.rParentNode.isChangedBoxChara) {
-								value.BoxChara = value.rParentNode.BoxChara;
-								value.isChangedBoxChara = true;
-							}
-							if (value.rParentNode.isChangedCompat) {
-								value.Compat = value.rParentNode.Compat;
-								value.isChangedCompat = true;
-							}
-						}
+						value.SetParent(value.rParentNode);
 
 						this.nSearchSongNodeCount++;
 					} else {
@@ -389,17 +342,15 @@ internal class CSongManager {
 						this.nSearchScoreCount++;
 						listNodeList.Add(tciCached);
 						CSongDict.tAddSongNode(tciCached.uniqueId, tciCached);
-						tciCached.rParentNode = nodeParent;
-						ApplyParentSettings(tciCached, nodeParent);
+						tciCached.SetParent(nodeParent);
 						this.nSearchSongNodeCount++;
 					} else {
 						CTci tci = new CTci(filePath);
 						if (tci.Courses.Count > 0) {
 							CSongListNode tciNode = tci.BuildSongListNode();
-							tciNode.rParentNode = nodeParent;
 							tciNode.strBreadcrumbs = (tciNode.rParentNode == null)
 								? filePath : tciNode.rParentNode.strBreadcrumbs + " > " + filePath;
-							ApplyParentSettings(tciNode, nodeParent);
+							tciNode.SetParent(nodeParent);
 							CSongDict.tAddSongNode(tciNode.uniqueId, tciNode);
 							if (!listSongsDB.ContainsKey(filePath + tciHashStr))
 								listSongsDB.Add(filePath + tciHashStr, tciNode);
@@ -429,50 +380,14 @@ internal class CSongManager {
 				CBoxDef boxdef = new CBoxDef(infoDir.FullName + @$"{Path.DirectorySeparatorChar}box.def");
 				CSongListNode cSongListNode = new CSongListNode();
 
-				ApplyParentSettings(cSongListNode, nodeParent);
+				cSongListNode.InheritFrom(boxdef);
+				cSongListNode.inherited.InheritFrom(cSongListNode);
+				cSongListNode.SetParent(nodeParent);
 
 				cSongListNode.nodeType = CSongListNode.ENodeType.BOX;
 				cSongListNode.ldTitle = boxdef.Title;
-				cSongListNode.songGenre = boxdef.Genre;
-				if (!string.IsNullOrWhiteSpace(boxdef.ScenePreset))
-					cSongListNode.strScenePresets = boxdef.ScenePreset;
-				cSongListNode.strSelectBGPath = infoDir.FullName + Path.DirectorySeparatorChar + boxdef.SelectBG;
+				cSongListNode.strSelectBGPath = infoDir.FullName + Path.DirectorySeparatorChar + boxdef.strSelectBGPath;
 				if (!File.Exists(cSongListNode.strSelectBGPath)) cSongListNode.strSelectBGPath = null;
-
-				if (boxdef.IsChangedForeColor) {
-					cSongListNode.ForeColor = boxdef.ForeColor;
-					cSongListNode.IsChangedForeColor = true;
-				}
-				if (boxdef.IsChangedBackColor) {
-					cSongListNode.BackColor = boxdef.BackColor;
-					cSongListNode.IsChangedBackColor = true;
-				}
-				if (boxdef.IsChangedBoxColor) {
-					cSongListNode.BoxColor = boxdef.BoxColor;
-					cSongListNode.isChangedBoxColor = true;
-				}
-				if (boxdef.IsChangedBgColor) {
-					cSongListNode.BgColor = boxdef.BgColor;
-					cSongListNode.isChangedBgColor = true;
-				}
-				if (boxdef.IsChangedBgType) {
-					cSongListNode.BgType = boxdef.BgType;
-					cSongListNode.isChangedBgType = true;
-				}
-				if (boxdef.IsChangedBoxType) {
-					cSongListNode.BoxType = boxdef.BoxType;
-					cSongListNode.isChangedBoxType = true;
-				}
-				if (boxdef.IsChangedBoxChara) {
-					cSongListNode.BoxChara = boxdef.BoxChara;
-					cSongListNode.isChangedBoxChara = true;
-				}
-				if (boxdef.IsChangedCompat) {
-					cSongListNode.Compat = boxdef.Compat;
-					cSongListNode.isChangedCompat = true;
-				}
-
-
 
 				for (int i = 0; i < 3; i++) {
 					if ((boxdef.strBoxText[i] != null)) {
@@ -486,9 +401,9 @@ internal class CSongManager {
 				cSongListNode.score[0] = new CScore();
 				cSongListNode.score[0].FileInfo.FolderAbsolutePath = infoDir.FullName + Path.DirectorySeparatorChar;
 				cSongListNode.score[0].ChartInfo.Title = boxdef.Title.GetString("");
-				cSongListNode.score[0].ChartInfo.Genre = boxdef.Genre;
-				if (!String.IsNullOrEmpty(boxdef.DefaultPreimage))
-					cSongListNode.score[0].ChartInfo.Preimage = boxdef.DefaultPreimage;
+				cSongListNode.score[0].ChartInfo.Genre = boxdef.songGenre;
+				if (!String.IsNullOrEmpty(boxdef.Preimage))
+					cSongListNode.score[0].ChartInfo.Preimage = boxdef.Preimage;
 				cSongListNode.rParentNode = nodeParent;
 
 
@@ -515,31 +430,31 @@ internal class CSongManager {
 							sb.Append("(onRoot):");
 						}
 						sb.Append("BOX, Title=" + cSongListNode.ldTitle.GetString(""));
-						if ((cSongListNode.songGenre != null) && (cSongListNode.songGenre.Length > 0)) {
+						if (cSongListNode.songGenre != null) {
 							sb.Append(", Genre=" + cSongListNode.songGenre);
 						}
-						if (cSongListNode.IsChangedForeColor) {
+						if (cSongListNode.ForeColor != null) {
 							sb.Append(", ForeColor=" + cSongListNode.ForeColor.ToString());
 						}
-						if (cSongListNode.IsChangedBackColor) {
+						if (cSongListNode.BackColor != null) {
 							sb.Append(", BackColor=" + cSongListNode.BackColor.ToString());
 						}
-						if (cSongListNode.isChangedBoxColor) {
+						if (cSongListNode.BoxColor != null) {
 							sb.Append(", BoxColor=" + cSongListNode.BoxColor.ToString());
 						}
-						if (cSongListNode.isChangedBgColor) {
+						if (cSongListNode.BgColor != null) {
 							sb.Append(", BgColor=" + cSongListNode.BgColor.ToString());
 						}
-						if (cSongListNode.isChangedBoxType) {
+						if (cSongListNode.BoxType != null) {
 							sb.Append(", BoxType=" + cSongListNode.BoxType.ToString());
 						}
-						if (cSongListNode.isChangedBgType) {
+						if (cSongListNode.BgType != null) {
 							sb.Append(", BgType=" + cSongListNode.BgType.ToString());
 						}
-						if (cSongListNode.isChangedBoxChara) {
+						if (cSongListNode.BoxChara != null) {
 							sb.Append(", BoxChara=" + cSongListNode.BoxChara.ToString());
 						}
-						if (cSongListNode.isChangedCompat) {
+						if (cSongListNode.Compat != null) {
 							sb.Append(", Compat=" + cSongListNode.Compat.ToString());
 						}
 						Trace.TraceInformation(sb.ToString());
@@ -981,17 +896,15 @@ Debug.WriteLine( dBPM + ":" + c曲リストノード.strタイトル );
 					this.nSearchScoreCount++;
 					nodeList.Add(tcmCached);
 					CSongDict.tAddSongNode(tcmCached.uniqueId, tcmCached);
-					tcmCached.rParentNode = parent;
-					ApplyParentSettings(tcmCached, parent);
+					tcmCached.SetParent(parent);
 					this.nSearchSongNodeCount++;
 				} else {
 					CTcm tcm = new CTcm(filePath);
 					CSongListNode? tcmNode = tcm.BuildSongListNode();
 					if (tcmNode != null) {
-						tcmNode.rParentNode = parent;
 						tcmNode.strBreadcrumbs = (tcmNode.rParentNode == null)
 							? filePath : tcmNode.rParentNode.strBreadcrumbs + " > " + filePath;
-						ApplyParentSettings(tcmNode, parent);
+						tcmNode.SetParent(parent);
 						CSongDict.tAddSongNode(tcmNode.uniqueId, tcmNode);
 						if (!listSongsDB.ContainsKey(filePath + tcmHashStr))
 							listSongsDB.Add(filePath + tcmHashStr, tcmNode);
@@ -1005,21 +918,4 @@ Debug.WriteLine( dBPM + ":" + c曲リストノード.strタイトル );
 			}
 		}
 	}
-
-	private static void ApplyParentSettings(CSongListNode node, CSongListNode? parent) {
-		if (parent == null) return;
-		if (string.IsNullOrWhiteSpace(node.strScenePresets))
-			node.strScenePresets = parent.strScenePresets;
-		if (parent.IsChangedForeColor) { node.ForeColor = parent.ForeColor; node.IsChangedForeColor = true; }
-		if (parent.IsChangedBackColor) { node.BackColor = parent.BackColor; node.IsChangedBackColor = true; }
-		if (parent.isChangedBoxColor) { node.BoxColor = parent.BoxColor; node.isChangedBoxColor = true; }
-		if (parent.isChangedBgColor) { node.BgColor = parent.BgColor; node.isChangedBgColor = true; }
-		if (parent.isChangedBgType) { node.BgType = parent.BgType; node.isChangedBgType = true; }
-		if (parent.isChangedBoxType) { node.BoxType = parent.BoxType; node.isChangedBoxType = true; }
-		if (parent.isChangedBoxChara) { node.BoxChara = parent.BoxChara; node.isChangedBoxChara = true; }
-		if (parent.isChangedCompat) { node.Compat = parent.Compat; node.isChangedCompat = true; }
-		if (node.score[0] != null && parent.score[0] != null && string.IsNullOrEmpty(node.score[0].ChartInfo.Preimage))
-			node.score[0].ChartInfo.Preimage = parent.score[0].ChartInfo.Preimage;
-	}
-
 }

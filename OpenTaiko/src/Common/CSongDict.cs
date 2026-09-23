@@ -85,16 +85,14 @@ internal class CSongDict {
 		itemBack.BackColor = ColorTranslator.FromHtml("#513009");
 		itemBack.BoxColor = Color.White;
 
-		itemBack.BgColor = parent.BgColor;
-		itemBack.isChangedBgColor = parent.isChangedBgColor;
-		itemBack.BgType = parent.BgType;
-		itemBack.isChangedBgType = parent.isChangedBgType;
+		itemBack.inherited.BgColor = parent.inherited.BgColor;
+		itemBack.inherited.BgType = parent.inherited.BgType;
 
-		itemBack.songGenre = parent.songGenre;
-		itemBack.strSelectBGPath = parent.strSelectBGPath;
+		itemBack.inherited.songGenre = parent.inherited.songGenre;
+		itemBack.inherited.strSelectBGPath = parent.inherited.strSelectBGPath;
 		itemBack.difficultiesCount = 1;
 		itemBack.rParentNode = parent;
-		itemBack.strSkinPath = (parent.rParentNode == null) ?
+		itemBack.inherited.strSkinPath = (parent.rParentNode == null) ?
 			"" : parent.rParentNode.strSkinPath;
 
 		// I guess this is used to count the number of box.def instances and only at startup, which makes using it here pretty weird
@@ -153,18 +151,7 @@ internal class CSongDict {
 	private static CSongListNode tReadaptChildNote(CSongListNode parent, CSongListNode node) {
 		if (node != null) {
 			node.rParentNode = parent;
-			node.isChangedBgType = parent.isChangedBgType;
-			node.isChangedBgColor = parent.isChangedBgColor;
-			node.isChangedBoxType = parent.isChangedBoxType;
-			node.isChangedBoxColor = parent.isChangedBoxColor;
-
-			node.ForeColor = parent.ForeColor;
-			node.BackColor = parent.BackColor;
-			node.BoxColor = parent.BoxColor;
-			node.BgColor = parent.BgColor;
-			node.BgType = parent.BgType;
-			node.BoxType = parent.BoxType;
-
+			node.inherited.InheritFrom(parent.inherited);
 			return node;
 		}
 		return null;

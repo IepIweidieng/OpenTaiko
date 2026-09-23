@@ -5,7 +5,64 @@ using System.Text.Json.Serialization;
 namespace OpenTaiko;
 
 [Serializable]
-internal class CSongListNode {
+internal class CSongListNodeInheritable {
+	// Properties
+
+	// Colors are re-derived from the parent node on load, so they are not JSON-cached.
+	public Color? ForeColor; // default: Color.White; Color for song title text fill
+	public Color? BackColor; // default: Color.Black; Color for song title text outline
+	public Color? BoxColor; // default: Color.White; Color for song entry panel
+	public Color? BgColor; // default: Color.White; Color for genre text
+	public string? BoxType;
+	public string? BgType;
+	public string? BoxChara;
+	public CTja.ETjaCompat? Compat;
+	public string? strSelectBGPath;
+	public string? Preimage;
+
+	// Metadata
+	public string? songGenre;
+	public string? songGenrePanel; // Used only for the panel under the song title
+
+	// In-game visuals
+	public string? strSkinPath;         // Removable?
+	public string? strScenePresets; // includes commas
+
+	private static readonly CSongListNodeInheritable InheritanceRoot = new() {
+		ForeColor = Color.White,
+		BackColor = Color.Black,
+		BoxColor = Color.White,
+		BgColor = Color.White,
+		songGenre = "",
+		songGenrePanel = "",
+		strSkinPath = "",
+	};
+
+	public void InheritFromRoot() => InheritFrom(InheritanceRoot);
+
+	public void InheritFrom(CSongListNodeInheritable? parent) {
+		if (parent == null)
+			return;
+		this.ForeColor ??= parent.ForeColor;
+		this.BackColor ??= parent.BackColor;
+		this.BoxColor ??= parent.BoxColor;
+		this.BgColor ??= parent.BgColor;
+		this.BgType ??= parent.BgType;
+		this.BoxType ??= parent.BoxType;
+		this.BoxChara ??= parent.BoxChara;
+		this.Compat ??= parent.Compat;
+		this.strSelectBGPath ??= parent.strSelectBGPath;
+		this.Preimage ??= parent.Preimage;
+		this.songGenre ??= parent.songGenre;
+		this.songGenrePanel ??= parent.songGenrePanel;
+		this.strSkinPath ??= parent.strSkinPath;
+		this.strScenePresets ??= parent.strScenePresets;
+	}
+}
+
+internal class CSongListNode : CSongListNodeInheritable {
+	[JsonIgnore] public CSongListNodeInheritable inherited;
+
 	// Properties
 
 	public ENodeType nodeType = ENodeType.UNKNOWN;
@@ -23,28 +80,8 @@ internal class CSongListNode {
 
 	public string[] difficultyLabel = new string[(int)Difficulty.Total];
 
-	// Colors are re-derived from the parent node on load, so they are not JSON-cached.
-	[JsonIgnore] public Color ForeColor = Color.White;
-	[JsonIgnore] public Color BackColor = Color.Black;
-	[JsonIgnore] public Color BoxColor = Color.White;
-
-	[JsonIgnore] public Color BgColor = Color.White;
-	public bool isChangedBgColor;
-	public bool isChangedBgType;
-	public bool isChangedBoxType;
-	public string BoxType;
-	public string BgType;
-	public string BoxChara;
-	public bool isChangedBoxChara;
-
-	public bool IsChangedForeColor;
-	public bool IsChangedBackColor;
-	public bool isChangedBoxColor;
 	[JsonIgnore] public List<CSongListNode> randomList;     // tree links: rebuilt by enumeration, not cached
 	[JsonIgnore] public List<CSongListNode> childrenList;
-
-	public CTja.ETjaCompat Compat;
-	public bool isChangedCompat;
 
 	public int difficultiesCount; // 4~5 if AD
 
@@ -54,11 +91,8 @@ internal class CSongListNode {
 	public int Openindex;
 	public bool bIsOpenFolder;
 	public string strBreadcrumbs = "";      // Removable?
-	public string strSkinPath = "";         // Removable?
 
 	// Metadata
-	public string songGenre = "";
-	public string songGenrePanel = ""; // Used only for the panel under the song title
 	public CLocalizationData ldTitle = new CLocalizationData();
 	public CLocalizationData ldSubtitle = new CLocalizationData();
 	public string strMaker = "";
@@ -98,11 +132,7 @@ internal class CSongListNode {
 
 	public CLocalizationData[] strBoxText = new CLocalizationData[3] { new CLocalizationData(), new CLocalizationData(), new CLocalizationData() };
 
-	public string strSelectBGPath;
-
 	// In-game visuals
-
-	public string strScenePresets; // includes commas
 
 	#region [ OpenTaiko-Exclusive TJA Extension Data ]
 
@@ -115,11 +145,24 @@ internal class CSongListNode {
 		return uniqueId?.data.id ?? "";
 	}
 
+	public void SetParent(CSongListNode? parent) {
+		if (parent == null)
+			return;
+		this.rParentNode = parent;
+		this.inherited.InheritFrom(parent.inherited);
+		if (this.score[0] != null && parent.score[0] != null && string.IsNullOrEmpty(this.score[0].ChartInfo.Preimage))
+			this.score[0].ChartInfo.Preimage = parent.score[0].ChartInfo.Preimage;
+	}
+
 	// Constructor
 
 	public CSongListNode() {
 		// Increment atomically because the song enumeration can build nodes concurrently.
 		this.nID = Interlocked.Increment(ref lastAssignedID);
+	}
+
+	public CSongListNode(CBoxDef boxDef) : this() {
+		this.InheritFrom(boxDef);
 	}
 
 	public CSongListNode Clone() {

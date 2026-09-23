@@ -5,52 +5,16 @@ using System.Text.RegularExpressions;
 
 namespace OpenTaiko;
 
-internal class CBoxDef {
+internal class CBoxDef : CSongListNodeInheritable {
 	// Properties
 
-	public Color Color;
-	public string SelectBG;
-	public string Genre;
+	public Color? FontColor; // default: Color.Black (?) Color for texts not genre nor song title
 	public CLocalizationData Title = new CLocalizationData();
 	public CLocalizationData[] strBoxText = new CLocalizationData[3] { new CLocalizationData(), new CLocalizationData(), new CLocalizationData() };
-	public Color ForeColor;
-	public Color BackColor;
-	public bool IsChangedForeColor;
-	public bool IsChangedBackColor;
-	public Color BoxColor;
-	public bool IsChangedBoxColor;
-	public Color BgColor;
-	public bool IsChangedBgColor;
-	public string BoxType;
-	public string BgType;
-	public bool IsChangedBoxType;
-	public bool IsChangedBgType;
-	public string BoxChara;
-	public bool IsChangedBoxChara;
-	public string DefaultPreimage;
-	public string ScenePreset;
-	public bool IsChangedCompat;
-	public CTja.ETjaCompat Compat;
 
 	// Constructor
 
-	public CBoxDef() {
-		this.Genre = "";
-		ForeColor = Color.White;
-		BackColor = Color.Black;
-		BoxColor = Color.White;
-		BoxType = "0";
-		BgType = "0";
-		BoxChara = "0";
-		BgColor = Color.White;
-		DefaultPreimage = null;
-		ScenePreset = null;
-		Compat = CTja.ETjaCompat.OOS;
-	}
-	public CBoxDef(string boxdefFileName)
-		: this() {
-		this.tLoad(boxdefFileName);
-	}
+	public CBoxDef(string boxdefFileName) => this.tLoad(boxdefFileName);
 
 	// メソッド
 	private static readonly Regex KeyAndValueRegex =
@@ -86,39 +50,31 @@ internal class CBoxDef {
 								string _lang = key.Substring(6).ToLowerInvariant();
 								this.Title.SetString(_lang, valueFull);
 							} else if (key == "#GENRE") {
-								this.Genre = valueFull;
+								this.songGenre = valueFull;
 							} else if (key == "#SELECTBG") {
-								this.SelectBG = value;
+								this.strSelectBGPath = value;
 							} else if (key == "#FONTCOLOR") {
-								this.Color = ColorTranslator.FromHtml(value);
+								this.FontColor = ColorTranslator.FromHtml(value);
 							} else if (key == "#FORECOLOR") {
 								this.ForeColor = ColorTranslator.FromHtml(value);
-								IsChangedForeColor = true;
 							} else if (key == "#BACKCOLOR") {
 								this.BackColor = ColorTranslator.FromHtml(value);
-								IsChangedBackColor = true;
 							} else if (key == "#BOXCOLOR") {
 								this.BoxColor = ColorTranslator.FromHtml(value);
-								IsChangedBoxColor = true;
 							} else if (key == "#BGCOLOR") {
 								this.BgColor = ColorTranslator.FromHtml(value);
-								IsChangedBgColor = true;
 							} else if (key == "#BGTYPE") {
 								this.BgType = value;
-								IsChangedBgType = true;
 							} else if (key == "#BOXTYPE") {
 								this.BoxType = value;
-								IsChangedBoxType = true;
 							} else if (key == "#BOXCHARA") {
 								this.BoxChara = value;
-								IsChangedBoxChara = true;
 							} else if (key == "#SCENEPRESET") {
-								this.ScenePreset = value;
+								this.strScenePresets = value;
 							} else if (key == "#DEFAULTPREIMAGE") {
-								this.DefaultPreimage = Path.Combine(Directory.GetParent(boxdefFileName).FullName, value);
+								this.Preimage = Path.Combine(Directory.GetParent(boxdefFileName).FullName, value);
 							} else if (key == "#COMPAT") {
 								this.Compat = CTja.strConvertTjaCompat(value);
-								IsChangedCompat = true;
 							} else {
 								for (int i = 0; i < 3; i++) {
 									if (key == "#BOXEXPLANATION" + (i + 1).ToString()) {

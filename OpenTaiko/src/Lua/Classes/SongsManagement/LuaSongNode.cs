@@ -1,4 +1,10 @@
-﻿namespace OpenTaiko {
+﻿using System.Drawing;
+
+namespace OpenTaiko {
+	static class ColorExtensions {
+		public static LuaColor? ToLuaColor(this Color? color) => (color == null) ? null : new(color.Value);
+	}
+
 	internal class LuaSongNode {
 		private CSongListNode? _node;
 		private List<LuaSongChart> _charts = new List<LuaSongChart>();
@@ -140,37 +146,37 @@
 
 		public string? BoxType {
 			get {
-				return _node?.BoxType ?? null;
+				return _node?.inherited.BoxType;
 			}
 		}
 
 		public string? BgType {
 			get {
-				return _node?.BgType ?? null;
+				return _node?.inherited.BgType;
 			}
 		}
 
 		public string? BoxChara {
 			get {
-				return _node?.BoxChara ?? null;
+				return _node?.inherited.BoxChara;
 			}
 		}
 
 		public LuaColor? ForeColor {
 			get {
-				return _node != null ? new(_node.ForeColor) : null;
+				return _node?.inherited.ForeColor.ToLuaColor();
 			}
 		}
 
 		public LuaColor? BackColor {
 			get {
-				return _node != null ? new(_node.BackColor) : null;
+				return _node?.inherited.BackColor.ToLuaColor();
 			}
 		}
 
 		public LuaColor? BoxColor {
 			get {
-				return _node != null ? new(_node.BoxColor) : null;
+				return _node?.inherited.BoxColor.ToLuaColor();
 			}
 		}
 

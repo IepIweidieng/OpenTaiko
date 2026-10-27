@@ -473,11 +473,11 @@ internal abstract partial class CStagePlayScreenCommon : CStage {
 			if (NotesManager.IsGenericBalloon(_chip)) {
 				var msDuration = (_chip.end.nSoundTimems - _chip.nSoundTimems);
 				var expectedHits = (int)(16.6 * msDuration / 1000);
-				nBalloonHits += Math.Min(_chip.nBalloon, expectedHits);
+				nBalloonHits += Math.Max(0, Math.Min(_chip.nBalloon, expectedHits));
 			}
 
 			if (NotesManager.IsRoll(_chip))
-				msRollTime += (_chip.end.nSoundTimems - _chip.nSoundTimems);
+				msRollTime += Math.Max(0, (_chip.end.nSoundTimems - _chip.nSoundTimems));
 		}
 	}
 

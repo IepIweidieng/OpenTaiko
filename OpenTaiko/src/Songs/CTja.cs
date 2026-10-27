@@ -1104,7 +1104,15 @@ internal class CTja : CActivity {
 		}
 	}
 	public void tProcessAllText(string? strAllInputString, Difficulty Difficulty, int nBGMAdjust) {
-		if (!string.IsNullOrEmpty(strAllInputString)) {
+		// the chart must be initialize even when the chart file is empty
+		if (strAllInputString == null) {
+			this.AddWarn("Failed to find or decode the chart file. Continued by loading an empty chart.");
+			strAllInputString = "";
+		} else if (string.IsNullOrEmpty(strAllInputString)) {
+			this.AddWarn("The chart file is empty. Continued by loading an empty chart.");
+		}
+
+		{
 			#region [ 初期化 ]
 			for (int j = 0; j < 36 * 36; j++) {
 				this.nInfiniteWAV![j] = -j;
@@ -1599,7 +1607,6 @@ internal class CTja : CActivity {
 	/// </summary>
 	/// <param name="strInput">譜面のデータ</param>
 	private void tInput_V4(string strInput, Difficulty difficulty) {
-		if (!String.IsNullOrEmpty(strInput)) //空なら通さない
 		{
 			strInput = this.preprocessTjaStr(strInput);
 
@@ -2867,6 +2874,9 @@ internal class CTja : CActivity {
 	}
 
 	private void EndChartDefinitionBody() {
+		if (this.nCurrentMeasureCount <= 0) // empty chart with missing #START
+			this.InitializeChartDefinitionBody();
+
 		// prevent ending too early for some branches
 		this.GotoBranchEnd(forced: true);
 

@@ -471,12 +471,12 @@ namespace OpenTaikoTests {
 
 			AssertSameChips(stream, host.Hits.Select(h => h.chip));
 			foreach (var chip in stream.SkipLast(1)) {
-				Assert.Equal((long)chip.dbSoundTimems + 39, HitTimeOf(host, chip));
+				Assert.Equal(chip.nSoundTimems + 39, HitTimeOf(host, chip));
 				Assert.Equal(ENoteJudge.Good, TimingJudgeOf(host, chip, HitTimeOf(host, chip)));
 				Assert.Equal(ENoteJudge.Poor, planner.JudgeOf(chip)); // the rolled Bad is kept
 			}
 			var last = stream[^1];
-			Assert.InRange(HitTimeOf(host, last) - (long)last.dbSoundTimems, 76, 108);
+			Assert.InRange(HitTimeOf(host, last) - last.nSoundTimems, 76, 108);
 			Assert.Equal(ENoteJudge.Poor, planner.JudgeOf(last));
 		}
 
@@ -488,7 +488,7 @@ namespace OpenTaikoTests {
 			host.JustMode = 1;
 			Play(planner, host, 0, 6000);
 			foreach (var (chip, msHit, _, _) in host.Hits) {
-				Assert.InRange(Math.Abs(msHit - chip.dbSoundTimems), 26, 75);
+				Assert.InRange(Math.Abs(msHit - chip.nSoundTimems), 26, 75);
 				Assert.Equal(ENoteJudge.Poor, TimingJudgeOf(host, chip, msHit));
 				Assert.Equal(ENoteJudge.Poor, planner.JudgeOf(chip));
 			}

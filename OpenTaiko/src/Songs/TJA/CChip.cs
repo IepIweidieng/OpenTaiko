@@ -85,7 +85,7 @@ internal class CChip : IComparable<CChip>, ICloneable {
 		get => _dbSoundTimems;
 		set {
 			_dbSoundTimems = value;
-			_nSoundTimems = int.CreateSaturating(Math.Floor(_dbSoundTimems));
+			_nSoundTimems = ms_int(_dbSoundTimems);
 		}
 	}
 
@@ -366,6 +366,9 @@ internal class CChip : IComparable<CChip>, ICloneable {
 
 		return nDuration;
 	}
+
+	public static int ms_int(double ms) => int.CreateSaturating(Math.Floor(ms));
+	public static long ms_long(double ms) => long.CreateSaturating(Math.Floor(ms));
 
 	#region [ IComparable 実装 ]
 	//-----------------

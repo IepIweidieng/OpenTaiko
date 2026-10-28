@@ -53,7 +53,7 @@ class CActImplTrainingMode : CActivity {
 				var width = 0;
 				if (OpenTaiko.Tx.Tokkun_ProgressBar != null) width = OpenTaiko.Tx.Tokkun_ProgressBar.szTextureSize.Width;
 
-				this.gogoXList.Add((int)(width * (current / length)));
+				this.gogoXList.Add(int.CreateSaturating(width * (current / length)));
 			}
 			if (pChip.nChannelNo == 0x9F && bIsInGoGo) {
 				bIsInGoGo = false;

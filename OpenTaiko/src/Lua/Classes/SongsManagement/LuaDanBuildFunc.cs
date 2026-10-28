@@ -221,7 +221,6 @@ namespace OpenTaiko {
 				//   • Audio/note sync is identical to standalone play — the relationship
 				//     between the BGM chip and all note chips is left untouched.
 				double offsetDb = accum;   // anchor = time 0 (start of chart)
-				int offsetMs = (int)Math.Round(offsetDb);
 
 				// OFFSET compensation for HBSCROLL/BMSCROLL.
 				//

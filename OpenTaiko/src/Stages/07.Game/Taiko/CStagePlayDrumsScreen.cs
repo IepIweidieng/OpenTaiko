@@ -826,12 +826,12 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 		if (eJudge == ENoteJudge.Miss)
 			return ENoteJudge.Miss;
 
-		this.actGame.OnJudge(nPlayer, eJudge, (int)((long)nHitTime - pChip.nSoundTimems), (long)nHitTime);
+		this.actGame.OnJudge(nPlayer, eJudge, int.CreateSaturating((long)CChip.ms_int(nHitTime) - pChip.nSoundTimems), CChip.ms_long(nHitTime));
 		return eJudge;
 	}
 
 	protected override void OnNoteMissed(int nPlayer, double msTjaTime)
-		=> this.actGame.OnJudge(nPlayer, ENoteJudge.Miss, 0, (long)msTjaTime);
+		=> this.actGame.OnJudge(nPlayer, ENoteJudge.Miss, 0, CChip.ms_long(msTjaTime));
 
 	protected override void DrumsScrollSpeedUp() {
 		OpenTaiko.ConfigIni.nScrollSpeed[0] = Math.Min(OpenTaiko.ConfigIni.nScrollSpeed[0] + 1, CConfigIni.MaximumScrollSpeed);
@@ -1022,7 +1022,7 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 					continue;
 				if (msPumpTjaTime > nowTja) // future
 					break;
-				long tHit = (long)inputs[replayCursor[p]].Item1;
+				long tHit = long.CreateSaturating(inputs[replayCursor[p]].Item1);
 				this.ProcessPadInput(p, (EPad)inputs[replayCursor[p]].Item2, tHit);
 			}
 		}
@@ -1052,8 +1052,8 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 			long msInputMixer = SoundManager.PlayTimer.SystemTimeToGameTime(inputEvent.nTimeStamp);
 			long rawInputGameTime = msInputMixer + nInputAdjustTimeMs;
 			long msHitTjaTime = OpenTaiko.ConfigIni.nFunMods[nUsePlayer] == EFunMods.DynamicBeat
-				? (long)(tja.GameTimeToTjaTime(rawInputGameTime) * dbDynamicBeatFactor + dbDynBeatTjaOffset)
-				: (long)tja.GameTimeToTjaTime(rawInputGameTime);
+				? CChip.ms_long(tja.GameTimeToTjaTime(rawInputGameTime) * dbDynamicBeatFactor + dbDynBeatTjaOffset)
+				: CChip.ms_long(tja.GameTimeToTjaTime(rawInputGameTime));
 
 			EPad nPadAs1P = NotesManager.PadTo1P(nPad);
 			// Register to replay file
@@ -1070,7 +1070,7 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 
 	protected override void ProcessPadInput(int nUsePlayer, EPad nPad, double msHitTjaTime, CChip? chipNoHit, ENoteJudge? eJudge) {
 		// test judgement
-		eJudge ??= (chipNoHit == null) ? ENoteJudge.Miss : this.eGetChipJudgeAtTime((long)msHitTjaTime, chipNoHit, nUsePlayer);
+		eJudge ??= (chipNoHit == null) ? ENoteJudge.Miss : this.eGetChipJudgeAtTime(msHitTjaTime, chipNoHit, nUsePlayer);
 		var gameType = this.eGameType[nUsePlayer];
 		if (eJudge != ENoteJudge.Miss) {
 			eJudge = this.JudgePadInput(nUsePlayer, chipNoHit, nPad, msHitTjaTime, eJudge.Value);
@@ -1122,7 +1122,7 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 				return ENoteJudge.ADLIB; // here for "empty hit but not a miss"
 			} else if (chipNoHit.eNoteState == ENoteState.Wait) {
 				bool _isExpected = NotesManager.IsExpectedPadMultiHit(chipNoHit.padStoredHit, nPad, chipNoHit, gameType);
-				if (_isExpected && IsAcceptMultiHit(chipNoHit, (long)msHitTjaTime)) {
+				if (_isExpected && IsAcceptMultiHit(chipNoHit, Math.Floor(msHitTjaTime))) {
 					if (skipHit)
 						return ENoteJudge.Perfect;
 					chipNoHit.eNoteState = ENoteState.None;
@@ -1192,7 +1192,7 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 					}
 				}
 
-				if (pChip.nSoundTimems < (long)nPlayTime) {
+				if (pChip.nSoundTimems < CChip.ms_int(nPlayTime)) {
 					this.actGame.OnNoteReached(nPlayer);
 				}
 
@@ -1229,7 +1229,8 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 			int yEnd = GetNoteOriginY(nPlayer) + pChip.end.nVerticalChipDistance;
 
 			if (NotesManager.IsGenericBalloon(nt)) {
-				if ((long)msTjaNowTime >= pChip.nSoundTimems && (long)msTjaNowTime < pChip.end.nSoundTimems) {
+				int msTjaNowTime_int = CChip.ms_int(msTjaNowTime);
+				if (msTjaNowTime_int >= pChip.nSoundTimems && msTjaNowTime_int < pChip.end.nSoundTimems) {
 					// TaikoJiro1 behavior: active balloons can still go right
 					if (!(tja.COMPAT is CTja.ETjaCompat.Jiro1 && pChip.nHorizontalChipDistance > 0 && !NotesManager.IsKusudama(pChip))) {
 						if (!isEnd)
@@ -1364,8 +1365,9 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 		var compat = tja.COMPAT;
 		// display non-stretchable (TJAP3/OOS default) or judging rolls
 		// Jiro2: future and past notes are hidden according to on-screen note count (unimplemented); currently needs detection
+		int msTjaNowTime_int = CChip.ms_int(msTjaNowTime);
 		if (compat is CTja.ETjaCompat.TJAP3 or CTja.ETjaCompat.OOS
-			|| (long)msTjaNowTime >= pChip.nSoundTimems && (long)msTjaNowTime <= pChip.end.nSoundTimems
+			|| msTjaNowTime_int >= pChip.nSoundTimems && msTjaNowTime_int <= pChip.end.nSoundTimems
 			) {
 			pChip.canShowBody = true;
 			return;
@@ -1389,7 +1391,7 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 
 		if (compat is CTja.ETjaCompat.Jiro1 or CTja.ETjaCompat.TMG) {
 			// TaikoJiro1 & TaikoManyGimmicks behavior: Rolls are hidden after judgement and after both tips exited the screen
-			if (!headInScreen && !endInScreen && (long)msTjaNowTime > pChip.end.nSoundTimems) {
+			if (!headInScreen && !endInScreen && msTjaNowTime_int > pChip.end.nSoundTimems) {
 				pChip.canShowBody = false;
 				return;
 			} else if (compat == CTja.ETjaCompat.TMG) {
@@ -1486,7 +1488,7 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 	/// 全体にわたる制御をする。
 	/// </summary>
 	public void tTotalControlMethod() {
-		int t = (int)SoundManager.PlayTimer.NowTimeMs;
+		int t = CChip.ms_int(SoundManager.PlayTimer.NowTimeMs);
 		//CDTXMania.act文字コンソール.tPrint( 0, 16, C文字コンソール.Eフォント種別.白, t.ToString() );
 
 		this.actBalloon.tDrawKusudama(this.actTokkun.bTrainingPAUSE);
@@ -1603,7 +1605,7 @@ internal partial class CStagePlayDrumsScreen : CStagePlayScreenCommon {
 		EGameType _gt = NotesManager.GetChipGameType(chip, iPlayer);
 		bool _isSwapNote = NotesManager.IsSwapNote(chip, _gt);
 
-		var msJudgeTjaTime = Math.Min((long)msTjaNowTime, msMaxPlayedTjaTime);
+		var msJudgeTjaTime = Math.Min(Math.Floor(msTjaNowTime), msMaxPlayedTjaTime);
 		if (chip.eNoteState == ENoteState.Wait && !IsAcceptMultiHit(chip, msJudgeTjaTime)) {
 			if (!_isSwapNote) {
 				this.tDrumsHitProcess(chip.msFirstMultiHit, EPad.Unknown, chip, false, iPlayer);
